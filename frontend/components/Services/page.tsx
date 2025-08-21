@@ -1,0 +1,33 @@
+import React from "react";
+import "./style.scss";
+import ServiseBox from "../ServiseBox/page";
+const Services = () => {
+  return (
+    <>
+      <div className=" servise_box flex justify-center items-start gap-6 w-[30%] bg-amber-50/20 ">
+        <div className="servise_box_right">
+          <h1 className=" servise_box_right_h1 text-white font-normal ">
+            برای رزرو نوبت از هر بخش روی ان کلیلک کنید
+          </h1>
+          <p className="servise_box_right_p">طرف قرار داد با تمامی بیمه ها</p>
+        </div>
+        <div className=" flex flex-col gap-3 absolute top-2 left-2">
+          <ServiseBox name="دکتر عمومی" href="/" />
+          <ServiseBox name="دندانپزشکی " href="/" />
+          <ServiseBox name=" پزشک متخصص" href="/" />
+          <ServiseBox name=" گفتار درمانی" href="/" />
+          <ServiseBox name=" بینایی سنجی و تجویز عینک" href="/" />
+          <ServiseBox name="مامائی " href="/" />
+          <ServiseBox name=" شنوایی سنجی" href="/" />
+          <ServiseBox name=" ازمایشگاه" href="/" />
+          <ServiseBox name=" کار درمانی" href="/" />
+          <ServiseBox name=" فیزیو تراپی " href="/" />
+          <ServiseBox name="  تزریقات " href="/" />
+          <ServiseBox name="  رادیو لوژی " href="/" />
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default Services;

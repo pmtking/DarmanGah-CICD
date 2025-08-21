@@ -1,0 +1,9 @@
+// varibels
+@use "../../styles/sass/abstracts/variables" as *;
+
+.icon {
+    background: $color-primary;
+    color: $white;
+    padding: 15px 15px;
+    
+}

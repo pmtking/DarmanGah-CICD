@@ -1,0 +1,47 @@
+.doctor-list {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, 1fr);
+  padding: 1rem 0;
+}
+
+.doctor-card {
+  background: #f9f9f9;
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease;
+}
+
+.doctor-card:hover {
+  transform: translateY(-4px);
+}
+
+.doctor-image {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 50%;
+  margin-bottom: 0.75rem;
+}
+
+.doctor-name {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.booking-button {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background-color: #2563eb;
+  color: #fff;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 0.875rem;
+  transition: background-color 0.2s ease;
+}
+
+.booking-button:hover {
+  background-color: #1e40af;
+}

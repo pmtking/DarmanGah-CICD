@@ -1,0 +1,47 @@
+// Example template for config.ts
+@use "../../styles/sass/abstracts/variables" as *;
+
+.button {
+  padding: 0.60rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  width: 100%;
+}
+
+.primary {
+  background-color: $color-primary;
+  color: white;
+
+  &:hover {
+    background-color: $color-primary;
+  }
+}
+
+.outline {
+  background-color: transparent;
+  border: 2px solid #1d4ed8;
+  color: #1d4ed8;
+
+  &:hover {
+    background-color: #eff6ff;
+  }
+}
+
+.danger {
+  background-color: #dc2626;
+  color: white;
+
+  &:hover {
+    background-color: #b91c1c;
+  }
+}
+
+.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

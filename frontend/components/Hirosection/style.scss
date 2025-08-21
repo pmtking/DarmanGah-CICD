@@ -1,0 +1,16 @@
+// Example template for config.ts
+.hero-section{
+    margin-top: 150px;
+    position: relative;
+
+    &::after {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        width: 50%;
+        content: ''; 
+        padding: 10px;
+        background: linear-gradient();
+        height: 100%;
+    }
+}

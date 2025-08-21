@@ -1,0 +1,19 @@
+// varibels
+@use "../../styles/sass/abstracts/variables" as *;
+
+.about_box {
+  width: 30%;
+  background: rgba(hsl(228, 100%, 96%), $alpha: 0.3);
+  height: 45vh;
+  padding-block: 20px;
+  border-radius: 10px;
+  padding-inline: 20px;
+  .about_box_header{
+    // border-bottom: 1px solid #fff;
+    padding-bottom: 20px;
+  }
+}
+.btn-yellow-important {
+  background-color: #facc15 !important; // این کد رنگی معادل yellow-400 در Tailwind است
+  color: #000 !important;
+}

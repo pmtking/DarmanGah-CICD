@@ -1,0 +1,48 @@
+// تعریف انیمیشن
+@use "../../styles/sass/abstracts/variables" as *;
+@keyframes modalFadeIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+// لایه‌ی بک‌گراند مدال
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 50;
+  //   animation: modalFadeIn 0.3s ease-out;
+}
+
+// محتوای مدال
+.modal-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 1rem;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+// دکمه بستن
+.modal-close-btn {
+  margin-top: 1rem;
+  background-color: $color-primary;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}

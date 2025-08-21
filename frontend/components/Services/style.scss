@@ -1,0 +1,39 @@
+// varibels
+@use "../../styles/sass/abstracts/variables" as *;
+
+.servise_box{
+
+    position: relative;
+    height: 80vh;
+    padding: 10px;
+    border-radius: 20px;
+    width: 415px;
+    
+    .servise_box_right{
+        position: relative;
+        // height: 100vh;
+        display: flex ;
+        justify-content: flex-start;
+        right: -110px;
+
+        .servise_box_right_h1{
+            position: relative;
+            width: 200px;
+            text-align: center;
+
+            
+        }
+        .servise_box_right_p{
+            position: absolute;
+            transform: rotate(-90deg);
+            top: 270px;
+            right: -150px;
+            font-size: 40px;
+            // flex-wrap: nowrap;
+            text-wrap: nowrap;
+            color: rgba(#aaa, $alpha: 0.8);
+            font-weight: 700;
+            // height: 100vh;
+        }
+    }
+}
