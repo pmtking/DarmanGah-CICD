@@ -1,74 +1,116 @@
+"use client";
 
-
-'use client'
-// type
+import { useUser } from "@/context/UserContext";
 import api from "@/libs/axios";
-import { useState, useEffect } from 'react';
+import Cookies from "js-cookie";
+import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 
+// =======================
+// 🔸 Type Definitions
+// =======================
 interface User {
-    id: number;
-    name: string;
-    email: string;
-    password: string;
+  id: number;
+  name: string;
+  email: string;
+  password: string;
 }
 
-interface Credentials  {
-    email: string;
-    password: string;
-
+interface Credentials {
+  email: string;
+  password: string;
 }
+
 interface RegisterData extends Credentials {
-    name: string;
+  name: string;
 }
-//use Auth
 
+// =======================
+// 🔹 useAuth Hook
+// =======================
 const useAuth = () => {
-    const [user, setUser] = useState<User | null>(null);
-    const [loading, setLoading] = useState<boolean>(false);
-    const [error, setError] = useState<boolean>(false);
+  const [data, setData] = useState<User | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | boolean>(false);
+  const { setUser } = useUser();
 
-    useEffect(() => {
-        const fechUser = async () => {
-            try{
-                setLoading(true);
-                const res = await api.get('/api/auth/user');
-                setUser(res.data);
-                // setLoading(false);
-            }catch(err:any){
-                setError(err);
-                setUser(null);
-            }finally {
-                setLoading(false);
-            }
+  // 🔸 Fetch current user on mount
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        setLoading(true);
+        const res = await api.get("/api/auth/user");
+        setData(res.data);
+        console.log(res.data.user);
+        setUser(res.data.user); // ذخیره در context
+      } catch (err: any) {
+        setError(err.message || "خطا در دریافت اطلاعات کاربر");
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-            fechUser() ;
-        }
+    fetchUser();
+  }, [setUser]);
 
+  // 🔸 Login function
+  const login = async (credentials: Credentials) => {
+    try {
+      setLoading(true);
+      const res = await api.post("/api/personel/login", credentials);
 
-    },[])
+      const user = res.data.user;
 
-    const register = async (data:RegisterData) => {
-        try{
-            setLoading(true);
-            // toast.loading('درحال ثبت نام')
-            const res = await api.post('/api/auth/register', data);
-            setUser(res.data.user);
-            setLoading(false);
-            toast.success("User registered successfully.")
+      const token = res.data.token;
 
-        }catch (err:any){
-            setLoading(false);
-            setError(err);
-            toast.error(err.message);
-        }
+      setUser(user);
+      console.log(user);
+      setData(user);
+
+      Cookies.set("token", token, {
+        expires: 1,
+        secure: true,
+        sameSite: "Strict",
+      });
+
+      toast.success("ورود با موفقیت انجام شد");
+      // location.replace("/reseption");
+    } catch (err: any) {
+      const message = err.response?.data?.message || "خطا در ورود";
+      setError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
     }
-    return {
-        loading,
-        error,
-        user,
-        register,
+  };
+
+  // 🔸 Register function
+  const register = async (registerData: RegisterData) => {
+    try {
+      setLoading(true);
+      const res = await api.post("/api/auth/register", registerData);
+
+      setUser(res.data.user);
+      setData(res.data.user);
+
+      toast.success("ثبت‌نام با موفقیت انجام شد");
+    } catch (err: any) {
+      setError(err.message || "خطا در ثبت‌نام");
+      toast.error(err.message);
+    } finally {
+      setLoading(false);
     }
-}
+  };
+
+  // 🔸 Return hook values
+  return {
+    loading,
+    error,
+    data,
+    register,
+    login,
+  };
+};
 
 export default useAuth;

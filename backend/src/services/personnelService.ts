@@ -18,7 +18,9 @@ export interface CreatePersonnelWithAuthInput {
 
 export async function createpersonnel(data: CreatePersonnelWithAuthInput) {
   // بررسی وجود پرسنل با کد ملی
-  const existingPersonnel = await Personnel.findOne({ nationalId: data.nationalId });
+  const existingPersonnel = await Personnel.findOne({
+    nationalId: data.nationalId,
+  });
   if (existingPersonnel) {
     throw new Error("پرسنلی با این کد ملی قبلاً ثبت شده است.");
   }
@@ -35,7 +37,8 @@ export async function createpersonnel(data: CreatePersonnelWithAuthInput) {
     nationalId: data.nationalId,
     role: data.role,
     salaryType: data.salaryType,
-    percentageRate: data.salaryType === "PERCENTAGE" ? data.percentageRate || 0 : 0,
+    percentageRate:
+      data.salaryType === "PERCENTAGE" ? data.percentageRate || 0 : 0,
     phone: data.phone || "",
     gender: data.gender || "UNKNOWN",
     hireAt: new Date(),
@@ -58,4 +61,32 @@ export async function createpersonnel(data: CreatePersonnelWithAuthInput) {
   await user.save();
 
   return { personnel, user };
+}
+
+
+
+export async function LoginpersonelService(data) {
+  const { userName, password } = data;
+
+  // پیدا کردن کاربر و پر کردن اطلاعات پرسنلی
+  const auth = await UserAuth.findOne({ username: userName }).populate('personnel');
+  if (!auth || !auth.password) {
+    throw new Error('کاربر یافت نشد یا اطلاعات ناقص است');
+  }
+
+  // اعتبارسنجی رمز عبور
+  const isPasswordValid = await bcrypt.compare(password, auth.password);
+  if (!isPasswordValid) {
+    throw new Error('رمز عبور اشتباه است');
+  }
+
+  // بازگرداندن اطلاعات ترکیبی
+  return {
+    id: auth.personnel._id,
+    username: auth.username,
+    name: auth.personnel.name,
+    role: auth.personnel.role,
+    // department: auth.personnel.department,
+    // سایر فیلدهای مورد نیاز
+  };
 }

@@ -1,3 +1,3 @@
 # DarmanGah-respotion
-این پروژه برای فرهنگ‌یاران است.
+این پروژه برای فرهنگ‌یان است.
 # DarmanGah-CICD
