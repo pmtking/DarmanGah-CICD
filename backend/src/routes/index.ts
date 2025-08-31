@@ -4,6 +4,8 @@ import { authMiddleware } from "../middlewares/auth";
 import AdminRouter from './superAdminRouter'
 import personel from './personnelRoutes'
 import managerRouter from './managerRoutes'
+import doctors from './doctorRoutes'
+import service from './clinicServiceRoutes'
 export const router = express.Router();
 const fs = require("fs");
 const path = "D:/key.txt"; // مسیر فلش (در ویندوز)
@@ -42,4 +44,6 @@ router.use("/auth", authRouter);
 router.use("/v/" ,AdminRouter)
 router.use("/v2" ,managerRouter )
 
+router.use('/service' ,service )
 router.use("/personel/" , personel)
+router.use('/doctors', doctors)

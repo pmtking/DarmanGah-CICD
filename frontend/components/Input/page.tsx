@@ -1,18 +1,26 @@
 import React, { forwardRef } from "react";
-import { InputProps } from "@/types/globaltypes";
+import { InputHTMLAttributes } from "react";
 
+// تعریف نوع ورودی‌ها
+export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+  error?: string;
+  validate?: (value: string) => boolean;
+}
+
+// کامپوننت Input با پشتیبانی از ref و تمام ویژگی‌های HTML
 const Input = forwardRef<HTMLInputElement, InputProps>(
   (
     {
       type = "text",
       onChange,
-      validate,
+      onKeyDown,
       className = "",
       placeholder = "",
       value,
       name,
-      error,
       id,
+      error,
+      validate,
       ...rest
     },
     ref
@@ -23,6 +31,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           type={type}
           onChange={onChange}
+          onKeyDown={onKeyDown}
           value={value}
           name={name}
           id={id}

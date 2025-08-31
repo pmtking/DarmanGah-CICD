@@ -17,13 +17,17 @@ interface User {
 }
 
 interface Credentials {
-  email: string;
+  userName: string;
   password: string;
 }
 
-interface RegisterData extends Credentials {
-  name: string;
+interface RegisterData {
+  name?: string;
+  number: string;
+  password: string;
+  role: "ADMIN" | "USER";
 }
+
 
 // =======================
 // 🔹 useAuth Hook

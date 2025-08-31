@@ -3,8 +3,19 @@ import React, { useState } from "react";
 import TitleComponents from "@/components/TitleComponents/page";
 import Button from "@/components/Button/page";
 
-const AddPersonnelPage = () => {
-  const [form, setForm] = useState({
+interface PersonnelForm {
+  name: string;
+  nationalId: string;
+  phone: string;
+  gender: "MALE" | "FEMALE" | "OTHER" | "";
+  role: "DOCTOR" | "NURSE" | "RECEPTION" | "MANAGER" | "SERVICE" | "";
+  salaryType: "FIXED" | "PERCENTAGE";
+  isActive: boolean;
+  hireAt: string;
+}
+
+const AddPersonnelPage: React.FC = () => {
+  const [form, setForm] = useState<PersonnelForm>({
     name: "",
     nationalId: "",
     phone: "",
@@ -18,21 +29,32 @@ const AddPersonnelPage = () => {
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value, type } = e.target;
+
+    const newValue =
+      type === "checkbox" && e.target instanceof HTMLInputElement
+        ? e.target.checked
+        : value;
+
     setForm((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: newValue,
     }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-  };  
+    try {
+      // اینجا می‌تونی داده‌ها رو به API ارسال کنی
+      console.log("فرم ارسال شد:", form);
+    } catch (error) {
+      console.error("خطا در ارسال فرم:", error);
+    }
+  };
 
   return (
     <div className="w-full h-full rounded-2xl mt-5 px-10 py-6">
-      <TitleComponents h1="افزودن پرسنل جدید" color="#fff" />
+      <TitleComponents h1="افزودن پرسنل جدید" color="#fff" classname="flex" />
 
       <form
         onSubmit={handleSubmit}

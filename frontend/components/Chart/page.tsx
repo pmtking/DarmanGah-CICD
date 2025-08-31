@@ -12,13 +12,14 @@ import {
   LinearScale,
   Tooltip,
   Legend,
+  TooltipItem,
 } from "chart.js";
 import "./style.scss";
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
-// تخصص‌های پزشکی
-const labels = [
+// داده‌ها
+const labels: string[] = [
   "پزشک عمومی",
   "متخصص داخلی",
   "متخصص قلب",
@@ -29,15 +30,11 @@ const labels = [
   "بینایی‌سنجی",
 ];
 
-// تعداد مراجعه و مبلغ هر ویزیت
-const visitCounts = [120, 80, 60, 90, 70, 150, 110, 50]; // تعداد مراجعه
-const visitFees = [50000, 80000, 100000, 90000, 60000, 40000, 70000, 30000]; // مبلغ هر ویزیت (تومان)
-
-// محاسبه درآمد کل
-const totalRevenue = visitCounts.map((count, index) => count * visitFees[index]);
+const visitCounts: number[] = [120, 80, 60, 90, 70, 150, 110, 50];
+const visitFees: number[] = [50000, 80000, 100000, 90000, 60000, 40000, 70000, 30000];
+const totalRevenue: number[] = visitCounts.map((count, i) => count * visitFees[i]);
 
 // داده‌های نمودار
-// داده‌های نمودار با محور مشخص‌شده
 const data = {
   labels,
   datasets: [
@@ -46,24 +43,24 @@ const data = {
       data: visitCounts,
       backgroundColor: "#4caf50",
       borderRadius: 4,
-      yAxisID: "y1", // محور سمت راست
+      yAxisID: "y1",
     },
     {
       label: "درآمد کسب‌شده",
       data: totalRevenue,
       backgroundColor: "#2196f3",
       borderRadius: 4,
-      yAxisID: "y", // محور سمت چپ
+      yAxisID: "y",
     },
   ],
 };
 
-// تنظیمات نمودار با دو محور Y
+// تنظیمات نمودار
 const options = {
   responsive: true,
   plugins: {
     legend: {
-      position: "top",
+      position: "top" as const,
       labels: {
         font: {
           family: "Vazir",
@@ -76,13 +73,12 @@ const options = {
         family: "Vazir",
       },
       callbacks: {
-        label: function (context) {
+        label: function (context: TooltipItem<"bar">) {
           const label = context.dataset.label || "";
-          const value = context.raw;
-          if (label === "درآمد کسب‌شده") {
-            return `${label}: ${value.toLocaleString()} تومان`;
-          }
-          return `${label}: ${value}`;
+          const value = context.raw as number;
+          return label === "درآمد کسب‌شده"
+            ? `${label}: ${value.toLocaleString()} تومان`
+            : `${label}: ${value}`;
         },
       },
     },
@@ -96,8 +92,8 @@ const options = {
       },
     },
     y: {
-      type: "linear",
-      position: "left",
+      type: "linear" as const,
+      position: "left" as const,
       title: {
         display: true,
         text: "درآمد (تومان)",
@@ -110,14 +106,14 @@ const options = {
         font: {
           family: "Vazir",
         },
-        callback: function (value) {
-          return value.toLocaleString() + " تومان";
+        callback: function (value: number | string) {
+          return Number(value).toLocaleString() + " تومان";
         },
       },
     },
     y1: {
-      type: "linear",
-      position: "right",
+      type: "linear" as const,
+      position: "right" as const,
       title: {
         display: true,
         text: "تعداد مراجعه",
@@ -127,7 +123,7 @@ const options = {
         },
       },
       grid: {
-        drawOnChartArea: false, // جلوگیری از تداخل خطوط شبکه
+        drawOnChartArea: false,
       },
       ticks: {
         font: {
@@ -138,8 +134,7 @@ const options = {
   },
 };
 
-
-const MedicalRevenueChart = () => {
+const MedicalRevenueChart: React.FC = () => {
   const chartRef = useRef<HTMLDivElement>(null);
 
   const exportToExcelWithImage = async () => {
@@ -152,13 +147,8 @@ const MedicalRevenueChart = () => {
     const worksheet = workbook.addWorksheet("گزارش درآمد پزشکی");
 
     worksheet.addRow(["تخصص", "تعداد مراجعه", "مبلغ هر ویزیت", "درآمد کل"]);
-    labels.forEach((label, index) => {
-      worksheet.addRow([
-        label,
-        visitCounts[index],
-        visitFees[index],
-        totalRevenue[index],
-      ]);
+    labels.forEach((label, i) => {
+      worksheet.addRow([label, visitCounts[i], visitFees[i], totalRevenue[i]]);
     });
 
     const imageId = workbook.addImage({

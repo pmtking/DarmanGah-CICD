@@ -17,3 +17,12 @@
     border: 1px solid $color-primary;
   }
 }
+
+.navbar {
+  transition: all 0.3s ease-in-out;
+}
+
+.btn {
+  font-weight: bold;
+  font-size: 0.95rem;
+}

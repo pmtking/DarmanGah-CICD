@@ -1,3 +1,4 @@
+import Personnel from "../models/Personnel";
 import {
   createpersonnel,
   LoginpersonelService,
@@ -49,4 +50,9 @@ export async function loginPersonnelController(req, res) {
       message: error.message || 'Login failed',
     });
   }
+}
+
+export const findPersonel = async (req , res) => {
+  const data = await Personnel.find()
+  return res.json({data})
 }

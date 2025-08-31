@@ -1,4 +1,4 @@
-// varibels
+// variables
 @use "../../styles/sass/abstracts/variables" as *;
 
 .about_box {
@@ -8,12 +8,45 @@
   padding-block: 20px;
   border-radius: 10px;
   padding-inline: 20px;
-  .about_box_header{
-    // border-bottom: 1px solid #fff;
+
+  .about_box_header {
     padding-bottom: 20px;
   }
 }
+
+// دکمه زرد
 .btn-yellow-important {
-  background-color: #facc15 !important; // این کد رنگی معادل yellow-400 در Tailwind است
+  background-color: #facc15 !important; // معادل yellow-400
   color: #000 !important;
+}
+
+/* ------------------------------
+   Responsive Styles
+--------------------------------*/
+
+// موبایل کوچک (تا 640px)
+@media (max-width: 640px) {
+  .about_box {
+    width: 90%;
+    height: auto;
+    padding-inline: 12px;
+    margin: 0 auto;
+  }
+}
+
+// تبلت (641px تا 1024px)
+@media (min-width: 641px) and (max-width: 1024px) {
+  .about_box {
+    width: 60%;
+    height: auto;
+    margin: 0 auto;
+  }
+}
+
+// دسکتاپ (بزرگتر از 1024px)
+@media (min-width: 1025px) {
+  .about_box {
+    width: 30%;
+    height: 45vh;
+  }
 }

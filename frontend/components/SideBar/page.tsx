@@ -12,7 +12,11 @@ const SideBar = () => {
 
   const navItems = [
     { name: "داشبورد", icon: <Home size="20" />, href: "/admin" },
-    { name: "لیست کارکنان", icon: <Home size="20" />, href:"/admin/personnel"},
+    {
+      name: "لیست کارکنان",
+      icon: <Home size="20" />,
+      href: "/admin/personnel",
+    },
     { name: "پزشکان", icon: <Home size="20" />, href: "/admin/doctors" },
     { name: "خدمات", icon: <Home size="20" />, href: "/" },
     { name: "حسابداری", icon: <Home size="20" />, href: "/" },
@@ -21,39 +25,48 @@ const SideBar = () => {
   ];
 
   return (
-    <div className="flex">
-      {/* Toggle Button */}
-
+    <div className="flex h-[95vh]">
       {/* Sidebar */}
       <aside
-        className={`bg-white shadow-md flex flex-col transition-all duration-300 ${
+        className={`bg-white shadow-md flex flex-col justify-between transition-all duration-300 rounded-2xl ${
           isOpen ? "w-64" : "w-20"
         }`}
       >
-        <button
-          onClick={toggleSidebar}
-          className="p-2 mt-5 bg-gray-200 rounded-md hover:bg-gray-300 w-max mx-auto"
-        >
-          <Menu size="24" />
-        </button>
-        <h2
-          className={`text-xl font-bold mb-6 p-6 text-right transition-opacity duration-300 ${
-            isOpen ? "opacity-100" : "opacity-0"
-          }`}
-        >
-          مدیریت
-        </h2>
-        <nav className="space-y-2">
-          {navItems.map((item, index) => (
-            <NavItem
-              key={index}
-              variant="sidebar"
-              name={isOpen ? item.name : ""}
-              icon={item.icon}
-              link={item.href}
-            />
-          ))}
-        </nav>
+        <div>
+          {/* Sidebar Header with Toggle */}
+          <div className="flex items-center justify-between p-4 border-b border-gray-200">
+            {isOpen && (
+              <h2 className="text-lg font-semibold text-gray-700 transition-all duration-300">
+                مدیریت
+              </h2>
+            )}
+            <button
+              onClick={toggleSidebar}
+              className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
+            >
+              <Menu size="22" />
+            </button>
+          </div>
+
+          {/* Nav Items */}
+          <nav className="space-y-2 mt-4">
+            {navItems.map((item, index) => (
+              <NavItem
+                key={index}
+                variant="sidebar"
+                name={isOpen ? item.name : ""}
+                icon={item.icon}
+                link={item.href}
+              />
+            ))}
+          </nav>
+        </div>
+
+        {/* تبلیغ */}
+        <div className="m-4 p-3 bg-amber-100 rounded-lg shadow-sm text-center cursor-pointer hover:bg-amber-200 transition">
+          <p className="text-sm font-medium text-gray-800">🎉 تخفیف ویژه خدمات درمانی</p>
+          {isOpen && <span className="text-xs text-gray-600">کلیک کنید</span>}
+        </div>
       </aside>
     </div>
   );

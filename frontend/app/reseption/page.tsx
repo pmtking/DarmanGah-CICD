@@ -59,10 +59,15 @@ const RespontionPage = () => {
 
   return (
     <div className=" flex flex-col w-full justify-center items-center ">
-      <ReseptionNav patientCount={42} user={user} />
+      {user && <ReseptionNav patientCount={42} user={user} />}
+
       <main className=" mt-20 bg-white/30  flex flex-col justify-start items-center w-[60%] h-[80%] px-5 py-8 rounded-2xl border-2 border-gray-600 shadow-2xl">
         <div className="mt-8 flex ">
-          <TitleComponents h1={"پذیرش درمانگاه "} color="#fff" />
+          <TitleComponents
+            h1={"پذیرش درمانگاه "}
+            color="#fff"
+            classname="flex"
+          />
         </div>
 
         {!isVerified ? (

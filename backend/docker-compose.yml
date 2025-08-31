@@ -6,9 +6,10 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - mongo
-    volumes:
-      - .:/app
+      mongo:
+        condition: service_healthy
+    environment:
+      - MONGO_URL=mongodb://mongodb:27017/dbname
     restart: always
 
   mongo:
@@ -19,6 +20,11 @@ services:
     volumes:
       - mongo_data:/data/db
     restart: always
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.runCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   mongo_data:

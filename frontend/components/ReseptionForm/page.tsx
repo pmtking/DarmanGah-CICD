@@ -4,15 +4,27 @@ import Input from "../Input/page";
 import Button from "../Button/page";
 
 // داده‌های تستی برای شبیه‌سازی لیست خدمات پزشکان
-const doctorsServices = {
+const doctorsServices: Record<string, string[]> = {
   "دکتر احمدی": ["معاینه عمومی", "نوار قلب", "تزریقات"],
   "دکتر رضایی": ["جراحی سرپایی", "بخیه", "پانسمان"],
   "دکتر محمدی": ["ارتوپدی", "شکسته‌بندی", "فیزوتراپی"],
 };
 
+type DoctorName = "دکتر احمدی" | "دکتر رضایی" | "دکتر محمدی";
+type FormData = {
+  firstName: string;
+  lastName: string;
+  gender: string;
+  doctorName: DoctorName | ""; // فقط پزشکان معتبر یا رشته خالی
+  visitDate: string;
+  insuranceType: string;
+  supplementaryInsurance: string;
+  relation: string;
+  service: string;
+};
+
 const ReseptionForm = () => {
-  // مدیریت وضعیت (state) برای فیلدهای مختلف فرم
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     firstName: "",
     lastName: "",
     gender: "",
@@ -23,9 +35,8 @@ const ReseptionForm = () => {
     relation: "",
     service: "",
   });
-
   // مدیریت لیست خدمات موجود برای پزشک انتخاب‌شده
-  const [availableServices, setAvailableServices] = useState([]);
+  const [availableServices, setAvailableServices] = useState<string[]>([]);
 
   // این تابع به محض تغییر نام پزشک، لیست خدمات موجود را به‌روزرسانی می‌کند.
   useEffect(() => {
@@ -37,7 +48,7 @@ const ReseptionForm = () => {
   }, [formData.doctorName]);
 
   // تابع سراسری برای به‌روزرسانی state
-  const handleChange = (e) => {
+  const handleChange = (e:any) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
       ...prevData,
@@ -128,7 +139,7 @@ const ReseptionForm = () => {
           </div>
           <div className="flex flex-col w-full">
             <label htmlFor="lastName" className="text-right text-gray-700">
-               نوع مراجعه
+              نوع مراجعه
             </label>
             <Input
               id="lastName"
@@ -189,34 +200,34 @@ const ReseptionForm = () => {
         </div>
 
         {/* فیلد تاریخ مراجعه */}
-       <div className="flex justify-between w-full gap-3">
-         <div className="flex flex-col w-full">
-          <label htmlFor="visitDate" className="text-right text-gray-700">
-             تاریخ نوبت 
-          </label>
-          <Input
-            id="visitDate"
-            type="date"
-            name="visitDate"
-            value={formData.visitDate}
-            onChange={handleChange}
-            className="w-full py-2 px-4 mb-4 border border-gray-400 rounded text-black"
-          />
+        <div className="flex justify-between w-full gap-3">
+          <div className="flex flex-col w-full">
+            <label htmlFor="visitDate" className="text-right text-gray-700">
+              تاریخ نوبت
+            </label>
+            <Input
+              id="visitDate"
+              type="date"
+              name="visitDate"
+              value={formData.visitDate}
+              onChange={handleChange}
+              className="w-full py-2 px-4 mb-4 border border-gray-400 rounded text-black"
+            />
+          </div>
+          <div className="flex flex-col w-full">
+            <label htmlFor="visitDate" className="text-right text-gray-700">
+              تاریخ مراجعه
+            </label>
+            <Input
+              id="visitDate"
+              type="date"
+              name="visitDate"
+              value={formData.visitDate}
+              onChange={handleChange}
+              className="w-full py-2 px-4 mb-4 border border-gray-400 rounded text-black"
+            />
+          </div>
         </div>
-         <div className="flex flex-col w-full">
-          <label htmlFor="visitDate" className="text-right text-gray-700">
-            تاریخ مراجعه
-          </label>
-          <Input
-            id="visitDate"
-            type="date"
-            name="visitDate"
-            value={formData.visitDate}
-            onChange={handleChange}
-            className="w-full py-2 px-4 mb-4 border border-gray-400 rounded text-black"
-          />
-        </div>
-       </div>
 
         {/* فیلد نوع بیمه اصلی */}
         <div className="flex flex-col w-full">
