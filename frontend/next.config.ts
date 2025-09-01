@@ -3,9 +3,8 @@ import { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
   images: {
-    domains: ["http://df-neyshabor.ir/"],
+    domains: ["df-neyshabor.ir"], // فقط نام دامنه
   },
 };
 
