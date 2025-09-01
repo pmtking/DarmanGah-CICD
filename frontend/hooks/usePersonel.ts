@@ -6,28 +6,42 @@ import api from "@/libs/axios";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
-export interface CreatePersonnelWithAuthInput {
+export interface CreatePersonnelInput {
   name: string;
   nationalId: string;
-  role: string; //Ipersonel["Role"]
-  salaryType: string;
-  percentageRate: number;
-  phone: string;
-  gender: string;
+  phone?: string;
+  gender?: "MALE" | "FEMALE" | "OTHER";
+  role: "DOCTOR" | "NURSE" | "RECEPTION" | "MANAGER" | "SERVICE";
+  salaryType: "FIXED" | "PERCENTAGE";
+  percentageRate?: number;
   username: string;
   password: string;
+  isActive?: boolean;
+  hireAt?: string;
 }
 
 export interface Personnel {
-  id: string;
+  _id: string;
   name: string;
   nationalId: string;
+  phone?: string;
+  gender?: "MALE" | "FEMALE" | "OTHER";
   role: string;
   salaryType: string;
   percentageRate?: number;
-  phone?: string;
-  gender?: string;
   username: string;
+  isActive: boolean;
+  hireAt: string;
+  lastLogin?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// پاسخ API هنگام افزودن پرسنل
+interface AddPersonnelResponse {
+  success: boolean;
+  data: Personnel;
+  message?: string;
 }
 
 // =======================
@@ -36,37 +50,47 @@ export interface Personnel {
 
 const usePersonel = () => {
   const [loading, setLoading] = useState<boolean>(false);
-  const [personels , setPersonels ] = useState<Personnel []> ([]) ;
-  const [error , setError ] = useState<string | null> (null) ;
+  const [personels, setPersonels] = useState<Personnel[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-  // 🔹 usePersonel Hook -- >> fetchPersonel
+  // دریافت لیست پرسنل‌ها
   const fetchPersonel = async () => {
     setLoading(true);
     try {
       const res = await api.get<Personnel[]>("/personnels");
-      if(!res) {
-        toast('خطا در سرور')
-      }
-      setPersonels(res.data)
-    } catch (error:any) {
-        setError(error.message)
-    }finally {
-        setLoading(false)
+      setPersonels(res.data);
+    } catch (err: any) {
+      setError(err.message);
+      toast.error("خطا در دریافت پرسنل‌ها: " + err.message);
+    } finally {
+      setLoading(false);
     }
   };
-   // 🔹 usePersonel Hook -->> addPersonel
-   const addPersonel = async(newPersonel:CreatePersonnelWithAuthInput) => {
-    setLoading(true) 
+
+  // افزودن پرسنل جدید
+  const addPersonel = async (personelData: CreatePersonnelInput) => {
+    setLoading(true);
     try {
-        const res = api.post<Personnel>('/peronel/add')
-        if(!res) {
-            toast.error('خطایی وجود دارد3')
-        }
-    } catch (error) {
-        
+      const res = await api.post<AddPersonnelResponse>("/api/personel/add", personelData);
+
+      if (res.data.success) {
+        setPersonels((prev) => [...prev, res.data.data]);
+        toast.success("پرسنل با موفقیت اضافه شد!");
+      } else {
+        toast.error(res.data.message || "خطا در افزودن پرسنل");
+      }
+
+      console.log("پاسخ API:", res.data);
+    } catch (err: any) {
+      console.error("خطا در افزودن پرسنل:", err.message);
+      setError(err.message);
+      toast.error("خطا در افزودن پرسنل: " + err.message);
+    } finally {
+      setLoading(false);
     }
-   }
-  return { fetchPersonel , addPersonel };
+  };
+
+  return { fetchPersonel, addPersonel, personels, loading, error };
 };
 
 export default usePersonel;

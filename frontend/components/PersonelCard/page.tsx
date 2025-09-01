@@ -1,6 +1,6 @@
 import React from "react";
 import "./style.scss";
-import defaultUserImage from "@/public/images/defult.png"; // مسیر عکس دیفالت
+import defaultUserImage from "@/public/images/defult.png"; 
 import Image from "next/image";
 
 interface PersonelCardProps {
@@ -20,11 +20,14 @@ const PersonelCard: React.FC<PersonelCardProps> = ({
   onUpdate,
   onViewDocuments,
 }) => {
-  const finalImage = imageUrl && imageUrl.trim() !== "" ? imageUrl : defaultUserImage;
+  const finalImage =
+    imageUrl && imageUrl.trim() !== "" ? imageUrl : defaultUserImage;
 
   return (
     <div className="personel-card">
-      <Image src={finalImage} alt={name} className="personel-image" />
+      <div className="personel-image">
+        <Image src={finalImage} alt={name} width={70} height={70} />
+      </div>
       <div className="personel-info">
         <h3>{name}</h3>
         <p>{role}</p>

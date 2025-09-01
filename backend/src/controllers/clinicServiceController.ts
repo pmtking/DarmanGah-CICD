@@ -1,24 +1,73 @@
 import { Request, Response } from "express";
-import { addSupplementaryInsurance, createSevice, deleteServices, getAllServices, getServicesById, updateInsurancePrice, updateService } from "../services/clinicService.service";
-
+import {
+  addSupplementaryInsurance,
+  createSevice,
+  deleteServices,
+  getAllServices,
+  getServicesById,
+  updateInsurancePrice,
+  updateService,
+} from "../services/clinicService.service";
+import ClinicService from "../models/clinicService";
 
 // کنترلر افزودن سرویس
 export const createClinicService = async (req: Request, res: Response) => {
   try {
-    const result = await createSevice(req.body);
-    res.status(201).json(result);
-  } catch (err:any) {
-    res.status(500).json({ message: "خطا در ایجاد سرویس", error: err.message });
+    const {
+      serviceCode,
+      serviceName,
+      serviceGroup,
+      pricePublic,
+      priceGovernmental,
+      baseInsurances,
+      supplementaryInsurances,
+      isFreeForStaff,
+    } = req.body;
+
+    // اعتبارسنجی اولیه
+    if (!serviceCode || !serviceName || !serviceGroup) {
+      return res.status(400).json({ message: "فیلدهای الزامی پر نشده‌اند" });
+    }
+
+    // بررسی یکتا بودن serviceCode
+    const exists = await ClinicService.findOne({ serviceCode });
+    if (exists) {
+      return res.status(409).json({ message: "کد خدمت قبلاً ثبت شده است" });
+    }
+
+    // ایجاد سرویس جدید
+    const newService = await createSevice({
+      serviceCode,
+      serviceName,
+      serviceGroup,
+      pricePublic: pricePublic || 0,
+      priceGovernmental: priceGovernmental || 0,
+      baseInsurances: baseInsurances || [],
+      supplementaryInsurances: supplementaryInsurances || [],
+      isFreeForStaff: isFreeForStaff || false,
+    });
+
+    return res.status(201).json({
+      message: "خدمت با موفقیت ایجاد شد",
+      service: newService,
+    });
+  } catch (err: any) {
+    console.error(err);
+    return res.status(500).json({
+      message: "خطا در ایجاد سرویس",
+      error: err.message,
+    });
   }
 };
-
 // کنترلر دریافت همه سرویس‌ها
 export const getAllClinicServices = async (_req: Request, res: Response) => {
   try {
     const result = await getAllServices();
     res.status(200).json(result);
-  } catch (err:any) {
-    res.status(500).json({ message: "خطا در دریافت سرویس‌ها", error: err.message });
+  } catch (err: any) {
+    res
+      .status(500)
+      .json({ message: "خطا در دریافت سرویس‌ها", error: err.message });
   }
 };
 
@@ -28,8 +77,10 @@ export const getClinicServiceById = async (req: Request, res: Response) => {
     const result = await getServicesById(req.params.id);
     if (!result) return res.status(404).json({ message: "سرویس پیدا نشد" });
     res.status(200).json(result);
-  } catch (err:any) {
-    res.status(500).json({ message: "خطا در دریافت سرویس", error: err.message });
+  } catch (err: any) {
+    res
+      .status(500)
+      .json({ message: "خطا در دریافت سرویس", error: err.message });
   }
 };
 
@@ -39,8 +90,10 @@ export const updateClinicService = async (req: Request, res: Response) => {
     const result = await updateService(req.params.id, req.body);
     if (!result) return res.status(404).json({ message: "سرویس پیدا نشد" });
     res.status(200).json(result);
-  } catch (err:any) {
-    res.status(500).json({ message: "خطا در ویرایش سرویس", error: err.message });
+  } catch (err: any) {
+    res
+      .status(500)
+      .json({ message: "خطا در ویرایش سرویس", error: err.message });
   }
 };
 
@@ -77,7 +130,7 @@ export const updateInsurance = async (req: Request, res: Response) => {
       req.body.contractPrice
     );
     res.status(200).json(result);
-  } catch (err:any) {
+  } catch (err: any) {
     res.status(400).json({ message: "خطا در آپدیت بیمه", error: err.message });
   }
 };

@@ -1,3 +1,4 @@
+
 import Personnel from "../models/Personnel";
 import {
   createpersonnel,
@@ -8,9 +9,14 @@ import jwt from 'jsonwebtoken';
 export const addPersonnelController = async (req, res) => {
   try {
     const personel = await createpersonnel(req.body);
-    return res.status(201).json(personel);
+    return res.status(201).json({
+      success:true ,
+      messgae:'پرسنل با موفقیت ایجاد شد' ,
+      data:personel
+    });
   } catch (err: any) {
-    res.status(400).json({ message: err.message });
+    
+    res.status(500).json({ message: err.message });
   }
 };
 

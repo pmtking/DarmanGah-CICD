@@ -18,7 +18,7 @@ const SideBar = () => {
       href: "/admin/personnel",
     },
     { name: "پزشکان", icon: <Home size="20" />, href: "/admin/doctors" },
-    { name: "خدمات", icon: <Home size="20" />, href: "/" },
+    { name: "خدمات", icon: <Home size="20" />, href: "/admin/service" },
     { name: "حسابداری", icon: <Home size="20" />, href: "/" },
     { name: "دسترسی‌ها", icon: <Home size="20" />, href: "/" },
     { name: "تیکت ها", icon: <Home size="20" />, href: "/" },
@@ -64,7 +64,9 @@ const SideBar = () => {
 
         {/* تبلیغ */}
         <div className="m-4 p-3 bg-amber-100 rounded-lg shadow-sm text-center cursor-pointer hover:bg-amber-200 transition">
-          <p className="text-sm font-medium text-gray-800">🎉 تخفیف ویژه خدمات درمانی</p>
+          <p className="text-sm font-medium text-gray-800">
+            🎉 تخفیف ویژه خدمات درمانی
+          </p>
           {isOpen && <span className="text-xs text-gray-600">کلیک کنید</span>}
         </div>
       </aside>

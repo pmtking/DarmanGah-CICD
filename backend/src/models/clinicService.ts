@@ -1,5 +1,7 @@
 import mongoose, { Schema, Document } from "mongoose";
-export interface ISupplementaryInsurance {
+
+export interface IInsurance {
+  _id?: mongoose.Types.ObjectId; // id یکتا برای ویرایش
   companyName: string;
   contractPrice: number;
 }
@@ -10,68 +12,30 @@ export interface IClinicService extends Document {
   serviceGroup: string;
   pricePublic: number;
   priceGovernmental: number;
-  baseInsurancePrice: number;
-  supplementaryInsurances: ISupplementaryInsurance[];
+  baseInsurances: IInsurance[];          // لیست بیمه‌های پایه
+  supplementaryInsurances: IInsurance[]; // لیست بیمه‌های تکمیلی
   isFreeForStaff: boolean;
 }
 
-const SupplementaryInsuranceSchema = new Schema<ISupplementaryInsurance>(
+const InsuranceSchema = new Schema<IInsurance>({
+  companyName: { type: String, required: true, trim: true },
+  contractPrice: { type: Number, required: true },
+});
+
+const ClinicServiceSchema = new Schema<IClinicService>(
   {
-    companyName: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    contractPrice: {
-      type: Number,
-      required: true,
-    },
-  },
-  { _id: false } // چون هر بیمه نیازی به آیدی جدا نداره
-);
-const ClinicServiceSchema: Schema = new Schema(
-  {
-    serviceCode: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-    },
-    serviceName: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    serviceGroup: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    pricePublic: {
-      type: Number,
-      required: true,
-    },
-    priceGovernmental: {
-      type: Number,
-      required: true,
-    },
-    baseInsurancePrice: {
-      type: Number,
-      required: true,
-    },
-    supplementaryInsurances: {
-      type: [SupplementaryInsuranceSchema],
-      default: [],
-    },
-    isFreeForStaff: {
-      type: Boolean,
-      default: false,
-    },
+    serviceCode: { type: String, required: true, unique: true, trim: true },
+    serviceName: { type: String, required: true, trim: true },
+    serviceGroup: { type: String, required: true, trim: true },
+    pricePublic: { type: Number, required: true },
+    priceGovernmental: { type: Number, required: true },
+    baseInsurances: { type: [InsuranceSchema], default: [] },          // آرایه بیمه پایه
+    supplementaryInsurances: { type: [InsuranceSchema], default: [] }, // آرایه بیمه تکمیلی
+    isFreeForStaff: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
 
+const ClinicService = mongoose.model<IClinicService>("ClinicService", ClinicServiceSchema);
 
-const ClinicService = mongoose.model("ClinicService" , ClinicServiceSchema) 
-
-export default ClinicService
+export default ClinicService;

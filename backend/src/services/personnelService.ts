@@ -17,10 +17,12 @@ export interface CreatePersonnelWithAuthInput {
 }
 
 export async function createpersonnel(data: CreatePersonnelWithAuthInput) {
+  console.log('------------>> ',data.nationalId);
   // بررسی وجود پرسنل با کد ملی
   const existingPersonnel = await Personnel.findOne({
     nationalId: data.nationalId,
   });
+  console.log('----<<',existingPersonnel);
   if (existingPersonnel) {
     throw new Error("پرسنلی با این کد ملی قبلاً ثبت شده است.");
   }

@@ -1,5 +1,5 @@
-import { date } from "joi";
-import ClinicService, { IClinicService, ISupplementaryInsurance } from "../models/clinicService";
+
+import ClinicService, { IClinicService, IInsurance,  } from "../models/clinicService";
 
 
 //  ---------------------------- add service -------------- //
@@ -33,30 +33,48 @@ export const deleteServices = async (id) => {
 }
 
 // ------------------------------- addSupplementaryInsurance --------------------- //
-export const addSupplementaryInsurance = async (serviceId :string ,insurance:ISupplementaryInsurance ) => {
-    const service = await ClinicService.findById(serviceId) ;
-    if(!service) return null;
-    const exists = service.supplementaryInsurances.some(
-        (ins) => ins.companyName === insurance.companyName
-    ) ;
-    if(exists) throw new Error("این شرکت بیمه قبلا ثبت شده است") ;
-    service.supplementaryInsurances.push(insurance) ;
-    return await service.save();
-} 
+export const addSupplementaryInsurance = async (
+  serviceId: string,
+  insurance: IInsurance
+) => {
+  // پیدا کردن خدمت
+  const service = await ClinicService.findById(serviceId);
+  if (!service) return null;
+
+  // بررسی اینکه بیمه مشابه قبلاً ثبت نشده باشد
+  const exists = service.supplementaryInsurances.some(
+    (ins) => ins.companyName === insurance.companyName
+  );
+  if (exists) throw new Error("این شرکت بیمه قبلا ثبت شده است");
+
+  // اضافه کردن بیمه جدید
+  service.supplementaryInsurances.push(insurance);
+
+  // ذخیره تغییرات
+  return await service.save();
+};
 
 // ------------------------------------ updateInsurancePrice ---------------------- //
 
 export const updateInsurancePrice = async (
   serviceId: string,
+  type: "base" | "supplementary", // نوع بیمه
   companyName: string,
   newPrice: number
 ) => {
   const service = await ClinicService.findById(serviceId);
   if (!service) return null;
 
-  const insurance = service.supplementaryInsurances.find(
+  // انتخاب آرایه بیمه مناسب
+  const insuranceArray =
+    type === "base"
+      ? service.baseInsurances
+      : service.supplementaryInsurances;
+
+  const insurance = insuranceArray.find(
     (ins) => ins.companyName === companyName
   );
+
   if (!insurance) throw new Error("شرکت بیمه پیدا نشد");
 
   insurance.contractPrice = newPrice;

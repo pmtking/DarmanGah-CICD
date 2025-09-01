@@ -6,7 +6,7 @@ import { verifySuperAdmin } from '../middlewares/verifySuperAdmin ';
 
 const router = express.Router() ;
 
-router.post('/add', verifySuperAdmin , addPersonnelController)
+router.post('/add' , addPersonnelController)
 router.post('/login' ,loginPersonnelController )
 router.get('/find' , findPersonel)
 
