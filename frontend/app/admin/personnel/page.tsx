@@ -23,7 +23,7 @@ const PersonnelsPage: React.FC = () => {
     setLoading(true);
     try {
       const res = await api.get<Personnel[]>("/api/personel/find");
-      setPersonnels(res.data); // فقط res.data چون خودش آرایه است
+      setPersonnels(res.data.data); // فقط res.data چون خودش آرایه است
     } catch (error) {
       console.error("خطا در دریافت پرسنل‌ها:", error);
     } finally {
