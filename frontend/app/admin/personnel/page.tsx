@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
 import Button from "@/components/Button/page";
 import PersonelCard from "@/components/PersonelCard/page";
@@ -10,7 +11,11 @@ interface Personnel {
   _id: string;
   name: string;
   role: string;
-  // می‌توانید فیلدهای بیشتری اضافه کنید
+}
+
+interface ApiResponse {
+  success: boolean;
+  data: Personnel[];
 }
 
 const PersonnelsPage: React.FC = () => {
@@ -18,14 +23,13 @@ const PersonnelsPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [search, setSearch] = useState<string>("");
 
-  // دریافت لیست پرسنل‌ها
   const fetchPersonnels = async () => {
     setLoading(true);
     try {
-      const res = await api.get<Personnel[]>("/api/personel/find");
-      setPersonnels(res.data.data); // فقط res.data چون خودش آرایه است
+      const res = await api.get<ApiResponse>("/api/personel/find");
+      setPersonnels(res.data.data);
     } catch (error) {
-      console.error("خطا در دریافت پرسنل‌ها:", error);
+      console.error("❌ خطا در دریافت پرسنل‌ها:", error);
     } finally {
       setLoading(false);
     }
@@ -35,22 +39,20 @@ const PersonnelsPage: React.FC = () => {
     fetchPersonnels();
   }, []);
 
-  // فیلتر بر اساس جستجو
   const filteredPersonnels = personnels.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  // توابع هندل‌کننده
   const handleDelete = (id: string) => {
-    console.log("حذف پرسنل با شناسه:", id);
+    console.log("🗑 حذف پرسنل با شناسه:", id);
   };
 
   const handleUpdate = (id: string) => {
-    console.log("ویرایش پرسنل با شناسه:", id);
+    console.log("✏️ ویرایش پرسنل با شناسه:", id);
   };
 
   const handleViewDocuments = (id: string) => {
-    console.log("مشاهده مدارک پرسنل با شناسه:", id);
+    console.log("📄 مشاهده مدارک پرسنل با شناسه:", id);
   };
 
   return (
@@ -73,7 +75,7 @@ const PersonnelsPage: React.FC = () => {
       {/* Content */}
       <main
         className="flex-grow backdrop-blur-2xl bg-white/10 rounded-2xl border border-white/20 shadow-2xl px-10 py-4 overflow-y-auto mt-5 max-h-[650px] 
-  scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent hover:scrollbar-thumb-white/50 transition-colors"
+        scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent hover:scrollbar-thumb-white/50 transition-colors"
       >
         <div className="flex flex-col gap-4">
           {loading ? (
