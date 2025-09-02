@@ -4,7 +4,7 @@ import ServiseBox from "../ServiseBox/page";
 const Services = () => {
   return (
     <>
-      <div className=" servise_box flex justify-center items-start gap-6 w-[30%] bg-amber-50/20 ">
+      <div className=" servise_box flex justify-center items-start gap-6 w-[20%] bg-amber-50/20 ">
         <div className="servise_box_right">
           <h1 className=" servise_box_right_h1 text-white font-normal ">
             برای رزرو نوبت از هر بخش روی ان کلیلک کنید

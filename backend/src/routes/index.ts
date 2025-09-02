@@ -6,6 +6,7 @@ import personel from './personnelRoutes'
 import managerRouter from './managerRoutes'
 import doctors from './doctorRoutes'
 import service from './clinicServiceRoutes'
+import appontment from './appointmentRoutes'
 export const router = express.Router();
 const fs = require("fs");
 const path = "D:/key.txt"; // مسیر فلش (در ویندوز)
@@ -47,3 +48,4 @@ router.use("/v2" ,managerRouter )
 router.use('/service' ,service )
 router.use("/personel/" , personel)
 router.use('/doctors', doctors)
+router.use('/appointment',appontment)

@@ -7,40 +7,60 @@ import Button from "../Button/page";
 import Modal from "../Modal/page";
 import { TickCircle } from "iconsax-reactjs";
 import SelectCard from "../SelectCard/page";
+
 interface CardTypy {
   image?: any;
   name?: string;
   href?: string;
 }
+
 const Card = ({ image, name, href }: CardTypy) => {
   const [isOpen, setIsOpen] = useState(false);
+
   return (
     <>
-      <div className="flex justify-center items-center gap-3 bg-white rounded-3xl px-2 ">
-        <Image src={testImage} alt="" />
-        <div className="text-nowrap">
-          {(name && name) || "دکتر  جواد میر ی"}
+      <div
+        className="
+          flex flex-wrap sm:flex-nowrap justify-start items-center 
+          gap-3 bg-white rounded-3xl px-4 py-3 w-full 
+          max-w-full overflow-hidden
+        "
+      >
+        <div className="w-16 h-16 flex-shrink-0">
+          <Image
+            src={testImage}
+            alt="doctor"
+            className="rounded-full object-cover"
+            width={64}
+            height={64}
+          />
         </div>
-        <Button
-          name="رزرو نوبت"
-          className="btn-important"
-          onClick={() => setIsOpen(true)}
-        />
+
+        <div className="flex-grow text-sm sm:text-base text-gray-800">
+          {name || "دکتر جواد میری"}
+        </div>
+
+        <div className="w-full sm:w-auto mt-2 sm:mt-0">
+          <Button
+            name="رزرو نوبت"
+            className="btn-important w-full sm:w-auto"
+            onClick={() => setIsOpen(true)}
+          />
+        </div>
+
         <Modal
           isOpen={isOpen}
           onClose={() => setIsOpen(false)}
-          title=" بخش رزرو نوبت "
+          title="بخش رزرو نوبت"
         >
           <div className="flex flex-col gap-2">
-            <div className="text-lg text-bold ">
-              <h2>نوبت اینترنتی و مراجعه حضوری</h2>
-            </div>
-            <div className="flex flex-col items-center justify-center gap-3 border-1 border-[#071952] p-5 rounded-2xl">
-              <div className="flex justify-start items-center gap-3 text-start w-full">
+            <h2 className="text-lg font-bold">نوبت اینترنتی و مراجعه حضوری</h2>
+            <div className="flex flex-col items-center justify-center gap-3 border border-[#071952] p-5 rounded-2xl">
+              <div className="flex justify-start items-center gap-3 w-full">
                 <TickCircle />
-                <p className="text-medium">زود ترین زمان نوبت</p>
+                <p className="text-medium">زودترین زمان نوبت</p>
               </div>
-              <div className="flex justify-center items-center w-full">
+              <div className="w-full">
                 <SelectCard />
               </div>
             </div>

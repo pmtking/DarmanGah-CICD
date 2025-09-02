@@ -1,9 +1,7 @@
-export function registerReseption (data: {
-    name: string;
+export function registerReseption(data: {
+  name: string;
   nationalId: string;
   phone?: string;
   username: string;
   password: string;
-}) {
-    
-}
+}) {}
