@@ -12,11 +12,12 @@ dotenvConfig();
 app.use("/api", router);
 
 export const startServer = async () => {
-
   try {
-    
     mongoConnected();
-    app.listen(process.env.PORT);
+    app.listen(process.env.PORT || 4000, "192.171.1.108", () => {
+  console.log("🚀 Server is running on http://192.171.1.108:" + (process.env.PORT || 4000));
+});
+
     console.log("🚀 server is runnig");
   } catch (error) {
     console.log("err");

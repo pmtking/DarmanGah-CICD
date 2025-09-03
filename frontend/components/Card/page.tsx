@@ -2,19 +2,20 @@
 import React, { useState } from "react";
 import "./style.scss";
 import Image from "next/image";
-import testImage from "@/public/images/image 8.png";
 import Button from "../Button/page";
 import Modal from "../Modal/page";
 import { TickCircle } from "iconsax-reactjs";
 import SelectCard from "../SelectCard/page";
 
-interface CardTypy {
-  image?: any;
-  name?: string;
-  href?: string;
+interface CardType {
+  doctorId: string;
+  name: string;
+  avatarUrl?: string;
+  specialty?: string;
+  phone?: string;
 }
 
-const Card = ({ image, name, href }: CardTypy) => {
+const Card = ({ doctorId, name, avatarUrl, specialty, phone }: CardType) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -28,7 +29,7 @@ const Card = ({ image, name, href }: CardTypy) => {
       >
         <div className="w-16 h-16 flex-shrink-0">
           <Image
-            src={testImage}
+            src={avatarUrl || "/images/image 8.png"} // fallback image
             alt="doctor"
             className="rounded-full object-cover"
             width={64}
@@ -37,7 +38,8 @@ const Card = ({ image, name, href }: CardTypy) => {
         </div>
 
         <div className="flex-grow text-sm sm:text-base text-gray-800">
-          {name || "دکتر جواد میری"}
+          <p className="font-bold">{name}</p>
+          {specialty && <p className="text-xs text-gray-500 mt-1">{specialty}</p>}
         </div>
 
         <div className="w-full sm:w-auto mt-2 sm:mt-0">
@@ -61,7 +63,7 @@ const Card = ({ image, name, href }: CardTypy) => {
                 <p className="text-medium">زودترین زمان نوبت</p>
               </div>
               <div className="w-full">
-                <SelectCard />
+                <SelectCard doctorId={doctorId} />
               </div>
             </div>
           </div>

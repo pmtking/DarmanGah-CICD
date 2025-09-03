@@ -1,6 +1,12 @@
+"use client";
 import React, { useState } from "react";
+import { useReserveAppointment } from "@/hooks/useAppointment";
 
-const SelectCard = () => {
+interface SelectCardProps {
+  doctorId: string;
+}
+
+const SelectCard: React.FC<SelectCardProps> = ({ doctorId }) => {
   const [step, setStep] = useState(1);
   const [selectedTime, setSelectedTime] = useState("");
   const [formData, setFormData] = useState({
@@ -9,6 +15,8 @@ const SelectCard = () => {
     phone: "",
     insuranceType: "",
   });
+
+  const { reserve, loading, error, success } = useReserveAppointment();
 
   const times = [
     "امروز ۳ تیر ساعت ۱۰:۳۰",
@@ -23,24 +31,37 @@ const SelectCard = () => {
     "فاقد بیمه",
   ];
 
-  const handleSelectTime = (time:any) => {
+  const handleSelectTime = (time: string) => {
     setSelectedTime(time);
-    // setStep(2);
   };
 
-  const handleChange = (e:any) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e:any) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("📦 ارسال نهایی:", { ...formData, selectedTime });
-    alert("رزرو با موفقیت انجام شد ✅");
+
+    const [_, time] = selectedTime.replace("امروز ", "").split(" ساعت ");
+
+    const payload = {
+      fullName: formData.name,
+      phoneNumber: formData.phone,
+      insuranceType: formData.insuranceType,
+      nationalCode: formData.nationalCode,
+      doctorId,
+      appointmentDate: "1403-04-03", // می‌تونه داینامیک بشه
+      appointmentTime: time,
+    };
+
+    await reserve(payload);
   };
 
   return (
-    <div className=" w-full mx-auto p-4">
+    <div className="w-full mx-auto p-4">
       {step === 1 && (
         <div className="flex flex-col gap-3">
           {times.map((time, idx) => (
@@ -72,7 +93,9 @@ const SelectCard = () => {
             disabled={!selectedTime}
             onClick={() => setStep(2)}
             className={`mt-4 bg-[#00245a] text-white rounded-xl py-3 px-4 text-sm font-medium transition-all ${
-              !selectedTime ? "opacity-50 cursor-not-allowed" : "hover:bg-[#001a40]"
+              !selectedTime
+                ? "opacity-50 cursor-not-allowed"
+                : "hover:bg-[#001a40]"
             }`}
           >
             تکمیل رزرو نوبت برای {selectedTime}
@@ -118,15 +141,27 @@ const SelectCard = () => {
           >
             <option value="">نوع بیمه</option>
             {insuranceOptions.map((option) => (
-              <option className="" key={option}>{option}</option>
+              <option key={option} value={option}>
+                {option}
+              </option>
             ))}
           </select>
 
+          {error && <p className="text-red-500 text-sm">{error}</p>}
+          {success && (
+            <p className="text-green-600 text-sm">رزرو با موفقیت انجام شد ✅</p>
+          )}
+
           <button
             type="submit"
-            className="mt-2 bg-[#00245a] text-white rounded-xl py-3 px-4 text-sm font-medium hover:bg-[#001a40] transition-all"
+            disabled={loading}
+            className={`mt-2 bg-[#00245a] text-white rounded-xl py-3 px-4 text-sm font-medium transition-all ${
+              loading ? "opacity-50 cursor-not-allowed" : "hover:bg-[#001a40]"
+            }`}
           >
-            ثبت نهایی رزرو برای {selectedTime}
+            {loading
+              ? "در حال ارسال..."
+              : `ثبت نهایی رزرو برای ${selectedTime}`}
           </button>
         </form>
       )}

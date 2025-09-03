@@ -26,10 +26,42 @@ export const createDoctorProfile = async (data: any) => {
 
 //  ---------------------- find all profiles --------------- //
 
+
+
 export const getAllDoctorProfiles = async () => {
-  return await DoctorProfile.find()
-    .populate("Personnel")
-    .populate("ClinicService");
+  try {
+    // مرحله ۱: دریافت لیست پرسنل‌هایی که نقش‌شون پزشک هست
+    const doctors = await Personnel.find({
+      role: "DOCTOR",
+      isActive: true,
+    }).select("name phone nationalId gender");
+
+    // مرحله ۲: دریافت پروفایل‌های مرتبط با هر پزشک
+    const profiles = await Promise.all(
+      doctors.map(async (doctor) => {
+        const profile = await DoctorProfile.findOne({ personnel: doctor._id });
+
+        return {
+          personnelId: doctor._id,
+          name: doctor.name,
+          phone: doctor.phone,
+          nationalId: doctor.nationalId,
+          gender: doctor.gender,
+          doctorProfileId: profile?._id || null,
+          specialty: profile?.specialty || null,
+          specialtyType: profile?.specialtyType || null,
+          licenseNumber: profile?.licenseNumber || null,
+          avatarUrl: profile?.avatarUrl || null,
+          isAvailable: profile?.isAvailable ?? false,
+        };
+      })
+    );
+
+    return profiles;
+  } catch (error) {
+    console.error("❌ خطا در دریافت لیست پزشک‌ها:", error);
+    throw new Error("خطا در دریافت لیست پزشک‌ها");
+  }
 };
 
 // --------------------- get profile By Id ------------------ //

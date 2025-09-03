@@ -3,40 +3,85 @@
 import Appointment from "../models/Appointment";
 import DoctorProfile from "../models/DoctorProfile";
 
-// reserveAppointment
-
 export const reserveAppointment = async (data) => {
-  const {
-    fullName,
-    phoneNumber,
-    insuranceType,
-    nationalCode,
-    doctorId,
-    appointmentDate,
-    appointmentTime,
-  } = data;
+  try {
+    const {
+      fullName,
+      phoneNumber,
+      insuranceType,
+      nationalCode,
+      doctorId,
+      appointmentDate,
+      appointmentTime,
+    } = data;
 
-  const doctor = await DoctorProfile.findById(doctorId);
-  if (!doctor) throw new Error("پزشک یافت نشد");
-  const conflict = await Appointment.findOne({
-    doctorId,
-    appointmentDate,
-    appointmentTime,
-    status: "reserved",
-  });
-  if (conflict) {
-    throw new Error("این نوبت قبلا رزرو شده");
+    // بررسی وجود پزشک
+    const doctor = await DoctorProfile.findOne({ personnel: doctorId });
+    if (!doctor) {
+      throw new Error("پزشک یافت نشد");
+    }
+
+    // بررسی تداخل نوبت
+    const conflict = await Appointment.findOne({
+      doctorId,
+      appointmentDate,
+      appointmentTime,
+      status: "reserved",
+    });
+
+    if (conflict) {
+      throw new Error("این نوبت قبلاً رزرو شده است");
+    }
+
+    // ایجاد نوبت جدید
+    const appointment = new Appointment({
+      fullName,
+      phoneNumber,
+      insuranceType,
+      nationalCode,
+      doctorId,
+      appointmentDate,
+      appointmentTime,
+      status: "reserved",
+    });
+
+    await appointment.save();
+
+    return { success: true, message: "رزرو با موفقیت انجام شد" };
+  } catch (error: any) {
+    return { success: false, message: error.message };
   }
-  const appointment = new Appointment({
-    fullName,
-    phoneNumber,
-    insuranceType,
-    nationalCode,
-    doctorId,
-    appointmentDate,
-    appointmentTime,
-    status: "reserved",
-  });
-  await appointment.save();
-  return appointment;
+};
+
+export const findAppointment = async (nationalCode: string) => {
+  try {
+    // اعتبارسنجی اولیه
+    if (!nationalCode || nationalCode.length !== 10) {
+      throw new Error("کد ملی باید 10 رقم باشد");
+    }
+
+    // جستجوی نوبت در دیتابیس
+    const appointment = await Appointment.findOne({ nationalCode });
+
+    if (appointment) {
+      return {
+        success: true,
+        message: "نوبت یافت شد",
+        data: appointment,
+      };
+    } else {
+      return {
+        success: false,
+        message: "هیچ نوبتی برای این کد ملی ثبت نشده است",
+        data: null,
+      };
+    }
+  } catch (error: any) {
+    console.error("خطا در استعلام نوبت:", error.message);
+    return {
+      success: false,
+      message: "خطا در پردازش درخواست",
+      error: error.message,
+    };
+  }
 };

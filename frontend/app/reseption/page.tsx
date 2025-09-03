@@ -58,10 +58,10 @@ const RespontionPage = () => {
   }, []);
 
   return (
-    <div className=" flex flex-col w-full justify-center items-center ">
+    <div className=" flex flex-col w-full justify-center items-center  ">
       {user && <ReseptionNav patientCount={42} user={user} />}
 
-      <main className=" mt-20 bg-white/30  flex flex-col justify-start items-center w-[60%] h-[80%] px-5 py-8 rounded-2xl border-2 border-gray-600 shadow-2xl">
+      <main className="  bg-white/30  flex flex-col justify-start items-center w-[60%] h-[80%] px-5 py-8 rounded-2xl border-2 border-gray-600 shadow-2xl">
         <div className="mt-8 flex ">
           <TitleComponents
             h1={"پذیرش درمانگاه "}
@@ -69,9 +69,8 @@ const RespontionPage = () => {
             classname="flex"
           />
         </div>
-
         {!isVerified ? (
-          <div className="w-[50%] text-center text-white rounded-xl mt-10 p-4 transition-all duration-300 h-max bg-white/30">
+          <div className="w-full max-w-xl text-center text-white rounded-xl transition-all duration-300 bg-white/30 p-6">
             <Input
               type="text"
               value={nationalCode}
@@ -88,7 +87,7 @@ const RespontionPage = () => {
             />
           </div>
         ) : (
-          <div className="mt-6 w-full text-center text-white rounded-xl p-4 transition-all duration-300 h-max bg-white px-5 ">
+          <div className="mt-6 w-full text-center text-white rounded-xl p-4 transition-all duration-300 bg-white px-5">
             <ReseptionForm />
           </div>
         )}

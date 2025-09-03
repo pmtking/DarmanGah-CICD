@@ -7,7 +7,7 @@ interface RespontionLayoutType {
 const RespontionLayout = ({ children }: RespontionLayoutType) => {
   return (
     <>
-      <main className="flex justify-center items-center w-screen h-screen ">
+      <main className="flex justify-center items-center w-full h-screen ">
         <UserProvider>{children}</UserProvider>
       </main>
     </>
