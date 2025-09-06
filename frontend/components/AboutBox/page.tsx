@@ -8,37 +8,36 @@ import ModaleContect from "../ModaleContect/page";
 const AboutBox = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const doctors = [
-  {
-    name: "دکتر سارا رضایی",
-    image: "https://via.placeholder.com/80",
-    bookingLink: "https://example.com/booking/sara",
-  },
-  {
-    name: "دکتر علی موسوی",
-    image: "https://via.placeholder.com/80",
-    bookingLink: "https://example.com/booking/ali",
-  },
     {
-    name: "دکتر علی موسوی",
-    image: "https://via.placeholder.com/80",
-    bookingLink: "https://example.com/booking/ali",
-  },
+      name: "دکتر سارا رضایی",
+      image: "https://via.placeholder.com/80",
+      bookingLink: "https://example.com/booking/sara",
+    },
     {
-    name: "دکتر علی موسوی",
-    image: "https://via.placeholder.com/80",
-    bookingLink: "https://example.com/booking/ali",
-  },
-      {
-    name: "دکتر علی موسوی",
-    image: "https://via.placeholder.com/80",
-    bookingLink: "https://example.com/booking/ali",
-  },
-      {
-    name: "دکتر علی موسوی",
-    image: "https://via.placeholder.com/80",
-    bookingLink: "https://example.com/booking/ali",
-  },
-];
+      name: "دکتر علی موسوی",
+      image: "https://via.placeholder.com/80",
+      bookingLink: "https://example.com/booking/ali",
+    },
+    {
+      name: "دکتر علی موسوی",
+      image: "https://via.placeholder.com/80",
+      bookingLink: "https://example.com/booking/ali",
+    },
+    {
+      name: "دکتر علی موسوی",
+      image: "https://via.placeholder.com/80",
+      bookingLink: "https://example.com/booking/ali",
+    },
+    {
+      name: "دکتر علی موسوی",
+      image: "https://via.placeholder.com/80",
+      bookingLink: "https://example.com/booking/ali",
+    },
+    {
+      name: "دکتر علی موسوی",
+      image: "https://via.placeholder.com/80",
+    },
+  ];
   return (
     <>
       <div className="about_box">
@@ -65,8 +64,8 @@ const AboutBox = () => {
             onClose={() => setIsModalOpen(false)}
             title=" بخش رزرو نوبت "
           >
-           <ModaleHeader />
-           <ModaleContect data={doctors} />
+            <ModaleHeader />
+            {/* <ModaleContect data={doctors} /> */}
           </Modal>
         </div>
       </div>

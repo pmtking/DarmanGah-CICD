@@ -4,8 +4,16 @@ import "./style.scss";
 import Card from "../Card/page";
 import api from "@/libs/axios";
 
+
+// ______________ types __________________ //
+interface Doctor {
+  personnelId:string ;
+  name:string ;
+
+}
+// __________________ comoenenst _________ //
 const DoctorsPresent = () => {
-  const [data, setData] = useState([]);
+  const [data, setData] = useState<Doctor []>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 

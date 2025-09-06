@@ -39,7 +39,9 @@ const Card = ({ doctorId, name, avatarUrl, specialty, phone }: CardType) => {
 
         <div className="flex-grow text-sm sm:text-base text-gray-800">
           <p className="font-bold">{name}</p>
-          {specialty && <p className="text-xs text-gray-500 mt-1">{specialty}</p>}
+          {specialty && (
+            <p className="text-xs text-gray-500 mt-1">{specialty}</p>
+          )}
         </div>
 
         <div className="w-full sm:w-auto mt-2 sm:mt-0">
