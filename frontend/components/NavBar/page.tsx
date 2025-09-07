@@ -8,7 +8,7 @@ import { Menu, CloseSquare } from "iconsax-reactjs";
 
 const navItems = [
   { name: "بخش دندان پزشکی", link: "/" },
-  { name: "آزمایشگاه", link: "/" },
+  { name: "آزمایشگاه", link: "/lab" },
   { name: "فیزیوتراپی", link: "/" },
   { name: "چشم پزشکی", link: "/login" },
 ];
