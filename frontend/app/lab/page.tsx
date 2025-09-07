@@ -2,27 +2,54 @@
 
 import NavBar from "@/components/NavBar/page";
 import { useState } from "react";
+import axios from "axios";
+
+interface LabFile {
+  name: string;
+  url: string; // لینک blob یا فایل سرور
+}
 
 export default function LabPage() {
   const [codeMelli, setCodeMelli] = useState("");
-  const [result, setResult] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [files, setFiles] = useState<LabFile[]>([]);
+  const [status, setStatus] = useState<string | null>(null);
+  const [previewFile, setPreviewFile] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!/^\d{10}$/.test(codeMelli)) {
-      setResult("❌ کد ملی معتبر نیست. لطفا دوباره وارد کنید.");
+      setStatus("❌ کد ملی معتبر نیست. لطفا دوباره وارد کنید.");
       return;
     }
 
-    setResult("✅ جواب آزمایش شما آماده است.");
+    try {
+      // ارسال POST به API
+      const res = await axios.post("/api/lab/get-files", { codeMelli });
+
+      // انتظار داریم فایل‌ها به صورت base64 یا URL برگردند
+      const fetchedFiles: LabFile[] = res.data.files.map((f: any) => {
+        const blob = Uint8Array.from(atob(f.data), (c) => c.charCodeAt(0));
+        const fileUrl = URL.createObjectURL(new Blob([blob]));
+        return { name: f.name, url: fileUrl };
+      });
+
+      setFiles(fetchedFiles);
+      setStatus(
+        fetchedFiles.length
+          ? `✅ ${fetchedFiles.length} فایل برای کد ملی پیدا شد.`
+          : "⚠️ فایلی پیدا نشد."
+      );
+    } catch (err: any) {
+      console.error(err);
+      setStatus("❌ مشکلی در دریافت فایل‌ها رخ داد.");
+    }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center w-full py-12">
+    <div className="flex flex-col items-center justify-center w-full py-12 px-4">
       <NavBar />
-      <h1 className="text-2xl font-bold mb-6 text- mt-20">
+      <h1 className="text-2xl font-bold mb-6 text-gray-800 mt-20 text-center">
         سامانه دریافت جواب آزمایش
       </h1>
 
@@ -50,48 +77,52 @@ export default function LabPage() {
         </button>
       </form>
 
-      {result && (
-        <div className="mt-6 w-full max-w-md text-center">
-          <div className="bg-green-100 border border-green-300 p-4 rounded-lg">
-            <p>{result}</p>
-            <div className="flex flex-col gap-2 mt-3">
-              <a
-                href="/sample-result.pdf"
-                download
-                className="text-blue-600 underline"
-              >
-                📄 دانلود جواب آزمایش
-              </a>
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg transition"
-              >
-                👁️ مشاهده آنلاین
-              </button>
+      {status && <p className="mt-4 text-center">{status}</p>}
+
+      {files.length > 0 && (
+        <div className="mt-6 w-full max-w-md flex flex-col gap-2">
+          {files.map((file, index) => (
+            <div
+              key={index}
+              className="bg-green-100 border border-green-300 p-4 rounded-lg flex justify-between items-center"
+            >
+              <span className="truncate">{file.name}</span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPreviewFile(file.url)}
+                  className="bg-blue-500 hover:bg-blue-600 text-white py-1 px-2 rounded-lg text-sm"
+                >
+                  👁️ مشاهده
+                </button>
+                <a
+                  href={file.url}
+                  download={file.name}
+                  className="bg-gray-500 hover:bg-gray-600 text-white py-1 px-2 rounded-lg text-sm"
+                >
+                  📄 دانلود
+                </a>
+              </div>
             </div>
-          </div>
+          ))}
         </div>
       )}
 
-      {/* 📌 مدال برای پیش‌نمایش PDF */}
-      {isModalOpen && (
-        <div className="fixed inset-0   flex items-center justify-center z-50">
+      {/* مدال پیش‌نمایش */}
+      {previewFile && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50">
           <div className="bg-white rounded-2xl shadow-lg w-11/12 md:w-3/4 lg:w-2/3 h-[80vh] flex flex-col">
-            {/* هدر مدال */}
             <div className="flex justify-between items-center p-4 border-b">
-              <h2 className="text-lg font-bold">📄 پیش‌نمایش جواب آزمایش</h2>
+              <h2 className="text-lg font-bold">📄 پیش‌نمایش فایل</h2>
               <button
-                onClick={() => setIsModalOpen(false)}
+                onClick={() => setPreviewFile(null)}
                 className="text-red-500 hover:text-red-700 text-xl"
               >
                 ✕
               </button>
             </div>
-
-            {/* بدنه مدال */}
             <div className="flex-1">
               <iframe
-                src="/sample-result.pdf"
+                src={previewFile}
                 className="w-full h-full rounded-b-2xl"
               />
             </div>
