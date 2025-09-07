@@ -1,9 +1,11 @@
 import express from "express";
-import { changeAvailability, createProfile, deleteProfile, getProfileById, getProfiles, updateProfile, uploadDocument } from "../controllers/doctorProfileController";
+import { changeAvailability, createProfile, deleteProfile, findDoctor, getProfileById, getProfiles, updateProfile, uploadDocument } from "../controllers/doctorProfileController";
 
 
 const router = express.Router();
 
+// ------------------ دریافت اطلاعات ---------------------------- //
+router.get('/find' , findDoctor)
 // ---------------------- ایجاد پروفایل پزشک ---------------------- //
 router.post("/add", createProfile);
 

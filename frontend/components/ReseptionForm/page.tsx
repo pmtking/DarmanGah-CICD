@@ -2,7 +2,11 @@ import React, { useState, useEffect } from "react";
 import "./style.scss";
 import Input from "../Input/page";
 import Button from "../Button/page";
+import toast from "react-hot-toast";
 
+type ReseptionFormProps = {
+  data?: any; // داده‌ای که از سرور میاد
+};
 // داده‌های تستی برای شبیه‌سازی لیست خدمات پزشکان
 const doctorsServices: Record<string, string[]> = {
   "دکتر احمدی": ["معاینه عمومی", "نوار قلب", "تزریقات"],
@@ -23,7 +27,7 @@ type FormData = {
   service: string;
 };
 
-const ReseptionForm = () => {
+const ReseptionForm = ({ data }: ReseptionFormProps) => {
   const [formData, setFormData] = useState<FormData>({
     firstName: "",
     lastName: "",
@@ -48,13 +52,34 @@ const ReseptionForm = () => {
   }, [formData.doctorName]);
 
   // تابع سراسری برای به‌روزرسانی state
-  const handleChange = (e:any) => {
+  const handleChange = (e: any) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
       ...prevData,
       [name]: value,
     }));
   };
+  useEffect(() => {
+    if (data) {
+      // جدا کردن نام و نام خانوادگی از fullName
+      let firstName = "";
+      let lastName = "";
+      if (data.fullName) {
+        const parts = data.fullName.split(" ");
+        firstName = parts[0] || "";
+        lastName = parts.slice(1).join(" ") || "";
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        firstName,
+        lastName,
+        phoneNumber: data.phoneNumber || "",
+        insuranceType: data.insuranceType || "",
+        nationalCode: data.nationalCode || "",
+      }));
+    }
+  }, [data]);
 
   return (
     <>
@@ -132,7 +157,7 @@ const ReseptionForm = () => {
               type="text"
               name="lastName"
               placeholder="نام خانوادگی"
-              value={formData.lastName}
+              value={formData.phoneNumber}
               onChange={handleChange}
               className="w-full py-2 px-4 mb-4 border border-gray-400 rounded text-black"
             />
@@ -146,7 +171,7 @@ const ReseptionForm = () => {
               type="text"
               name="lastName"
               placeholder="نوع مراجعه مثلا ازاد "
-              value={formData.lastName}
+              value={formData.relation}
               onChange={handleChange}
               className="w-full py-2 px-4 mb-4 border border-gray-400 rounded text-black"
             />
@@ -273,7 +298,7 @@ const ReseptionForm = () => {
         </div>
         <div className="flex w-full gap-20 px-0 mt-5 ">
           <Button name="ثبت اطلاعات (F5)" />
-          <button className="text-white w-full bg-gray-500 rounded-lg ">
+          <button className="text-white w-full bg-gray-500 rounded-lg " >
             صرف نظر از پذیرش
           </button>
         </div>

@@ -6,6 +6,6 @@ export const router = express.Router();
 
 // مسیر آپلود چند فایل
 router.post("/upload", upload.array("files"), uploadFiles);
-router.post("/lab/get-files", getFilesByCodeMelli);
+router.post("/get-files", getFilesByCodeMelli);
 
 export default router

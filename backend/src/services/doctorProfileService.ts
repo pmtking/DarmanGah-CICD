@@ -66,10 +66,10 @@ export const getAllDoctorProfiles = async () => {
 
 // --------------------- get profile By Id ------------------ //
 export const getDoctorProfileById = async (id) => {
-  if (!mongoose.Types.ObjectId.isValid(id)) throw new Error("Invalid ID");
-  return await DoctorProfile.findById(id)
-    .populate("Personnel")
-    .populate("ClinicService");
+
+  return await DoctorProfile.findOne({personnel:id})
+    
+    
 };
 
 //  --------------------- update Profile --------------- //

@@ -13,6 +13,10 @@ import { createDoctorProfileSchema } from "../validations/doctorProfile.validati
 import Personnel from "../models/Personnel";
 
 // ---------------------- ایجاد پروفایل پزشک ---------------------- //
+export const findDoctor = async(req:Request , res:Response) => {
+  const doctors  = await Personnel.find({role:"DOCTOR"}) ;
+  res.status(200).json(doctors)
+}
 // کنترلر
 export const createProfile = async (req: Request, res: Response) => {
   try {

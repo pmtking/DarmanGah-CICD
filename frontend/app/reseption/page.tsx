@@ -6,56 +6,60 @@ import ReseptionForm from "@/components/ReseptionForm/page";
 import ReseptionNav from "@/components/ReseptionNav/page";
 import TitleComponents from "@/components/TitleComponents/page";
 import { useUser } from "@/context/UserContext";
+import api from "@/libs/axios";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 // داده‌های نمونه برای اعتبارسنجی
-const mockNationalCodes = ["1234567890", "9876543210"];
 
 const RespontionPage = () => {
   const [nationalCode, setNationalCode] = useState<string>("");
   const [isVerified, setIsVerified] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const [data, setData] = useState([]);
   const { user } = useUser();
 
   const handleVerify = async () => {
     if (nationalCode.length !== 10) {
-      toast.error("کد ملی باید 10 رقم باشد ");
+      toast.error("کد ملی باید 10 رقم باشد");
       return;
     }
 
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    // شبیه‌سازی فراخوانی API با یک تأخیر کوتاه
-    // این کار UX بهتری ایجاد می‌کند و حس لود شدن را به کاربر منتقل می‌کند
-    await new Promise((resolve) => setTimeout(resolve, 500));
+      const res = await api.post("/api/appointment/find", {
+        nationalCode:nationalCode,
+      });
 
-    // بررسی کد ملی وارد شده در برابر داده‌های نمونه
-    const exists = true;
-
-    if (exists) {
-      setIsVerified(true);
-      toast.success("کد ملی معتبر است");
-    } else {
-      toast.error("کد ملی یافت نشد.");
+      // بررسی خروجی
+      if (res.data.success) {
+        setData(res.data.data); // فقط داده اصلی
+        setIsVerified(true);
+        toast.success(res.data.message || "کد ملی معتبر است ✅");
+      } else {
+        toast.error(res.data.message || "کد ملی یافت نشد ❌");
+      }
+    } catch (err: any) {
+      toast.error("خطا در برقراری ارتباط با سرور ❌");
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
-
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       handleVerify();
     }
   };
-  useEffect(() => {
-    const cookies = document.cookie;
-    const hasToken = cookies.includes("token");
-    // console.log("------------->>", user);
-    if (!hasToken) {
-      window.location.href = "/login";
-    }
-  }, []);
+  // useEffect(() => {
+  //   const cookies = document.cookie;
+  //   const hasToken = cookies.includes("token");
+  //   // console.log("------------->>", user);
+  //   if (!hasToken) {
+  //     window.location.href = "/login";
+  //   }
+  // }, []);
 
   return (
     <div className=" flex flex-col w-full justify-center items-center  ">
@@ -69,6 +73,7 @@ const RespontionPage = () => {
             classname="flex"
           />
         </div>
+        
         {!isVerified ? (
           <div className="w-full max-w-xl text-center text-white rounded-xl transition-all duration-300 bg-white/30 p-6">
             <Input
@@ -88,7 +93,7 @@ const RespontionPage = () => {
           </div>
         ) : (
           <div className="mt-6 w-full text-center text-white rounded-xl p-4 transition-all duration-300 bg-white px-5">
-            <ReseptionForm />
+            <ReseptionForm data={data} />
           </div>
         )}
       </main>

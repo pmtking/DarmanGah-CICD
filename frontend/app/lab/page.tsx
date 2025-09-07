@@ -3,6 +3,7 @@
 import NavBar from "@/components/NavBar/page";
 import { useState } from "react";
 import axios from "axios";
+import api from "@/libs/axios";
 
 interface LabFile {
   name: string;
@@ -25,7 +26,7 @@ export default function LabPage() {
 
     try {
       // ارسال POST به API
-      const res = await axios.post("/api/lab/get-files", { codeMelli });
+      const res = await api.post("/api/lab/get-files", { codeMelli });
 
       // انتظار داریم فایل‌ها به صورت base64 یا URL برگردند
       const fetchedFiles: LabFile[] = res.data.files.map((f: any) => {

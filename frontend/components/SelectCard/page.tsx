@@ -1,12 +1,27 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useReserveAppointment } from "@/hooks/useAppointment";
+import dayjs from "dayjs";
+import "dayjs/locale/fa";
+import axios from "axios";
+import api from "@/libs/axios";
+import toast from "react-hot-toast";
 
 interface SelectCardProps {
   doctorId: string;
 }
 
+interface Doctor {
+  workingDays: string[];
+  workingHours: {
+    شروع: string;
+    پایان: string;
+  };
+}
+
 const SelectCard: React.FC<SelectCardProps> = ({ doctorId }) => {
+  const [doctor, setDoctor] = useState<Doctor | null>(null);
+  const [loadingDoctor, setLoadingDoctor] = useState(true);
   const [step, setStep] = useState(1);
   const [selectedTime, setSelectedTime] = useState("");
   const [formData, setFormData] = useState({
@@ -18,22 +33,51 @@ const SelectCard: React.FC<SelectCardProps> = ({ doctorId }) => {
 
   const { reserve, loading, error, success } = useReserveAppointment();
 
-  const times = [
-    "امروز ۳ تیر ساعت ۱۰:۳۰",
-    "امروز ۳ تیر ساعت ۱۰:۴۰",
-    "امروز ۳ تیر ساعت ۱۰:۴۵",
-  ];
+  // گرفتن اطلاعات پزشک از API
+  useEffect(() => {
+    const fetchDoctor = async () => {
+      try {
+        const res = await api.get(`/api/doctors/${doctorId}`);
+        setDoctor(res.data);
+      } catch (err) {
+        console.error("خطا در دریافت اطلاعات پزشک:", err);
+      } finally {
+        setLoadingDoctor(false);
+      }
+    };
 
-  const insuranceOptions = [
-    "سلامت",
-    "تأمین اجتماعی",
-    "نیروهای مسلح",
-    "فاقد بیمه",
-  ];
+    fetchDoctor();
+  }, [doctorId]);
 
-  const handleSelectTime = (time: string) => {
-    setSelectedTime(time);
-  };
+  // محاسبه تایم‌ها
+  const times = useMemo(() => {
+    if (!doctor) return [];
+
+    const today = dayjs().locale("fa");
+    const weekday = today.format("dddd");
+
+    if (!doctor.workingDays.includes(weekday)) return [];
+
+    const start = dayjs(`${today.format("YYYY-MM-DD")} ${doctor.workingHours.شروع}`);
+    const end = dayjs(`${today.format("YYYY-MM-DD")} ${doctor.workingHours.پایان}`);
+
+    if (dayjs().isAfter(end)) return [];
+
+    const slots: string[] = [];
+    let current = start;
+
+    while (current.isBefore(end)) {
+      if (current.isAfter(dayjs())) {
+        slots.push(`امروز ${weekday} ساعت ${current.format("HH:mm")}`);
+      }
+      current = current.add(20, "minute");
+    }
+    return slots;
+  }, [doctor]);
+
+  const insuranceOptions = ["سلامت", "تأمین اجتماعی", "نیروهای مسلح", "فاقد بیمه"];
+
+  const handleSelectTime = (time: string) => setSelectedTime(time);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -44,6 +88,7 @@ const SelectCard: React.FC<SelectCardProps> = ({ doctorId }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    toast.success('نوبت شما فعال شد لطفا در اسراع وقت حضور داشته باشید')
 
     const [_, time] = selectedTime.replace("امروز ", "").split(" ساعت ");
 
@@ -53,41 +98,57 @@ const SelectCard: React.FC<SelectCardProps> = ({ doctorId }) => {
       insuranceType: formData.insuranceType,
       nationalCode: formData.nationalCode,
       doctorId,
-      appointmentDate: "1403-04-03", // می‌تونه داینامیک بشه
+      appointmentDate: dayjs().format("YYYY-MM-DD"),
       appointmentTime: time,
     };
 
     await reserve(payload);
+    
+     
   };
+
+  if (loadingDoctor) {
+    return <p className="text-center text-gray-500">در حال بارگذاری اطلاعات پزشک...</p>;
+  }
+
+  if (!doctor) {
+    return <p className="text-center text-red-500">اطلاعات پزشک یافت نشد ❌</p>;
+  }
 
   return (
     <div className="w-full mx-auto p-4">
       {step === 1 && (
         <div className="flex flex-col gap-3">
-          {times.map((time, idx) => (
-            <label
-              key={idx}
-              onClick={() => handleSelectTime(time)}
-              className={`flex items-center justify-between px-4 py-3 rounded-xl border text-sm font-medium cursor-pointer transition-all ${
-                selectedTime === time
-                  ? "bg-white text-[#00245a] border-[#00245a] shadow-md"
-                  : "bg-transparent text-[#00245a] border-[#444444] opacity-70"
-              }`}
-            >
-              {time}
-              <span
-                className={`w-5 h-5 flex items-center justify-center border-2 rounded-full ${
+          {times.length === 0 ? (
+            <p className="text-center text-gray-500 text-sm">
+              نوبتی برای امروز وجود ندارد ❌
+            </p>
+          ) : (
+            times.map((time, idx) => (
+              <label
+                key={idx}
+                onClick={() => handleSelectTime(time)}
+                className={`flex items-center justify-between px-4 py-3 rounded-xl border text-sm font-medium cursor-pointer transition-all ${
                   selectedTime === time
-                    ? "border-[#00245a] bg-[#00245a]"
-                    : "border-[#444444]"
+                    ? "bg-white text-[#00245a] border-[#00245a] shadow-md"
+                    : "bg-transparent text-[#00245a] border-[#444444] opacity-70"
                 }`}
               >
-                {selectedTime === time && (
-                  <span className="w-2 h-2 bg-white rounded-full" />
-                )}
-              </span>
-            </label>
-          ))}
+                {time}
+                <span
+                  className={`w-5 h-5 flex items-center justify-center border-2 rounded-full ${
+                    selectedTime === time
+                      ? "border-[#00245a] bg-[#00245a]"
+                      : "border-[#444444]"
+                  }`}
+                >
+                  {selectedTime === time && (
+                    <span className="w-2 h-2 bg-white rounded-full" />
+                  )}
+                </span>
+              </label>
+            ))
+          )}
 
           <button
             disabled={!selectedTime}
