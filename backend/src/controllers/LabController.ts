@@ -4,7 +4,7 @@ import path from "path";
 import fs from "fs";
 
 // مسیر ذخیره فایل‌ها
-const UPLOAD_DIR = "/home/ubuntu-website/";
+const UPLOAD_DIR = "/home/ubuntu-website/darmanBot/files/";
 
 // اطمینان از وجود پوشه
 if (!fs.existsSync(UPLOAD_DIR)) {
@@ -25,10 +25,7 @@ const storage = multer.diskStorage({
 export const upload = multer({ storage });
 
 // کنترلر برای دریافت فایل‌ها
-export const uploadFiles = (
-  req: Request<{}, {}, {}, {}>,
-  res: Response
-) => {
+export const uploadFiles = (req: Request<{}, {}, {}, {}>, res: Response) => {
   const files = req.files as Express.Multer.File[] | undefined;
 
   if (!files || files.length === 0) {
@@ -41,4 +38,31 @@ export const uploadFiles = (
     message: "✅ فایل‌ها با موفقیت آپلود شدند.",
     files: uploadedFiles,
   });
+};
+export const getFilesByCodeMelli = (req: Request, res: Response) => {
+  const { codeMelli } = req.body;
+
+  if (!codeMelli) {
+    return res.status(400).json({ error: "کد ملی ارسال نشده است." });
+  }
+
+  // خواندن فایل‌ها
+  const allFiles = fs.readdirSync(UPLOAD_DIR);
+  const matchedFiles = allFiles.filter((f) => f.startsWith(codeMelli));
+
+  if (matchedFiles.length === 0) {
+    return res.status(404).json({ message: "فایلی برای این کد ملی پیدا نشد." });
+  }
+
+  // می‌توانیم فایل‌ها را به صورت base64 یا لینک ارسال کنیم
+  const filesData = matchedFiles.map((filename) => {
+    const filePath = path.join(UPLOAD_DIR, filename);
+    const fileBuffer = fs.readFileSync(filePath);
+    return {
+      name: filename,
+      data: fileBuffer.toString("base64"), // encode برای ارسال در JSON
+    };
+  });
+
+  res.json({ files: filesData });
 };

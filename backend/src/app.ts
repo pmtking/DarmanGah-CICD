@@ -10,6 +10,7 @@ dotenvConfig();
 
 // اپلیکیشن
 export const app = express();
+app.use("/files", express.static("/home/ubuntu-website/darmanBot/files/"));
 
 // میان‌افزارها
 app.use(cors({ origin: process.env.ALLOWED_ORIGINS || "*" }));
@@ -19,10 +20,17 @@ app.use(express.json());
 app.use("/api", router);
 
 // هندل خطاهای عمومی
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error("❌ Error:", err.message || err);
-  res.status(500).json({ error: "مشکلی در سرور رخ داده است." });
-});
+app.use(
+  (
+    err: any,
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+    console.error("❌ Error:", err.message || err);
+    res.status(500).json({ error: "مشکلی در سرور رخ داده است." });
+  }
+);
 
 // تابع برای گرفتن IPهای سرور
 const getServerIPs = () => {
