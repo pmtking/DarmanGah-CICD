@@ -137,7 +137,6 @@ export default function LabPage() {
               <iframe
                 src={previewFile}
                 className="w-full h-full rounded-b-2xl"
-                type="application/pdf"
               />
             </div>
           </div>
