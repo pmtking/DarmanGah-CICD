@@ -12,7 +12,7 @@ const AboutBox = () => {
       <div className="about_box shadow-2xl">
         <div className="about_box_header">
           <h1 className="text-center text-4xl text-white font-bold text-nowrap">
-            درمانگاه فرهنگیان نیشابور        
+            درمانگاه فرهنگیان نیشابور
           </h1>
         </div>
 
@@ -31,7 +31,10 @@ const AboutBox = () => {
         </div>
 
         <div className="flex flex-wrap justify-center gap-4 px-4 mt-8">
-          <Button name="تماس با ما" className="btn-yellow-important shadow-2xl" />
+          <Button
+            name="تماس با ما"
+            className="btn-yellow-important shadow-2xl"
+          />
         </div>
       </div>
     </>

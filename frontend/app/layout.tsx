@@ -80,7 +80,7 @@ export default function RootLayout({
       <body className="w-full bg-gray-50 text-gray-900 min-h-screen">
         <Toaster position="top-center" />
         {/* ناوبری عمومی */}
-        <NavBar />
+        {/* <NavBar /> */}
         {/* محتوای اصلی */}
         <main className="flex flex-col px-4 sm:px-6 md:px-12 lg:px-20 py-6 gap-12">
           {children}

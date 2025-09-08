@@ -50,7 +50,7 @@ const DoctorsPresent = () => {
         </h1>
       </div>
 
-      <div className="flex flex-col justify-center items-start gap-6 mt-3 w-full px-2 overflow-y-auto lg:overflow-y-visible">
+      <div className="flex flex-col justify-center items-start gap-6 mt-3 w-full px-2 overflow-y-auto lg:overflow-hidden">
         {loading && (
           <p className="text-center text-sm text-gray-600">
             در حال بارگذاری...
