@@ -1,13 +1,18 @@
 "use client";
 
-import NavBar from "@/components/NavBar/page";
 import { useState } from "react";
+import dynamic from "next/dynamic";
+import NavBar from "@/components/NavBar/page";
 import api from "@/libs/axios";
+import PDFPreview from "@/components/PDFPreview/page";
 
 interface LabFile {
   name: string;
-  url: string; // لینک blob یا فایل سرور
+  url: string;
 }
+
+// ⛔️ فقط در مرورگر لود میشه (SSR غیرفعال)
+
 
 export default function LabPage() {
   const [codeMelli, setCodeMelli] = useState("");
@@ -26,13 +31,11 @@ export default function LabPage() {
     try {
       const res = await api.post("/api/lab/get-files", { codeMelli });
 
-      // تبدیل base64 به Blob URL با نوع MIME درست
       const fetchedFiles: LabFile[] = res.data.files.map((f: any) => {
         const byteCharacters = atob(f.data);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
+        const byteNumbers = Array.from(byteCharacters).map((c) =>
+          c.charCodeAt(0)
+        );
         const byteArray = new Uint8Array(byteNumbers);
         const blob = new Blob([byteArray], { type: "application/pdf" });
         const fileUrl = URL.createObjectURL(blob);
@@ -45,17 +48,9 @@ export default function LabPage() {
           ? `✅ ${fetchedFiles.length} فایل برای کد ملی پیدا شد.`
           : "⚠️ فایلی پیدا نشد."
       );
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
       setStatus("❌ مشکلی در دریافت فایل‌ها رخ داد.");
-    }
-  };
-
-  // آزاد کردن Blob URL هنگام بستن مدال
-  const handleClosePreview = () => {
-    if (previewFile) {
-      URL.revokeObjectURL(previewFile);
-      setPreviewFile(null);
     }
   };
 
@@ -66,6 +61,7 @@ export default function LabPage() {
         سامانه دریافت جواب آزمایش
       </h1>
 
+      {/* فرم ورود کد ملی */}
       <form
         onSubmit={handleSubmit}
         className="bg-white shadow-md rounded-2xl p-6 w-full max-w-md flex flex-col gap-4"
@@ -90,8 +86,22 @@ export default function LabPage() {
         </button>
       </form>
 
-      {status && <p className="mt-4 text-center">{status}</p>}
+      {/* وضعیت (سبز/قرمز) */}
+      {status && (
+        <p
+          className={`mt-4 text-center ${
+            status.startsWith("❌")
+              ? "text-red-600"
+              : status.startsWith("⚠️")
+              ? "text-yellow-600"
+              : "text-green-600"
+          }`}
+        >
+          {status}
+        </p>
+      )}
 
+      {/* لیست فایل‌ها */}
       {files.length > 0 && (
         <div className="mt-6 w-full max-w-md flex flex-col gap-2">
           {files.map((file, index) => (
@@ -120,27 +130,9 @@ export default function LabPage() {
         </div>
       )}
 
-      {/* مدال پیش‌نمایش PDF */}
+      {/* مدال پیش‌نمایش PDF (فقط سمت کلاینت) */}
       {previewFile && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50">
-          <div className="bg-white rounded-2xl shadow-lg w-11/12 md:w-3/4 lg:w-2/3 h-[80vh] flex flex-col">
-            <div className="flex justify-between items-center p-4 border-b">
-              <h2 className="text-lg font-bold">📄 پیش‌نمایش فایل</h2>
-              <button
-                onClick={handleClosePreview}
-                className="text-red-500 hover:text-red-700 text-xl"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="flex-1">
-              <iframe
-                src={previewFile}
-                className="w-full h-full rounded-b-2xl"
-              />
-            </div>
-          </div>
-        </div>
+        <PDFPreview fileUrl={previewFile} onClose={() => setPreviewFile(null)} />
       )}
     </div>
   );

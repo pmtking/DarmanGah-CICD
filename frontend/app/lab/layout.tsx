@@ -16,10 +16,10 @@ export const metadata: Metadata = {
 
 export default function LabLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fa" dir="rtl">
-      <body className="bg-gray-50 text-gray-900 min-h-screen">
+  
+      <main className=" text-gray-900 min-h-screen">
         <main className="container mx-auto px-4 py-8">{children}</main>
-      </body>
-    </html>
+      </main>
+    
   );
 }
