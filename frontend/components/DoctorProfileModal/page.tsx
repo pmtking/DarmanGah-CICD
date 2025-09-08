@@ -30,7 +30,7 @@ type Props = {
   isOpen: boolean;
   onClose: () => void;
   doctorName?: string;
-  nationalCode?: string;
+  nationalId?: string;
 };
 
 const specialtyTypes = [
@@ -84,11 +84,11 @@ export default function DoctorProfileModal({
   }, [isOpen, doctorName, nationalId]);
 
   const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value, type } = e.target;
+    const checked = type === "checkbox" && (e.target as HTMLInputElement).checked;
+
     setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
@@ -257,7 +257,7 @@ export default function DoctorProfileModal({
                   onChange={(e) =>
                     handleWorkingDaysChange(day, e.target.checked)
                   }
-                />{" "}
+                />
                 {day}
               </label>
             ))}
@@ -277,7 +277,7 @@ export default function DoctorProfileModal({
               name="isAvailable"
               checked={formData.isAvailable}
               onChange={handleChange}
-            />{" "}
+            />
             فعال
           </label>
 

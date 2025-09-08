@@ -1,13 +1,14 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
-import "./style.scss";
 import Input from "../Input/page";
 import Button from "../Button/page";
 import toast from "react-hot-toast";
 
 type ReseptionFormProps = {
-  data?: any; // داده‌ای که از سرور میاد
+  data?: any;
 };
-// داده‌های تستی برای شبیه‌سازی لیست خدمات پزشکان
+
 const doctorsServices: Record<string, string[]> = {
   "دکتر احمدی": ["معاینه عمومی", "نوار قلب", "تزریقات"],
   "دکتر رضایی": ["جراحی سرپایی", "بخیه", "پانسمان"],
@@ -15,15 +16,19 @@ const doctorsServices: Record<string, string[]> = {
 };
 
 type DoctorName = "دکتر احمدی" | "دکتر رضایی" | "دکتر محمدی";
+
+type ServiceItem = { name: string; quantity: number };
+
 type FormData = {
   firstName: string;
   lastName: string;
   gender: string;
-  doctorName: DoctorName | ""; // فقط پزشکان معتبر یا رشته خالی
+  doctorName: DoctorName | "";
   visitDate: string;
   insuranceType: string;
   supplementaryInsurance: string;
   relation: string;
+  phoneNumber: string;
   service: string;
 };
 
@@ -37,31 +42,52 @@ const ReseptionForm = ({ data }: ReseptionFormProps) => {
     insuranceType: "",
     supplementaryInsurance: "",
     relation: "",
+    phoneNumber: "",
     service: "",
   });
-  // مدیریت لیست خدمات موجود برای پزشک انتخاب‌شده
-  const [availableServices, setAvailableServices] = useState<string[]>([]);
 
-  // این تابع به محض تغییر نام پزشک، لیست خدمات موجود را به‌روزرسانی می‌کند.
+  const [availableServices, setAvailableServices] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [selectedServices, setSelectedServices] = useState<ServiceItem[]>([]);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const addService = (service: string) => {
+    if (!selectedServices.find((s) => s.name === service)) {
+      setSelectedServices([...selectedServices, { name: service, quantity: 1 }]);
+      setSearchQuery("");
+      setFormData((prev) => ({ ...prev, service: "" }));
+    } else {
+      toast.error("این خدمت قبلا انتخاب شده است");
+    }
+  };
+
+  const updateQuantity = (service: string, quantity: number) => {
+    setSelectedServices((prev) =>
+      prev.map((s) => (s.name === service ? { ...s, quantity } : s))
+    );
+  };
+
+  const removeService = (service: string) => {
+    setSelectedServices((prev) => prev.filter((s) => s.name !== service));
+  };
+
   useEffect(() => {
     if (formData.doctorName && doctorsServices[formData.doctorName]) {
       setAvailableServices(doctorsServices[formData.doctorName]);
     } else {
       setAvailableServices([]);
+      setSelectedServices([]);
     }
   }, [formData.doctorName]);
 
-  // تابع سراسری برای به‌روزرسانی state
-  const handleChange = (e: any) => {
-    const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
-  };
   useEffect(() => {
     if (data) {
-      // جدا کردن نام و نام خانوادگی از fullName
       let firstName = "";
       let lastName = "";
       if (data.fullName) {
@@ -76,234 +102,153 @@ const ReseptionForm = ({ data }: ReseptionFormProps) => {
         lastName,
         phoneNumber: data.phoneNumber || "",
         insuranceType: data.insuranceType || "",
-        nationalCode: data.nationalCode || "",
       }));
     }
   }, [data]);
 
   return (
-    <>
-      <div className="flex flex-col justify-center items-center p-4 ">
-        {/* فیلدهای نام، نام خانوادگی و جنسیت */}
-        <div className="flex justify-between w-full gap-3 ">
-          <div className="flex flex-col w-full">
-            <label htmlFor="firstName" className="text-right text-gray-700">
-              نام
-            </label>
-            <Input
-              id="firstName"
-              type="text"
-              name="firstName"
-              placeholder="نام"
-              value={formData.firstName}
-              onChange={handleChange}
-              className="w-full py-2 px-4 mb-4 border border-gray-400 rounded text-black"
-            />
-          </div>
-          <div className="flex flex-col w-full">
-            <label htmlFor="lastName" className="text-right text-gray-700">
-              نام خانوادگی
-            </label>
-            <Input
-              id="lastName"
-              type="text"
-              name="lastName"
-              placeholder="نام خانوادگی"
-              value={formData.lastName}
-              onChange={handleChange}
-              className="w-full py-2 px-4 mb-4 border border-gray-400 rounded text-black"
-            />
-          </div>
-          <div className="flex flex-col w-full">
-            <label htmlFor="gender" className="text-right text-gray-700">
-              جنسیت
-            </label>
-            <select
-              id="gender"
-              name="gender"
-              value={formData.gender}
-              onChange={handleChange}
-              className="w-full rounded-xl py-2 px-4 mb-4 border border-gray-400 text-black"
-            >
-              <option value="">جنسیت</option>
-              <option value="مرد">مرد</option>
-              <option value="زن">زن</option>
-            </select>
-          </div>
-        </div>
-
-        {/* فیلد نسبت با سرپرست */}
-        <div className="flex justify-between w-full gap-3">
-          <div className="flex flex-col w-full">
-            <label htmlFor="relation" className="text-right text-gray-700">
-              نسبت با سرپرست
-            </label>
-            <Input
-              id="relation"
-              type="text"
-              name="relation"
-              placeholder="نسبت با سرپرست"
-              value={formData.relation}
-              onChange={handleChange}
-              className="w-full py-2 px-4 mb-4 border border-gray-400 rounded text-black"
-            />
-          </div>
-          <div className="flex flex-col w-full">
-            <label htmlFor="lastName" className="text-right text-gray-700">
-              شماره تماس
-            </label>
-            <Input
-              id="lastName"
-              type="text"
-              name="lastName"
-              placeholder="نام خانوادگی"
-              value={formData.phoneNumber}
-              onChange={handleChange}
-              className="w-full py-2 px-4 mb-4 border border-gray-400 rounded text-black"
-            />
-          </div>
-          <div className="flex flex-col w-full">
-            <label htmlFor="lastName" className="text-right text-gray-700">
-              نوع مراجعه
-            </label>
-            <Input
-              id="lastName"
-              type="text"
-              name="lastName"
-              placeholder="نوع مراجعه مثلا ازاد "
-              value={formData.relation}
-              onChange={handleChange}
-              className="w-full py-2 px-4 mb-4 border border-gray-400 rounded text-black"
-            />
-          </div>
-        </div>
-
-        {/* فیلد انتخاب پزشک */}
-        <div className="flex justify-between items-center w-full gap-3">
-          <div className="flex flex-col w-full">
-            <label htmlFor="doctorName" className="text-right text-gray-700">
-              نام پزشک
-            </label>
-            <select
-              id="doctorName"
-              name="doctorName"
-              value={formData.doctorName}
-              onChange={handleChange}
-              className="w-full py-2 px-4 mb-4 border border-gray-400 rounded text-black"
-            >
-              <option value="">نام پزشک را انتخاب کنید</option>
-              {Object.keys(doctorsServices).map((doctor, index) => (
-                <option key={index} value={doctor}>
-                  {doctor}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* فیلد خدمات (بر اساس پزشک انتخابی نمایش داده می‌شود) */}
-          {availableServices.length > 0 && (
-            <div className="flex flex-col w-full">
-              <label htmlFor="service" className="text-right text-gray-700">
-                خدمات
-              </label>
-              <select
-                id="service"
-                name="service"
-                value={formData.service}
-                onChange={handleChange}
-                className="w-full py-2 px-4 mb-4 border border-gray-400 rounded text-black"
-              >
-                <option value="">خدمات مورد نظر را انتخاب کنید</option>
-                {availableServices.map((service, index) => (
-                  <option key={index} value={service}>
-                    {service}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-        </div>
-
-        {/* فیلد تاریخ مراجعه */}
-        <div className="flex justify-between w-full gap-3">
-          <div className="flex flex-col w-full">
-            <label htmlFor="visitDate" className="text-right text-gray-700">
-              تاریخ نوبت
-            </label>
-            <Input
-              id="visitDate"
-              type="date"
-              name="visitDate"
-              value={formData.visitDate}
-              onChange={handleChange}
-              className="w-full py-2 px-4 mb-4 border border-gray-400 rounded text-black"
-            />
-          </div>
-          <div className="flex flex-col w-full">
-            <label htmlFor="visitDate" className="text-right text-gray-700">
-              تاریخ مراجعه
-            </label>
-            <Input
-              id="visitDate"
-              type="date"
-              name="visitDate"
-              value={formData.visitDate}
-              onChange={handleChange}
-              className="w-full py-2 px-4 mb-4 border border-gray-400 rounded text-black"
-            />
-          </div>
-        </div>
-
-        {/* فیلد نوع بیمه اصلی */}
+    <div className="flex flex-col justify-center items-center p-4">
+      {/* نام و نام خانوادگی و جنسیت */}
+      <div className="flex justify-between w-full gap-3">
         <div className="flex flex-col w-full">
-          <label htmlFor="insuranceType" className="text-right text-gray-700">
-            نوع بیمه اصلی
-          </label>
-          <select
-            id="insuranceType"
-            name="insuranceType"
-            value={formData.insuranceType}
+          <label className="text-right text-gray-700">نام</label>
+          <Input
+            type="text"
+            name="firstName"
+            value={formData.firstName}
             onChange={handleChange}
             className="w-full py-2 px-4 mb-4 border border-gray-400 rounded text-black"
-          >
-            <option value="">نوع بیمه اصلی</option>
-            <option value="تامین اجتماعی">تامین اجتماعی</option>
-            <option value="خدمات درمانی">خدمات درمانی</option>
-            <option value="نیروهای مسلح">نیروهای مسلح</option>
-            <option value="آزاد">آزاد</option>
-          </select>
+          />
         </div>
-
-        {/* فیلد نوع بیمه تکمیلی */}
         <div className="flex flex-col w-full">
-          <label
-            htmlFor="supplementaryInsurance"
-            className="text-right text-gray-700"
-          >
-            نوع بیمه تکمیلی
-          </label>
-          <select
-            id="supplementaryInsurance"
-            name="supplementaryInsurance"
-            value={formData.supplementaryInsurance}
+          <label className="text-right text-gray-700">نام خانوادگی</label>
+          <Input
+            type="text"
+            name="lastName"
+            value={formData.lastName}
             onChange={handleChange}
             className="w-full py-2 px-4 mb-4 border border-gray-400 rounded text-black"
-          >
-            <option value="">نوع بیمه تکمیلی</option>
-            <option value="بیمه دانا">بیمه دانا</option>
-            <option value="بیمه البرز">بیمه البرز</option>
-            <option value="بیمه سینا">بیمه سینا</option>
-            <option value="سایر">سایر</option>
-          </select>
+          />
         </div>
-        <div className="flex w-full gap-20 px-0 mt-5 ">
-          <Button name="ثبت اطلاعات (F5)" />
-          <button className="text-white w-full bg-gray-500 rounded-lg " >
-            صرف نظر از پذیرش
-          </button>
+        <div className="flex flex-col w-full">
+          <label className="text-right text-gray-700">جنسیت</label>
+          <select
+            name="gender"
+            value={formData.gender}
+            onChange={handleChange}
+            className="w-full rounded-xl py-2 px-4 mb-4 border border-gray-400 text-black"
+          >
+            <option value="">جنسیت</option>
+            <option value="مرد">مرد</option>
+            <option value="زن">زن</option>
+          </select>
         </div>
       </div>
-    </>
+
+      {/* نسبت با سرپرست و شماره تماس */}
+      <div className="flex justify-between w-full gap-3">
+        <div className="flex flex-col w-full">
+          <label className="text-right text-gray-700">نسبت با سرپرست</label>
+          <Input
+            type="text"
+            name="relation"
+            value={formData.relation}
+            onChange={handleChange}
+            className="w-full py-2 px-4 mb-4 border border-gray-400 rounded text-black"
+          />
+        </div>
+        <div className="flex flex-col w-full">
+          <label className="text-right text-gray-700">شماره تماس</label>
+          <Input
+            type="text"
+            name="phoneNumber"
+            value={formData.phoneNumber}
+            onChange={handleChange}
+            className="w-full py-2 px-4 mb-4 border border-gray-400 rounded text-black"
+          />
+        </div>
+      </div>
+
+      {/* انتخاب پزشک */}
+      <div className="flex flex-col w-full mb-4">
+        <label className="text-right text-gray-700">نام پزشک</label>
+        <select
+          name="doctorName"
+          value={formData.doctorName}
+          onChange={handleChange}
+          className="w-full py-2 px-4 border border-gray-400 rounded text-black"
+        >
+          <option value="">انتخاب پزشک</option>
+          {Object.keys(doctorsServices).map((d, i) => (
+            <option key={i} value={d}>
+              {d}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* خدمات */}
+      {availableServices.length > 0 && (
+        <div className="flex flex-col w-full relative mb-4">
+          <label className="text-right text-gray-700">خدمات</label>
+          <Input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="جستجوی خدمات..."
+            className="w-full py-2 px-4 mb-2 border border-gray-400 rounded text-black"
+          />
+          {searchQuery && (
+            <ul className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded max-h-40 overflow-y-auto z-10">
+              {availableServices
+                .filter((s) =>
+                  s.toLowerCase().includes(searchQuery.toLowerCase())
+                )
+                .map((s, i) => (
+                  <li
+                    key={i}
+                    onClick={() => addService(s)}
+                    className="px-4 py-2 cursor-pointer hover:bg-gray-100 text-black"
+                  >
+                    {s}
+                  </li>
+                ))}
+            </ul>
+          )}
+          <div className="flex flex-wrap gap-2 mt-2">
+            {selectedServices.map((s, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-1 bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm"
+              >
+                <span>{s.name}</span>
+                <input
+                  type="number"
+                  min={1}
+                  value={s.quantity}
+                  onChange={(e) => updateQuantity(s.name, Number(e.target.value))}
+                  className="w-12 px-1 py-0.5 border rounded text-xs text-black"
+                />
+                <button
+                  onClick={() => removeService(s.name)}
+                  className="text-red-500 font-bold px-1"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* دکمه‌ها */}
+      <div className="flex w-full gap-4 mt-5">
+        <Button name="ثبت اطلاعات" />
+        <button className="w-full bg-gray-500 text-white rounded-lg py-2">
+          صرف نظر از پذیرش
+        </button>
+      </div>
+    </div>
   );
 };
 
