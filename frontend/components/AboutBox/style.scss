@@ -2,15 +2,16 @@
 @use "../../styles/sass/abstracts/variables" as *;
 
 .about_box {
-  width: 30%;
-  background: rgba(hsl(228, 100%, 96%), $alpha: 0.3);
-  height: 45vh;
-  padding-block: 20px;
+  width: 40%;
+  background: rgba(hsl(228, 100%, 96%), $alpha: 0.2);
+  height: 100%;
+  padding-block:20px;
   border-radius: 10px;
   padding-inline: 20px;
+  border: 1px solid #c7c6c6;
 
   .about_box_header {
-    padding-bottom: 20px;
+    padding-bottom: 10px;
   }
 }
 

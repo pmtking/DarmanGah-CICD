@@ -9,15 +9,15 @@ import ModaleContect from "../ModaleContect/page";
 const AboutBox = () => {
   return (
     <>
-      <div className="about_box">
+      <div className="about_box shadow-2xl">
         <div className="about_box_header">
-          <h1 className="text-center text-4xl text-white font-bold">
-            درمانگاه فرهنگیان نیشابور – رزرو نوبت آنلاین و خدمات تخصصی پزشکی
+          <h1 className="text-center text-4xl text-white font-bold text-nowrap">
+            درمانگاه فرهنگیان نیشابور        
           </h1>
         </div>
 
-        <div className="px-4 md:px-10 mt-6">
-          <p className="text-center text-white leading-relaxed text-lg border-b pb-8">
+        <div className="px-1 md:px-10 mt-4 lg:px-4">
+          <p className="text-center text-white leading-relaxed text-md border-b ">
             به <strong>درمانگاه فرهنگیان نیشابور</strong> خوش آمدید! ما مرکزی
             مدرن و مجهز برای ارائه بهترین <strong>خدمات درمانی نیشابور</strong>{" "}
             به فرهنگیان و خانواده‌هایشان هستیم. با تیم متخصص و پزشکان حرفه‌ای،
@@ -31,7 +31,7 @@ const AboutBox = () => {
         </div>
 
         <div className="flex flex-wrap justify-center gap-4 px-4 mt-8">
-          <Button name="تماس با ما" className="btn-yellow-important" />
+          <Button name="تماس با ما" className="btn-yellow-important shadow-2xl" />
         </div>
       </div>
     </>
