@@ -2,7 +2,6 @@
 
 import NavBar from "@/components/NavBar/page";
 import { useState } from "react";
-import axios from "axios";
 import api from "@/libs/axios";
 
 interface LabFile {
@@ -25,13 +24,18 @@ export default function LabPage() {
     }
 
     try {
-      // ارسال POST به API
       const res = await api.post("/api/lab/get-files", { codeMelli });
 
-      // انتظار داریم فایل‌ها به صورت base64 یا URL برگردند
+      // تبدیل base64 به Blob URL با نوع MIME درست
       const fetchedFiles: LabFile[] = res.data.files.map((f: any) => {
-        const blob = Uint8Array.from(atob(f.data), (c) => c.charCodeAt(0));
-        const fileUrl = URL.createObjectURL(new Blob([blob]));
+        const byteCharacters = atob(f.data);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: "application/pdf" });
+        const fileUrl = URL.createObjectURL(blob);
         return { name: f.name, url: fileUrl };
       });
 
@@ -44,6 +48,14 @@ export default function LabPage() {
     } catch (err: any) {
       console.error(err);
       setStatus("❌ مشکلی در دریافت فایل‌ها رخ داد.");
+    }
+  };
+
+  // آزاد کردن Blob URL هنگام بستن مدال
+  const handleClosePreview = () => {
+    if (previewFile) {
+      URL.revokeObjectURL(previewFile);
+      setPreviewFile(null);
     }
   };
 
@@ -108,14 +120,14 @@ export default function LabPage() {
         </div>
       )}
 
-      {/* مدال پیش‌نمایش */}
+      {/* مدال پیش‌نمایش PDF */}
       {previewFile && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50">
           <div className="bg-white rounded-2xl shadow-lg w-11/12 md:w-3/4 lg:w-2/3 h-[80vh] flex flex-col">
             <div className="flex justify-between items-center p-4 border-b">
               <h2 className="text-lg font-bold">📄 پیش‌نمایش فایل</h2>
               <button
-                onClick={() => setPreviewFile(null)}
+                onClick={handleClosePreview}
                 className="text-red-500 hover:text-red-700 text-xl"
               >
                 ✕
@@ -125,6 +137,7 @@ export default function LabPage() {
               <iframe
                 src={previewFile}
                 className="w-full h-full rounded-b-2xl"
+                type="application/pdf"
               />
             </div>
           </div>

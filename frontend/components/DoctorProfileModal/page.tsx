@@ -31,6 +31,7 @@ type Props = {
   onClose: () => void;
   doctorName?: string;
   nationalId?: string;
+  personnelId?: string; // برای fetch اطلاعات
 };
 
 const specialtyTypes = [
@@ -58,6 +59,7 @@ export default function DoctorProfileModal({
   onClose,
   doctorName,
   nationalId,
+  personnelId,
 }: Props) {
   const [formData, setFormData] = useState<DoctorProfileForm>({
     personnelName: doctorName || "",
@@ -75,13 +77,36 @@ export default function DoctorProfileModal({
     documents: [],
   });
 
+  // وقتی modal باز می‌شود و personnelId موجود است، اطلاعات را fetch کن
   useEffect(() => {
-    setFormData((prev) => ({
-      ...prev,
-      personnelName: doctorName || "",
-      nationalId: nationalId || "",
-    }));
-  }, [isOpen, doctorName, nationalId]);
+    if (isOpen ) {
+      api
+        .get(`/api/doctors/${personnelId}`)
+        .then((res) => {
+          setFormData(res.data); // اطلاعات API را در فرم بنشان
+        })
+        .catch((err) => {
+          alert("خطا در دریافت اطلاعات: " + (err.response?.data?.message || err.message));
+        });
+    } else if (isOpen) {
+      // حالت اضافه کردن پزشک جدید
+      setFormData({
+        personnelName: doctorName || "",
+        nationalId: nationalId || "",
+        specialty: "",
+        specialtyType: "پزشک عمومی",
+        licenseNumber: "",
+        bio: "",
+        service: "",
+        workingDays: [],
+        workingHours: { شروع: "", پایان: "" },
+        roomNumber: "",
+        avatarUrl: "",
+        isAvailable: true,
+        documents: [],
+      });
+    }
+  }, [isOpen, personnelId, doctorName, nationalId]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -129,13 +154,16 @@ export default function DoctorProfileModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.post("/api/doctors/add", formData);
-      alert("پزشک جدید با موفقیت ثبت شد!");
+      if (personnelId) {
+        await api.put(`/api/doctors/${personnelId}`, formData);
+        alert("اطلاعات پزشک با موفقیت بروزرسانی شد!");
+      } else {
+        await api.post("/api/doctors/add", formData);
+        alert("پزشک جدید با موفقیت ثبت شد!");
+      }
       onClose();
     } catch (err: any) {
-      alert(
-        "خطا در ثبت اطلاعات: " + (err.response?.data?.message || err.message)
-      );
+      alert("خطا در ثبت اطلاعات: " + (err.response?.data?.message || err.message));
     }
   };
 
@@ -151,10 +179,11 @@ export default function DoctorProfileModal({
           ✕
         </button>
         <h2 className="text-xl text-[#fff] font-bold mb-4 text-center">
-          ثبت اطلاعات پزشک
+          {personnelId ? "ویرایش اطلاعات پزشک" : "ثبت اطلاعات پزشک"}
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* تمام inputها و UI شما همانند قبل */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <input
               name="personnelName"
@@ -169,6 +198,7 @@ export default function DoctorProfileModal({
               onChange={handleChange}
               placeholder="کد ملی"
               className={inputClass}
+              disabled={!!personnelId}
             />
             <input
               name="specialty"
@@ -247,16 +277,11 @@ export default function DoctorProfileModal({
 
           <div className="flex flex-wrap gap-2">
             {weekDays.map((day) => (
-              <label
-                key={day}
-                className="flex items-center gap-1 text-[#071952]"
-              >
+              <label key={day} className="flex items-center gap-1 text-[#071952]">
                 <input
                   type="checkbox"
                   checked={formData.workingDays.includes(day)}
-                  onChange={(e) =>
-                    handleWorkingDaysChange(day, e.target.checked)
-                  }
+                  onChange={(e) => handleWorkingDaysChange(day, e.target.checked)}
                 />
                 {day}
               </label>
@@ -286,17 +311,13 @@ export default function DoctorProfileModal({
               <div key={i} className="flex gap-2">
                 <input
                   value={doc.title}
-                  onChange={(e) =>
-                    handleDocumentChange(i, "title", e.target.value)
-                  }
+                  onChange={(e) => handleDocumentChange(i, "title", e.target.value)}
                   placeholder="عنوان"
                   className={`${inputClass} flex-1`}
                 />
                 <input
                   value={doc.fileUrl}
-                  onChange={(e) =>
-                    handleDocumentChange(i, "fileUrl", e.target.value)
-                  }
+                  onChange={(e) => handleDocumentChange(i, "fileUrl", e.target.value)}
                   placeholder="لینک فایل"
                   className={`${inputClass} flex-1`}
                 />
@@ -322,7 +343,7 @@ export default function DoctorProfileModal({
             type="submit"
             className="w-full py-2 bg-[#071952] text-white rounded hover:bg-[#0a2a70]"
           >
-            ثبت اطلاعات پزشک
+            {personnelId ? "بروزرسانی اطلاعات" : "ثبت اطلاعات پزشک"}
           </button>
         </form>
       </div>

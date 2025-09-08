@@ -75,6 +75,7 @@ export default function ClientDoctorsTable() {
           onClose={closeModal}
           doctorName={selectedDoctor.name}
           nationalId={selectedDoctor.nationalCode}
+          personnelId={selectedDoctor._id}
         />
       )}
     </div>
