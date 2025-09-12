@@ -13,6 +13,7 @@
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
     "@prisma/client": "^6.10.1",
+    "@types/jalaali-js": "^1.2.0",
     "axios": "^1.9.0",
     "chart.js": "^4.5.0",
     "clsx": "^2.1.1",
@@ -22,6 +23,7 @@
     "gsap": "^3.13.0",
     "html2canvas": "^1.4.1",
     "iconsax-reactjs": "0.0.8",
+    "jalaali-js": "^1.2.8",
     "js-cookie": "^3.0.5",
     "next": "^15.5.0",
     "next-auth": "^4.24.11",

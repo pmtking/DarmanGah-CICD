@@ -3,7 +3,6 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useReserveAppointment } from "@/hooks/useAppointment";
 import dayjs from "dayjs";
 import "dayjs/locale/fa";
-import axios from "axios";
 import api from "@/libs/axios";
 import toast from "react-hot-toast";
 
@@ -33,7 +32,7 @@ const SelectCard: React.FC<SelectCardProps> = ({ doctorId }) => {
 
   const { reserve, loading, error, success } = useReserveAppointment();
 
-  // گرفتن اطلاعات پزشک از API
+  // دریافت اطلاعات پزشک
   useEffect(() => {
     const fetchDoctor = async () => {
       try {
@@ -45,11 +44,10 @@ const SelectCard: React.FC<SelectCardProps> = ({ doctorId }) => {
         setLoadingDoctor(false);
       }
     };
-
     fetchDoctor();
   }, [doctorId]);
 
-  // محاسبه تایم‌ها
+  // محاسبه تایم‌های آزاد امروز
   const times = useMemo(() => {
     if (!doctor) return [];
 
@@ -79,16 +77,17 @@ const SelectCard: React.FC<SelectCardProps> = ({ doctorId }) => {
 
   const handleSelectTime = (time: string) => setSelectedTime(time);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success('نوبت شما فعال شد لطفا در اسراع وقت حضور داشته باشید')
+
+    if (!selectedTime) return;
+
+    toast.success("نوبت شما فعال شد لطفا در اسرع وقت حضور داشته باشید");
 
     const [_, time] = selectedTime.replace("امروز ", "").split(" ساعت ");
 
@@ -103,8 +102,6 @@ const SelectCard: React.FC<SelectCardProps> = ({ doctorId }) => {
     };
 
     await reserve(payload);
-    
-     
   };
 
   if (loadingDoctor) {
@@ -117,53 +114,56 @@ const SelectCard: React.FC<SelectCardProps> = ({ doctorId }) => {
 
   return (
     <div className="w-full mx-auto p-4">
+      {/* مرحله انتخاب نوبت */}
       {step === 1 && (
-        <div className="flex flex-col gap-3">
-          {times.length === 0 ? (
-            <p className="text-center text-gray-500 text-sm">
-              نوبتی برای امروز وجود ندارد ❌
-            </p>
-          ) : (
-            times.map((time, idx) => (
-              <label
-                key={idx}
-                onClick={() => handleSelectTime(time)}
-                className={`flex items-center justify-between px-4 py-3 rounded-xl border text-sm font-medium cursor-pointer transition-all ${
-                  selectedTime === time
-                    ? "bg-white text-[#00245a] border-[#00245a] shadow-md"
-                    : "bg-transparent text-[#00245a] border-[#444444] opacity-70"
-                }`}
-              >
-                {time}
-                <span
-                  className={`w-5 h-5 flex items-center justify-center border-2 rounded-full ${
+        <>
+          <div className="flex flex-col gap-2 max-h-60 overflow-y-auto rounded-lg border p-2">
+            {times.length === 0 ? (
+              <p className="text-center text-gray-500 text-xs">
+                نوبتی برای امروز وجود ندارد ❌
+              </p>
+            ) : (
+              times.map((time, idx) => (
+                <label
+                  key={idx}
+                  onClick={() => handleSelectTime(time)}
+                  className={`flex items-center justify-between px-3 py-2 rounded-lg border text-xs font-medium cursor-pointer transition-all ${
                     selectedTime === time
-                      ? "border-[#00245a] bg-[#00245a]"
-                      : "border-[#444444]"
+                      ? "bg-white text-[#00245a] border-[#00245a] shadow-md"
+                      : "bg-transparent text-[#00245a] border-[#444444] opacity-70"
                   }`}
                 >
-                  {selectedTime === time && (
-                    <span className="w-2 h-2 bg-white rounded-full" />
-                  )}
-                </span>
-              </label>
-            ))
-          )}
+                  {time}
+                  <span
+                    className={`w-4 h-4 flex items-center justify-center border-2 rounded-full ${
+                      selectedTime === time
+                        ? "border-[#00245a] bg-[#00245a]"
+                        : "border-[#444444]"
+                    }`}
+                  >
+                    {selectedTime === time && (
+                      <span className="w-1.5 h-1.5 bg-white rounded-full" />
+                    )}
+                  </span>
+                </label>
+              ))
+            )}
+          </div>
 
+          {/* دکمه بیرون از لیست تایم‌ها */}
           <button
             disabled={!selectedTime}
             onClick={() => setStep(2)}
-            className={`mt-4 bg-[#00245a] text-white rounded-xl py-3 px-4 text-sm font-medium transition-all ${
-              !selectedTime
-                ? "opacity-50 cursor-not-allowed"
-                : "hover:bg-[#001a40]"
+            className={`mt-4 bg-[#00245a]  w-full text-white rounded-xl py-3 px-4 text-sm font-medium transition-all ${
+              !selectedTime ? "opacity-50 cursor-not-allowed" : "hover:bg-[#001a40]"
             }`}
           >
-            تکمیل رزرو نوبت برای {selectedTime}
+            تکمیل رزرو نوبت برای {selectedTime || "..."}
           </button>
-        </div>
+        </>
       )}
 
+      {/* مرحله تکمیل اطلاعات */}
       {step === 2 && (
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-4">
           <input
@@ -209,9 +209,7 @@ const SelectCard: React.FC<SelectCardProps> = ({ doctorId }) => {
           </select>
 
           {error && <p className="text-red-500 text-sm">{error}</p>}
-          {success && (
-            <p className="text-green-600 text-sm">رزرو با موفقیت انجام شد ✅</p>
-          )}
+          {success && <p className="text-green-600 text-sm">رزرو با موفقیت انجام شد ✅</p>}
 
           <button
             type="submit"
@@ -220,9 +218,7 @@ const SelectCard: React.FC<SelectCardProps> = ({ doctorId }) => {
               loading ? "opacity-50 cursor-not-allowed" : "hover:bg-[#001a40]"
             }`}
           >
-            {loading
-              ? "در حال ارسال..."
-              : `ثبت نهایی رزرو برای ${selectedTime}`}
+            {loading ? "در حال ارسال..." : `ثبت نهایی رزرو برای ${selectedTime}`}
           </button>
         </form>
       )}

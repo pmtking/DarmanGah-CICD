@@ -41,7 +41,8 @@ const RespontionPage = () => {
         toast.error(res.data.message || "کد ملی یافت نشد ❌");
       }
     } catch (err: any) {
-      toast.error("خطا در برقراری ارتباط با سرور ❌");
+      toast.error("نوبت  ثبت نشده است❌");
+      setIsVerified(true);
       console.error(err);
     } finally {
       setLoading(false);
@@ -52,14 +53,14 @@ const RespontionPage = () => {
       handleVerify();
     }
   };
-  useEffect(() => {
-    const cookies = document.cookie;
-    const hasToken = cookies.includes("token");
-    // console.log("------------->>", user);
-    if (!hasToken) {
-      window.location.href = "/login";
-    }
-  }, []);
+  // useEffect(() => {
+  //   const cookies = document.cookie;
+  //   const hasToken = cookies.includes("token");
+  //   // console.log("------------->>", user);
+  //   if (!hasToken) {
+  //     window.location.href = "/login";
+  //   }
+  // }, []);
 
   return (
     <div className=" flex flex-col w-full justify-center items-center  ">

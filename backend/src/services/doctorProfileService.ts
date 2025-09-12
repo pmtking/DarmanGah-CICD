@@ -26,20 +26,48 @@ export const createDoctorProfile = async (data: any) => {
 
 //  ---------------------- find all profiles --------------- //
 
-
-
 export const getAllDoctorProfiles = async () => {
   try {
-    // مرحله ۱: دریافت لیست پرسنل‌هایی که نقش‌شون پزشک هست
+    // مرحله ۱: دریافت پرسنل‌هایی که نقش‌شون پزشک هست و فعال هستند
     const doctors = await Personnel.find({
       role: "DOCTOR",
       isActive: true,
     }).select("name phone nationalId gender");
 
-    // مرحله ۲: دریافت پروفایل‌های مرتبط با هر پزشک
+    // تعیین روز فعلی (فارسی)
+    const weekDays = [
+      "یک‌شنبه",
+      "دوشنبه",
+      "سه‌شنبه",
+      "چهارشنبه",
+      "پنج‌شنبه",
+      "جمعه",
+      "شنبه",
+    ];
+    const todayIndex = new Date().getDay(); // 0 یکشنبه، 6 شنبه
+    const today = weekDays[todayIndex === 0 ? 0 : todayIndex]; // روز فعلی فارسی
+
+    const now = new Date();
+    const currentTime = now.getHours() * 60 + now.getMinutes(); // زمان فعلی به دقیقه
+
+    // مرحله ۲: دریافت پروفایل‌های مرتبط و فیلتر پزشکان فعال در روز جاری و زمان مناسب
     const profiles = await Promise.all(
       doctors.map(async (doctor) => {
         const profile = await DoctorProfile.findOne({ personnel: doctor._id });
+
+        if (!profile) return null;
+
+        // فقط پزشکان فعال در روز جاری را برگردان
+        if (!profile.isAvailable || !profile.workingDays.includes(today))
+          return null;
+
+        // بررسی زمان پایان
+        const [endHour, endMinute] = profile.workingHours.پایان
+          .split(":")
+          .map(Number);
+        const endTimeInMinutes = endHour * 60 + endMinute;
+
+        if (currentTime > endTimeInMinutes) return null; // اگر زمان گذشته بود حذف شود
 
         return {
           personnelId: doctor._id,
@@ -47,29 +75,28 @@ export const getAllDoctorProfiles = async () => {
           phone: doctor.phone,
           nationalId: doctor.nationalId,
           gender: doctor.gender,
-          doctorProfileId: profile?._id || null,
-          specialty: profile?.specialty || null,
-          specialtyType: profile?.specialtyType || null,
-          licenseNumber: profile?.licenseNumber || null,
-          avatarUrl: profile?.avatarUrl || null,
-          isAvailable: profile?.isAvailable ?? false,
+          doctorProfileId: profile._id,
+          specialty: profile.specialty,
+          specialtyType: profile.specialtyType,
+          licenseNumber: profile.licenseNumber,
+          avatarUrl: profile.avatarUrl,
+          isAvailable: profile.isAvailable,
+          workingHours: profile.workingHours,
         };
       })
     );
 
-    return profiles;
-  } catch (error) {
-    console.error("❌ خطا در دریافت لیست پزشک‌ها:", error);
-    throw new Error("خطا در دریافت لیست پزشک‌ها");
+    // حذف null‌ها
+    return profiles.filter((p) => p !== null);
+  } catch (err: any) {
+    console.error("خطا در دریافت پروفایل پزشکان:", err.message);
+    throw new Error("خطا در دریافت پروفایل پزشکان");
   }
 };
 
 // --------------------- get profile By Id ------------------ //
 export const getDoctorProfileById = async (id) => {
-
-  return await DoctorProfile.findOne({personnel:id})
-    
-    
+  return await DoctorProfile.findOne({ personnel: id });
 };
 
 //  --------------------- update Profile --------------- //

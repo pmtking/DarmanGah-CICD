@@ -16,7 +16,6 @@ const doctorsServices: Record<string, string[]> = {
 };
 
 type DoctorName = "دکتر احمدی" | "دکتر رضایی" | "دکتر محمدی";
-
 type ServiceItem = { name: string; quantity: number };
 
 type FormData = {
@@ -49,7 +48,9 @@ const ReseptionForm = ({ data }: ReseptionFormProps) => {
   const [availableServices, setAvailableServices] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedServices, setSelectedServices] = useState<ServiceItem[]>([]);
+  const [loading, setLoading] = useState(false);
 
+  // تغییر فیلدها
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -57,9 +58,13 @@ const ReseptionForm = ({ data }: ReseptionFormProps) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // اضافه کردن خدمت
   const addService = (service: string) => {
     if (!selectedServices.find((s) => s.name === service)) {
-      setSelectedServices([...selectedServices, { name: service, quantity: 1 }]);
+      setSelectedServices([
+        ...selectedServices,
+        { name: service, quantity: 1 },
+      ]);
       setSearchQuery("");
       setFormData((prev) => ({ ...prev, service: "" }));
     } else {
@@ -67,16 +72,19 @@ const ReseptionForm = ({ data }: ReseptionFormProps) => {
     }
   };
 
+  // بروزرسانی تعداد خدمت
   const updateQuantity = (service: string, quantity: number) => {
     setSelectedServices((prev) =>
       prev.map((s) => (s.name === service ? { ...s, quantity } : s))
     );
   };
 
+  // حذف خدمت
   const removeService = (service: string) => {
     setSelectedServices((prev) => prev.filter((s) => s.name !== service));
   };
 
+  // بروزرسانی خدمات موجود بر اساس پزشک
   useEffect(() => {
     if (formData.doctorName && doctorsServices[formData.doctorName]) {
       setAvailableServices(doctorsServices[formData.doctorName]);
@@ -86,6 +94,7 @@ const ReseptionForm = ({ data }: ReseptionFormProps) => {
     }
   }, [formData.doctorName]);
 
+  // مقداردهی اولیه از داده دریافتی
   useEffect(() => {
     if (data) {
       let firstName = "";
@@ -95,7 +104,6 @@ const ReseptionForm = ({ data }: ReseptionFormProps) => {
         firstName = parts[0] || "";
         lastName = parts.slice(1).join(" ") || "";
       }
-
       setFormData((prev) => ({
         ...prev,
         firstName,
@@ -105,6 +113,73 @@ const ReseptionForm = ({ data }: ReseptionFormProps) => {
       }));
     }
   }, [data]);
+
+  // ارسال داده‌ها به سرور
+  const handleSubmit = async () => {
+    if (
+      !formData.firstName ||
+      !formData.lastName ||
+      !formData.doctorName ||
+      selectedServices.length === 0
+    ) {
+      toast.error("لطفا فیلدهای ضروری را پر کنید");
+      return;
+    }
+
+    const payload = {
+      patientName: `${formData.firstName} ${formData.lastName}`,
+      phoneNumber: formData.phoneNumber,
+      relationWithGuardian: formData.relation || "خود شخص",
+      visitType: "اولیه", // می‌توانید از فرم انتخاب کنید
+      insuranceType: formData.insuranceType || "",
+      supplementaryInsurance: formData.supplementaryInsurance || "",
+      doctorId: "650f0c1a2f3b3a0012345678", // ID واقعی پزشک از سرور
+      staffId: "650f0c1a2f3b3a0012345679", // ID کارمند ثبت‌کننده
+      appointmentDate: formData.visitDate,
+      appointmentTime: "10:30", // یا از فرم انتخاب شود
+      services: selectedServices.map((s, i) => ({
+        serviceId:
+          i === 0 ? "650f0c1a2f3b3a0012345680" : "650f0c1a2f3b3a0012345681",
+        quantity: s.quantity,
+      })),
+    };
+
+    try {
+      setLoading(true);
+      const res = await fetch("http://192.171.1.108:4000/api/reseption/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      setLoading(false);
+
+      if (data.success) {
+        toast.success("نوبت ثبت و فیش چاپ شد");
+        // پاک کردن فرم
+        setFormData({
+          firstName: "",
+          lastName: "",
+          gender: "",
+          doctorName: "",
+          visitDate: "",
+          insuranceType: "",
+          supplementaryInsurance: "",
+          relation: "",
+          phoneNumber: "",
+          service: "",
+        });
+        setSelectedServices([]);
+      } else {
+        toast.error(data.message || "خطا در ثبت نوبت");
+      }
+    } catch (err) {
+      setLoading(false);
+      toast.error("ارتباط با سرور برقرار نشد");
+      console.error(err);
+    }
+  };
 
   return (
     <div className="flex flex-col justify-center items-center p-4">
@@ -169,6 +244,18 @@ const ReseptionForm = ({ data }: ReseptionFormProps) => {
         </div>
       </div>
 
+      {/* تاریخ مراجعه */}
+      <div className="flex flex-col w-full mb-4">
+        <label className="text-right text-gray-700">تاریخ مراجعه</label>
+        <Input
+          type="date"
+          name="visitDate"
+          value={formData.visitDate}
+          onChange={handleChange}
+          className="w-full py-2 px-4 border border-gray-400 rounded text-black"
+        />
+      </div>
+
       {/* انتخاب پزشک */}
       <div className="flex flex-col w-full mb-4">
         <label className="text-right text-gray-700">نام پزشک</label>
@@ -226,7 +313,9 @@ const ReseptionForm = ({ data }: ReseptionFormProps) => {
                   type="number"
                   min={1}
                   value={s.quantity}
-                  onChange={(e) => updateQuantity(s.name, Number(e.target.value))}
+                  onChange={(e) =>
+                    updateQuantity(s.name, Number(e.target.value))
+                  }
                   className="w-12 px-1 py-0.5 border rounded text-xs text-black"
                 />
                 <button
@@ -243,7 +332,10 @@ const ReseptionForm = ({ data }: ReseptionFormProps) => {
 
       {/* دکمه‌ها */}
       <div className="flex w-full gap-4 mt-5">
-        <Button name="ثبت اطلاعات" />
+        <Button
+          name={loading ? "در حال ارسال..." : "ثبت اطلاعات"}
+          onClick={handleSubmit}
+        />
         <button className="w-full bg-gray-500 text-white rounded-lg py-2">
           صرف نظر از پذیرش
         </button>

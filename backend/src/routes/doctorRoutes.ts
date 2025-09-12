@@ -1,5 +1,5 @@
 import express from "express";
-import { changeAvailability, createProfile, deleteProfile, findDoctor, getProfileById, getProfiles, updateProfile, uploadDocument } from "../controllers/doctorProfileController";
+import { changeAvailability, createProfile, deleteProfile, findDoctor, getProfileById, getProfiles, updateProfile, uploadDocument, upsertProfile } from "../controllers/doctorProfileController";
 
 
 const router = express.Router();
@@ -26,5 +26,6 @@ router.patch("/:id/availability", changeAvailability);
 
 // ---------------------- افزودن مدرک جدید به پروفایل ---------------------- //
 router.post("/:id/document", uploadDocument);
+router.post("/upsert" , upsertProfile)
 
 export default router;

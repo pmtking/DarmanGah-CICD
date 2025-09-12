@@ -138,3 +138,45 @@ export const uploadDocument = async (req: Request, res: Response) => {
     res.status(500).json({ message: "خطا در افزودن مدرک", error: err.message });
   }
 };
+
+// ---------------------- ایجاد یا بروزرسانی پروفایل ---------------------- //
+export const upsertProfile = async (req: Request, res: Response) => {
+  try {
+    const { error } = createDoctorProfileSchema.validate(req.body);
+    if (error)
+      return res.status(400).json({ message: error.details[0].message });
+
+    const { nationalId, name } = req.body;
+
+    // جستجو بر اساس nationalId یا name
+    const personnel = await Personnel.findOne({
+      $or: [{ nationalId: nationalId?.trim() }, { name: name?.trim() }],
+    });
+
+    if (!personnel) return res.status(404).json({ message: "پرسنل پیدا نشد" });
+
+    if (personnel.role !== "DOCTOR") {
+      return res
+        .status(400)
+        .json({ message: "فقط پرسنل با نقش پزشک قابل انتخاب است" });
+    }
+
+    // بررسی وجود پروفایل دکتر
+    const existingProfile = await getAllDoctorProfiles().then((profiles) =>
+      profiles.find((p) => p.personnelId === personnel._id.toString())
+    );
+
+    let profile;
+    if (existingProfile) {
+      // اگر پروفایل موجود بود بروزرسانی کن
+      profile = await updateDoctorProfile(existingProfile._id, req.body);
+    } else {
+      // اگر نبود، بساز
+      profile = await createDoctorProfile({ ...req.body, personnelId: personnel._id });
+    }
+
+    res.status(200).json({ message: "اطلاعات پزشک ذخیره شد", profile });
+  } catch (err: any) {
+    res.status(500).json({ message: "خطا در ذخیره اطلاعات", error: err.message });
+  }
+};

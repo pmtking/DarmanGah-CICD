@@ -7,6 +7,7 @@ import managerRouter from "./managerRoutes";
 import doctors from "./doctorRoutes";
 import service from "./clinicServiceRoutes";
 import appontment from "./appointmentRoutes";
+import reseption from './ReseptionRouter'
 import Lab from "./labRoutes";
 export const router = express.Router();
 const fs = require("fs");
@@ -51,3 +52,4 @@ router.use("/personel/", personel);
 router.use("/doctors", doctors);
 router.use("/appointment", appontment);
 router.use("/lab", Lab);
+router.use("/reseption", reseption);

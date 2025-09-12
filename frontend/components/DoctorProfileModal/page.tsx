@@ -79,15 +79,16 @@ export default function DoctorProfileModal({
 
   // وقتی modal باز می‌شود و personnelId موجود است، اطلاعات را fetch کن
   useEffect(() => {
-    if (isOpen ) {
+    if (isOpen && personnelId) {
       api
         .get(`/api/doctors/${personnelId}`)
-        .then((res) => {
-          setFormData(res.data); // اطلاعات API را در فرم بنشان
-        })
-        .catch((err) => {
-          alert("خطا در دریافت اطلاعات: " + (err.response?.data?.message || err.message));
-        });
+        .then((res) => setFormData(res.data))
+        .catch((err) =>
+          alert(
+            "خطا در دریافت اطلاعات: " +
+              (err.response?.data?.message || err.message)
+          )
+        );
     } else if (isOpen) {
       // حالت اضافه کردن پزشک جدید
       setFormData({
@@ -154,16 +155,15 @@ export default function DoctorProfileModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      if (personnelId) {
-        await api.put(`/api/doctors/${personnelId}`, formData);
-        alert("اطلاعات پزشک با موفقیت بروزرسانی شد!");
-      } else {
-        await api.post("/api/doctors/add", formData);
-        alert("پزشک جدید با موفقیت ثبت شد!");
-      }
+      // فقط یک endpoint برای upsert
+      await api.post("/api/doctors/upsert", formData);
+      alert("اطلاعات پزشک ذخیره شد ✅");
       onClose();
     } catch (err: any) {
-      alert("خطا در ثبت اطلاعات: " + (err.response?.data?.message || err.message));
+      alert(
+        "خطا در ذخیره اطلاعات: " +
+          (err.response?.data?.message || err.message)
+      );
     }
   };
 
@@ -179,11 +179,10 @@ export default function DoctorProfileModal({
           ✕
         </button>
         <h2 className="text-xl text-[#fff] font-bold mb-4 text-center">
-          {personnelId ? "ویرایش اطلاعات پزشک" : "ثبت اطلاعات پزشک"}
+          ثبت یا بروزرسانی اطلاعات پزشک
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* تمام inputها و UI شما همانند قبل */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <input
               name="personnelName"
@@ -198,7 +197,7 @@ export default function DoctorProfileModal({
               onChange={handleChange}
               placeholder="کد ملی"
               className={inputClass}
-              disabled={!!personnelId}
+              // disabled={!!personnelId} // می‌تونی نگه داری یا برداری
             />
             <input
               name="specialty"
@@ -343,7 +342,7 @@ export default function DoctorProfileModal({
             type="submit"
             className="w-full py-2 bg-[#071952] text-white rounded hover:bg-[#0a2a70]"
           >
-            {personnelId ? "بروزرسانی اطلاعات" : "ثبت اطلاعات پزشک"}
+            ذخیره اطلاعات پزشک
           </button>
         </form>
       </div>
