@@ -1,22 +1,23 @@
 import { Request, Response } from "express";
-
 import {
   addDocument,
   createDoctorProfile,
   deleteDoctorProfile,
   getAllDoctorProfiles,
+  getAllDoctors,
   getDoctorProfileById,
   toggleAvailability,
   updateDoctorProfile,
 } from "../services/doctorProfileService";
 import { createDoctorProfileSchema } from "../validations/doctorProfile.validation";
 import Personnel from "../models/Personnel";
+import DoctorProfile from "../models/DoctorProfile";
 
 // ---------------------- ایجاد پروفایل پزشک ---------------------- //
-export const findDoctor = async(req:Request , res:Response) => {
-  const doctors  = await Personnel.find({role:"DOCTOR"}) ;
-  res.status(200).json(doctors)
-}
+export const findDoctor = async (req: Request, res: Response) => {
+  const doctors = await Personnel.find({ role: "DOCTOR" });
+  res.status(200).json(doctors);
+};
 // کنترلر
 export const createProfile = async (req: Request, res: Response) => {
   try {
@@ -63,6 +64,22 @@ export const getProfiles = async (_req: Request, res: Response) => {
       .json({ message: "خطا در دریافت لیست پزشکان", error: err.message });
   }
 };
+// -------------------------دریافت با type ------------------------ //
+export const getAllDoctorsController = async (req: Request, res: Response) => {
+  try {
+    
+    const doctors = await DoctorProfile.find();
+    // اگه بخوای سرویس هم بیاد
+
+    res.status(200).json(doctors);
+  } catch (error) {
+    console.error("❌ Error in getAllDoctorsController:", error);
+    res.status(500).json({
+      message: "خطا در گرفتن لیست پزشک‌ها",
+      error,
+    });
+  }
+};
 
 // ---------------------- دریافت پروفایل با آیدی ---------------------- //
 export const getProfileById = async (req: Request, res: Response) => {
@@ -94,7 +111,6 @@ export const updateProfile = async (req: Request, res: Response) => {
       .json({ message: "خطا در بروزرسانی پروفایل", error: err.message });
   }
 };
-
 // ---------------------- حذف پروفایل ---------------------- //
 export const deleteProfile = async (req: Request, res: Response) => {
   try {
@@ -172,11 +188,16 @@ export const upsertProfile = async (req: Request, res: Response) => {
       profile = await updateDoctorProfile(existingProfile._id, req.body);
     } else {
       // اگر نبود، بساز
-      profile = await createDoctorProfile({ ...req.body, personnelId: personnel._id });
+      profile = await createDoctorProfile({
+        ...req.body,
+        personnelId: personnel._id,
+      });
     }
 
     res.status(200).json({ message: "اطلاعات پزشک ذخیره شد", profile });
   } catch (err: any) {
-    res.status(500).json({ message: "خطا در ذخیره اطلاعات", error: err.message });
+    res
+      .status(500)
+      .json({ message: "خطا در ذخیره اطلاعات", error: err.message });
   }
 };

@@ -1,7 +1,7 @@
 // -------------------------- imports ------------------- //
 
 import mongoose from "mongoose";
-import DoctorProfile from "../models/DoctorProfile";
+import DoctorProfile, { IDoctorProfile } from "../models/DoctorProfile";
 import Personnel from "../models/Personnel";
 
 // -------------------------- add profile -------------- //
@@ -82,6 +82,7 @@ export const getAllDoctorProfiles = async () => {
           avatarUrl: profile.avatarUrl,
           isAvailable: profile.isAvailable,
           workingHours: profile.workingHours,
+          workingDays: profile.workingDays,
         };
       })
     );
@@ -91,6 +92,26 @@ export const getAllDoctorProfiles = async () => {
   } catch (err: any) {
     console.error("خطا در دریافت پروفایل پزشکان:", err.message);
     throw new Error("خطا در دریافت پروفایل پزشکان");
+  }
+};
+
+export const getAllDoctors = async (
+  type?: "general" | "specialist"
+): Promise<IDoctorProfile[]> => {
+  try {
+    let filter: Record<string, any> = {};
+
+    if (type === "general") {
+      filter.specialty = "عمومی";
+    } else if (type === "specialist") {
+      filter.specialty = "متخصص";
+    }
+
+    const data = await DoctorProfile.find(filter);
+    return data;
+  } catch (error) {
+    console.error("Error in getAllDoctors:", error);
+    throw error;
   }
 };
 

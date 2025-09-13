@@ -1,11 +1,21 @@
 import express from "express";
-import { changeAvailability, createProfile, deleteProfile, findDoctor, getProfileById, getProfiles, updateProfile, uploadDocument, upsertProfile } from "../controllers/doctorProfileController";
-
+import {
+  changeAvailability,
+  createProfile,
+  deleteProfile,
+  findDoctor,
+  getAllDoctorsController,
+  getProfileById,
+  getProfiles,
+  updateProfile,
+  uploadDocument,
+  upsertProfile,
+} from "../controllers/doctorProfileController";
 
 const router = express.Router();
 
 // ------------------ دریافت اطلاعات ---------------------------- //
-router.get('/find' , findDoctor)
+router.get("/find", findDoctor);
 // ---------------------- ایجاد پروفایل پزشک ---------------------- //
 router.post("/add", createProfile);
 
@@ -26,6 +36,12 @@ router.patch("/:id/availability", changeAvailability);
 
 // ---------------------- افزودن مدرک جدید به پروفایل ---------------------- //
 router.post("/:id/document", uploadDocument);
-router.post("/upsert" , upsertProfile)
 
+// --------------------------- ایجاد و بهروز رسانی ------------------------ //
+router.post("/upsert", upsertProfile);
+
+//  ------------------------------- دسته بندی پزشک -------------------- //
+router.get("/all", getAllDoctorsController);
+
+// --------------------- export =----------------- //
 export default router;
