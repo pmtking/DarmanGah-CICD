@@ -10,7 +10,7 @@ export const createDoctorProfileSchema = Joi.object({
     .required()
     .label("نوع تخصص"),
   licenseNumber: Joi.string().required().label("شماره نظام پزشکی"),
-  bio: Joi.string().max(10000).label("بیوگرافی"),
+  bio: Joi.string().max(10000).optional().label("بیوگرافی"),
   workingDays: Joi.array()
     .items(
       Joi.string().valid(
@@ -23,11 +23,32 @@ export const createDoctorProfileSchema = Joi.object({
         "جمعه"
       )
     )
+    .optional()
     .label("روزهای کاری"),
-  workingHours: Joi.object({
-    شروع: Joi.string().required().label("ساعت شروع"),
-    پایان: Joi.string().required().label("ساعت پایان"),
-  }).required().label("ساعات کاری"),
+  workingHours: Joi.object()
+    .pattern(
+      Joi.string().valid(
+        "شنبه",
+        "یک‌شنبه",
+        "دوشنبه",
+        "سه‌شنبه",
+        "چهارشنبه",
+        "پنج‌شنبه",
+        "جمعه"
+      ),
+      Joi.object({
+        shifts: Joi.array()
+          .items(
+            Joi.object({
+              start: Joi.string().required().label("ساعت شروع"),
+              end: Joi.string().required().label("ساعت پایان"),
+            })
+          )
+          .required()
+      })
+    )
+    .optional()
+    .label("ساعات کاری"),
   roomNumber: Joi.string().optional().label("شماره اتاق"),
   avatarUrl: Joi.string().uri().optional().label("آواتار"),
   isAvailable: Joi.boolean().optional().label("وضعیت فعال"),

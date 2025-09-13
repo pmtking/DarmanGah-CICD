@@ -13,15 +13,14 @@ export interface IDoctorProfile extends Document {
     | "رادیولوژی"
     | "سایر";
   licenseNumber: string;
-  bio?: string;
   service: Schema.Types.ObjectId;
   workingDays: ("شنبه" | "یک‌شنبه" | "دوشنبه" | "سه‌شنبه" | "چهارشنبه" | "پنج‌شنبه" | "جمعه")[];
   workingHours: {
-    شروع: string;
-    پایان: string;
+    [day: string]: {
+      shifts: { start: string; end: string; booked?: string[] }[];
+    };
   };
   roomNumber?: string;
-  avatarUrl?: string;
   isAvailable: boolean;
   documents: {
     title: string;
@@ -33,42 +32,17 @@ export interface IDoctorProfile extends Document {
 // ---------------------- Schema ---------------------- //
 const DoctorProfileSchema = new Schema<IDoctorProfile>(
   {
-    personnel: {
-      type: Schema.Types.ObjectId,
-      ref: "Personnel",
-    },
+    personnel: { type: Schema.Types.ObjectId, ref: "Personnel" },
 
-    specialty: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+    specialty: { type: String, required: true, trim: true },
 
     specialtyType: {
       type: String,
-      enum: [
-        "پزشک عمومی",
-        "جراح",
-        "داخلی",
-        "اطفال",
-        "پوست",
-        "رادیولوژی",
-        "سایر",
-      ],
+      enum: ["پزشک عمومی", "جراح", "داخلی", "اطفال", "پوست", "رادیولوژی", "سایر"],
       required: true,
     },
 
-    licenseNumber: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-    },
-
-    bio: {
-      type: String,
-      maxlength: 10000,
-    },
+    licenseNumber: { type: String, required: true, unique: true, trim: true },
 
     service: { type: String, required: true },
 
@@ -78,24 +52,24 @@ const DoctorProfileSchema = new Schema<IDoctorProfile>(
       default: [],
     },
 
+    // شیفت‌ها
     workingHours: {
-      شروع: { type: String, required: true },
-      پایان: { type: String, required: true },
+      type: Map,
+      of: new Schema({
+        shifts: [
+          {
+            start: { type: String, required: true },
+            end: { type: String, required: true },
+            booked: { type: [String], default: [] },
+          },
+        ],
+      }),
+      default: {},
     },
 
-    roomNumber: {
-      type: String,
-      trim: true,
-    },
+    roomNumber: { type: String, trim: true },
 
-    avatarUrl: {
-      type: String,
-    },
-
-    isAvailable: {
-      type: Boolean,
-      default: true,
-    },
+    isAvailable: { type: Boolean, default: true },
 
     documents: [
       {
@@ -111,5 +85,4 @@ const DoctorProfileSchema = new Schema<IDoctorProfile>(
 // ---------------------- Model ---------------------- //
 const DoctorProfile = mongoose.model("DoctorProfile", DoctorProfileSchema);
 
-// ---------------------- Export ---------------------- //
 export default DoctorProfile;

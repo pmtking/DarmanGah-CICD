@@ -1,9 +1,16 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation"; // 🟢 اضافه شد
 import api from "@/libs/axios";
 
+interface Shift {
+  start: string;
+  end: string;
+  booked: string[];
+}
+
 interface Doctor {
+  personnelId: string; // 🟢 کلید اصلی
   _id: string;
   name: string;
   specialty: string;
@@ -11,22 +18,46 @@ interface Doctor {
   email: string;
   workingDays: string[];
   workingHours: {
-    [day: string]: { شروع: string; پایان: string; booked?: string[] };
+    [day: string]: { shifts: Shift[] };
   };
   avatarUrl?: string;
 }
 
+// Modal component
+const Modal = ({
+  children,
+  onClose,
+}: {
+  children: React.ReactNode;
+  onClose: () => void;
+}) => (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div className="bg-white/90 rounded-xl p-6 w-80 relative backdrop-blur-md">
+      <button
+        onClick={onClose}
+        className="absolute top-2 right-2 text-gray-600 hover:text-gray-900 font-bold"
+      >
+        ×
+      </button>
+      {children}
+    </div>
+  </div>
+);
+
 const DoctorsPage = () => {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDoctorId, setSelectedDoctorId] = useState<string | null>(null);
+  const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
-  const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false);
 
   const params = useParams();
-  // بررسی نوع پارامتر قبل از decode
+  const router = useRouter(); // 🟢 اضافه شد
+
   const type =
-    typeof params?.type === "string" ? decodeURIComponent(params.type).trim() : undefined;
+    typeof params?.type === "string"
+      ? decodeURIComponent(params.type).trim()
+      : undefined;
 
   const fetchDoctors = async () => {
     try {
@@ -45,14 +76,13 @@ const DoctorsPage = () => {
 
   const typeMap: Record<string, string[]> = {
     عمومی: ["پزشک عمومی"],
-    دندان‌پزشک: ["دندان‌پزشک"],
+    "دندان‌پزشک": ["دندان‌پزشک"],
     متخصص: ["جراح", "داخلی", "اطفال", "پوست", "رادیولوژی", "سایر"],
   };
 
   const filteredDoctors = type
     ? doctors.filter((doc) => {
-        if (type === "عمومی")
-          return typeMap["عمومی"].includes(doc.specialtyType);
+        if (type === "عمومی") return typeMap["عمومی"].includes(doc.specialtyType);
         if (type === "دندان‌پزشک")
           return typeMap["دندان‌پزشک"].includes(doc.specialtyType);
         return typeMap["متخصص"].includes(doc.specialtyType);
@@ -107,74 +137,64 @@ const DoctorsPage = () => {
                 </p>
               </div>
 
-              <div className="w-full mb-4">
-                <p className="text-sm font-bold text-white">ساعات حضور:</p>
-                <p className="text-sm text-gray-200">
-                  {selectedDay && doctor.workingHours[selectedDay]
-                    ? `${doctor.workingHours[selectedDay].شروع} - ${doctor.workingHours[selectedDay].پایان}`
-                    : `${doctor.workingHours["شنبه"]?.شروع || "-"} - ${
-                        doctor.workingHours["شنبه"]?.پایان || "-"
-                      }`}
-                </p>
-              </div>
-
               <button
-                onClick={() =>
-                  setSelectedDoctorId(
-                    selectedDoctorId === doctor._id ? null : doctor._id
-                  )
-                }
+                onClick={() => {
+                  setSelectedDoctor(doctor);
+                  setSelectedDay(null);
+                  setShowModal(true);
+                }}
                 className="w-full bg-blue-600/70 text-white py-2 rounded-xl hover:bg-blue-700/80 transition font-medium backdrop-blur-sm"
               >
                 نوبت گرفتن
               </button>
-
-              {selectedDoctorId === doctor._id && (
-                <div className="mt-4 w-full">
-                  <h4 className="font-bold text-white mb-2">انتخاب روز:</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {doctor.workingDays.map((day) => (
-                      <button
-                        key={day}
-                        onClick={() => setSelectedDay(day)}
-                        className={`px-3 py-1 rounded ${
-                          selectedDay === day
-                            ? "bg-blue-500 text-white"
-                            : "bg-gray-200/50"
-                        }`}
-                      >
-                        {day} ({doctor.workingHours[day]?.booked?.length || 0} نوبت)
-                      </button>
-                    ))}
-                  </div>
-
-                  {selectedDay && (
-                    <>
-                      <h4 className="font-bold text-white mt-3 mb-2">
-                        انتخاب ساعت:
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        {doctor.workingHours[selectedDay]?.booked?.map((hour) => (
-                          <button
-                            key={hour}
-                            onClick={() => setSelectedTime(hour)}
-                            className={`px-3 py-1 rounded ${
-                              selectedTime === hour
-                                ? "bg-green-500 text-white"
-                                : "bg-gray-200/50"
-                            }`}
-                          >
-                            {hour}
-                          </button>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
             </div>
           ))}
         </div>
+      )}
+
+      {/* Modal */}
+      {showModal && selectedDoctor && (
+        <Modal onClose={() => setShowModal(false)}>
+          <h4 className="font-bold text-gray-800 mb-2">انتخاب روز:</h4>
+          <div className="flex flex-wrap gap-2 mb-4">
+            {selectedDoctor.workingDays.map((day) => (
+              <button
+                key={day}
+                onClick={() => setSelectedDay(day)}
+                className={`px-3 py-1 rounded ${
+                  selectedDay === day ? "bg-blue-500 text-white" : "bg-gray-200/50"
+                }`}
+              >
+                {day}
+              </button>
+            ))}
+          </div>
+
+          {selectedDay && (
+            <>
+              <h4 className="font-bold text-gray-800 mb-2">انتخاب ساعت:</h4>
+              <div className="flex flex-wrap gap-2">
+                {selectedDoctor.workingHours[selectedDay]?.shifts.map((shift, i) => {
+                  const label = `${shift.start} - ${shift.end}`;
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => {
+                        // 🟢 بجای alert → ریدایرکت به صفحه رزرو
+                        router.push(
+                          `/reserve/${selectedDoctor.personnelId}?day=${selectedDay}&time=${shift.start}`
+                        );
+                      }}
+                      className="px-3 py-1 rounded bg-gray-200/50 hover:bg-green-500 hover:text-white transition"
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </Modal>
       )}
     </section>
   );

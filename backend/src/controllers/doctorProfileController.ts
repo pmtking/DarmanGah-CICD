@@ -162,7 +162,7 @@ export const upsertProfile = async (req: Request, res: Response) => {
     if (error)
       return res.status(400).json({ message: error.details[0].message });
 
-    const { nationalId, name } = req.body;
+    const { nationalId, name, workingHours } = req.body;
 
     // جستجو بر اساس nationalId یا name
     const personnel = await Personnel.findOne({
@@ -178,19 +178,25 @@ export const upsertProfile = async (req: Request, res: Response) => {
     }
 
     // بررسی وجود پروفایل دکتر
-    const existingProfile = await getAllDoctorProfiles().then((profiles) =>
-      profiles.find((p) => p.personnelId === personnel._id.toString())
-    );
+    const existingProfile = await DoctorProfile.findOne({ personnel: personnel._id });
 
     let profile;
     if (existingProfile) {
-      // اگر پروفایل موجود بود بروزرسانی کن
-      profile = await updateDoctorProfile(existingProfile._id, req.body);
+      // بروزرسانی پروفایل
+      profile = await DoctorProfile.findByIdAndUpdate(
+        existingProfile._id,
+        {
+          ...req.body,
+          personnel: personnel._id,
+          workingHours, // حتماً شیفت‌ها را درست بفرستید
+        },
+        { new: true }
+      );
     } else {
-      // اگر نبود، بساز
-      profile = await createDoctorProfile({
+      // ایجاد پروفایل جدید
+      profile = await DoctorProfile.create({
         ...req.body,
-        personnelId: personnel._id,
+        personnel: personnel._id,
       });
     }
 

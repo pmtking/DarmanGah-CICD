@@ -20,7 +20,7 @@ const Services = () => {
           <ServiseBox name=" بینایی سنجی و تجویز عینک" href="/" />
           <ServiseBox name="مامائی " href="/" />
           <ServiseBox name=" شنوایی سنجی" href="/" />
-          <ServiseBox name=" کار درمانی" href="/" />
+          <ServiseBox name=" کار درمانی" href="/" alertMessage="در ساعات 8 الی 10 و عصر ها 16 الی 17  جهت معاینه و اخذ نوبت  به صورت حضوری مراجعه فرمایید " />
           <ServiseBox name="  تزریقات " href="/" />
           <ServiseBox name=" گفتار درمانی" href="/" />
           <ServiseBox name="  رادیو لوژی " href="/" />
