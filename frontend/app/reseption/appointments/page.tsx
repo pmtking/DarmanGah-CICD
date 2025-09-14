@@ -21,7 +21,7 @@ const AppointmentsTable = () => {
   const fetchAppointments = async () => {
     try {
       setLoading(true);
-      const res = await api.get("/api/appointments");
+      const res = await api.get("/api/appointment");
       // فقط نوبت‌های 1 ساعت آینده
       const now = new Date();
       const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
