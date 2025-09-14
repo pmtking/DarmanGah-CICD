@@ -5,11 +5,15 @@ import api from "@/libs/axios";
 import toast from "react-hot-toast";
 
 interface Appointment {
-  id: string;
-  doctorName: string;
-  specialty: string;
-  time: string; // ISO string
-  status: "active" | "cancelled" | "completed";
+  _id: string;
+  fullName: string;
+  phoneNumber: string;
+  insuranceType: string;
+  nationalCode: string;
+  doctorId: { fullName: string; specialization: string } | null;
+  appointmentDate: string;
+  appointmentTime: string;
+  status: "reserved" | "completed" | "cancelled";
 }
 
 const AppointmentsTable = () => {
@@ -21,16 +25,13 @@ const AppointmentsTable = () => {
   const fetchAppointments = async () => {
     try {
       setLoading(true);
-      const res = await api.get("/api/appointment");
-      // فقط نوبت‌های 1 ساعت آینده
-      const now = new Date();
-      const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
-      const upcomingAppointments = res.data.filter((appt: Appointment) => {
-        const apptTime = new Date(appt.time);
-        return apptTime >= now && apptTime <= oneHourLater;
-      });
-      setAppointments(upcomingAppointments);
-      setFilteredAppointments(upcomingAppointments);
+      const res = await api.get("/api/appointment"); // API نوبت‌های امروز
+      if (res.data.success) {
+        setAppointments(res.data.data);
+        setFilteredAppointments(res.data.data);
+      } else {
+        toast.error("هیچ نوبتی موجود نیست");
+      }
     } catch (err) {
       console.error(err);
       toast.error("خطا در دریافت نوبت‌ها");
@@ -41,12 +42,10 @@ const AppointmentsTable = () => {
 
   useEffect(() => {
     fetchAppointments();
-    // آپدیت خودکار هر دقیقه
     const interval = setInterval(fetchAppointments, 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 
-  // فیلتر جستجو
   useEffect(() => {
     if (!search) {
       setFilteredAppointments(appointments);
@@ -56,8 +55,9 @@ const AppointmentsTable = () => {
     setFilteredAppointments(
       appointments.filter(
         (appt) =>
-          appt.doctorName.toLowerCase().includes(lower) ||
-          appt.specialty.toLowerCase().includes(lower)
+          appt.fullName.toLowerCase().includes(lower) ||
+          appt.phoneNumber.includes(lower) ||
+          (appt.doctorId?.fullName || "").toLowerCase().includes(lower)
       )
     );
   }, [search, appointments]);
@@ -66,10 +66,9 @@ const AppointmentsTable = () => {
     <div className="w-full overflow-x-auto bg-white/20 backdrop-blur-md rounded-xl shadow-md p-4">
       <h2 className="text-lg font-semibold text-white mb-4">لیست نوبت‌ها</h2>
 
-      {/* جستجو */}
       <input
         type="text"
-        placeholder="جستجو بر اساس نام پزشک یا تخصص"
+        placeholder="جستجو بر اساس نام بیمار، شماره یا پزشک"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         className="w-full mb-4 p-2 rounded text-black"
@@ -83,7 +82,11 @@ const AppointmentsTable = () => {
         <table className="min-w-full divide-y divide-gray-200 text-white">
           <thead>
             <tr className="bg-gray-800/50">
-              <th className="px-4 py-2 text-left">نام پزشک</th>
+              <th className="px-4 py-2 text-left">نام بیمار</th>
+              <th className="px-4 py-2 text-left">کد ملی</th>
+              <th className="px-4 py-2 text-left">شماره</th>
+              <th className="px-4 py-2 text-left">نوع بیمه</th>
+              <th className="px-4 py-2 text-left">پزشک</th>
               <th className="px-4 py-2 text-left">تخصص</th>
               <th className="px-4 py-2 text-left">ساعت نوبت</th>
               <th className="px-4 py-2 text-left">وضعیت</th>
@@ -91,13 +94,17 @@ const AppointmentsTable = () => {
           </thead>
           <tbody className="divide-y divide-gray-700">
             {filteredAppointments.map((appt) => (
-              <tr key={appt.id} className="hover:bg-gray-700/30">
-                <td className="px-4 py-2">{appt.doctorName}</td>
-                <td className="px-4 py-2">{appt.specialty}</td>
-                <td className="px-4 py-2">{new Date(appt.time).toLocaleTimeString()}</td>
+              <tr key={appt._id} className="hover:bg-gray-700/30">
+                <td className="px-4 py-2">{appt.fullName}</td>
+                <td className="px-4 py-2">{appt.nationalCode}</td>
+                <td className="px-4 py-2">{appt.phoneNumber}</td>
+                <td className="px-4 py-2">{appt.insuranceType}</td>
+                <td className="px-4 py-2">{appt.doctorId?.fullName || "-"}</td>
+                <td className="px-4 py-2">{appt.doctorId?.specialization || "-"}</td>
+                <td className="px-4 py-2">{appt.appointmentTime}</td>
                 <td className="px-4 py-2">
-                  {appt.status === "active" && (
-                    <span className="text-green-400 font-semibold">فعال</span>
+                  {appt.status === "reserved" && (
+                    <span className="text-green-400 font-semibold">رزرو شده</span>
                   )}
                   {appt.status === "cancelled" && (
                     <span className="text-red-400 font-semibold">لغو شده</span>
