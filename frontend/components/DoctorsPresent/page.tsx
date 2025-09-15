@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useEffect, useState } from "react";
 import "./style.scss";
 import Card from "../Card/page";
@@ -12,7 +11,7 @@ interface Doctor {
   specialty?: string;
   phone?: string;
   status?: "present" | "upcoming" | "finished";
-  shiftTime?: string; // ساعت شیفت برای نمایش
+  nextShift?: string;
 }
 
 const DoctorsPresent = () => {
@@ -25,10 +24,7 @@ const DoctorsPresent = () => {
       setLoading(true);
       const res = await api.get("/api/doctors");
 
-      // زمان فعلی با توجه به تهران
-      const now = new Date(
-        new Date().toLocaleString("fa-IR", { timeZone: "Asia/Tehran" })
-      );
+      const now = new Date();
       const nowMinutes = now.getHours() * 60 + now.getMinutes();
 
       const weekDays = [
@@ -46,46 +42,36 @@ const DoctorsPresent = () => {
         .filter((doc: any) => doc.workingHours?.[today])
         .map((doc: any) => {
           const todayHours = doc.workingHours[today];
-          const shiftsSorted = [...todayHours.shifts].sort((a, b) => {
-            const [ah, am] = a.start.split(":").map(Number);
-            const [bh, bm] = b.start.split(":").map(Number);
-            return ah * 60 + am - (bh * 60 + bm);
-          });
-
           let status: "present" | "upcoming" | "finished" = "finished";
-          let shiftTime: string | undefined;
+          let nextShift: string | undefined = undefined;
+          let nearestUpcomingDelta = Number.POSITIVE_INFINITY;
 
-          for (let shift of shiftsSorted) {
+          todayHours.shifts.forEach((shift: any) => {
             const [sh, sm] = shift.start.split(":").map(Number);
             const [eh, em] = shift.end.split(":").map(Number);
 
-            // شیفت طول صفر نادیده گرفته می‌شود
-            if (sh === eh && sm === em) continue;
+            // شیفت‌های طول صفر را نادیده بگیر
+            if (sh === eh && sm === em) return;
 
-            const start = sh * 60 + sm;
-            let end = eh * 60 + em;
+            let start = sh * 60 + sm; // شروع واقعی شیفت
+            let end = eh * 60 + em;   // پایان واقعی شیفت
+
             let nowComparable = nowMinutes;
-
-            // مدیریت عبور از نیمه شب
+            // عبور از نیمه شب
             if (end <= start && nowMinutes < start) nowComparable += 24 * 60;
             if (end <= start) end += 24 * 60;
 
             if (nowComparable >= start && nowComparable <= end) {
               status = "present";
-              shiftTime = `${shift.start} - ${shift.end}`;
-              break;
-            } else if (nowComparable < start && status === "finished") {
-              status = "upcoming";
-              shiftTime = `${shift.start} - ${shift.end}`;
-              break;
+            } else if (nowComparable < start && status !== "present") {
+              const delta = start - nowComparable;
+              if (delta < nearestUpcomingDelta) {
+                nearestUpcomingDelta = delta;
+                nextShift = shift.start;
+                status = "upcoming";
+              }
             }
-          }
-
-          // اگر هیچ شیفت حاضر یا آینده‌ای نیست، ساعت اولین شیفت را نمایش دهیم
-          if (!shiftTime && shiftsSorted.length > 0) {
-            const s = shiftsSorted[0];
-            shiftTime = `${s.start} - ${s.end}`;
-          }
+          });
 
           return {
             personnelId: doc.personnelId,
@@ -94,7 +80,7 @@ const DoctorsPresent = () => {
             specialty: doc.specialty,
             phone: doc.phone,
             status,
-            shiftTime,
+            nextShift,
           };
         });
 
@@ -121,13 +107,9 @@ const DoctorsPresent = () => {
         {loading && (
           <p className="text-center text-sm text-gray-600">در حال بارگذاری...</p>
         )}
-        {error && (
-          <p className="text-center text-red-500 text-sm">{error}</p>
-        )}
+        {error && <p className="text-center text-red-500 text-sm">{error}</p>}
         {!loading && !error && doctors.length === 0 && (
-          <p className="text-center text-gray-500 text-sm">
-            هیچ پزشکی برای امروز ثبت نشده است.
-          </p>
+          <p className="text-center text-gray-500 text-sm">هیچ پزشکی برای امروز ثبت نشده است.</p>
         )}
 
         {doctors.map((d) => (
@@ -137,7 +119,7 @@ const DoctorsPresent = () => {
             name={d.name}
             specialty={d.specialty}
             status={d.status}
-            nextShift={d.shiftTime} // نمایش ساعت شیفت
+            nextShift={d.nextShift}
           />
         ))}
       </div>
