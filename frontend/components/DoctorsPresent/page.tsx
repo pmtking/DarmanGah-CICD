@@ -106,7 +106,7 @@ const DoctorsPresent: React.FC = () => {
       </div>
 
       {/* لیست پزشکان با اسکرول */}
-      <div className="flex flex-col gap-6 mt-3 w-full px-2 h-full overflow-y-auto">
+      <div className="flex flex-col gap-6 mt-3 w-full px-2 h-full overflow-y-auto scrollbar-hide">
         {loading && (
           <p className="text-center text-sm text-gray-600">در حال بارگذاری...</p>
         )}
