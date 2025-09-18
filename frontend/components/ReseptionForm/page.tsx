@@ -54,7 +54,7 @@ const ReseptionForm = ({ data, nationalId, onSubmit }: ReseptionFormProps) => {
   };
 
   useEffect(() => {
-    fetch("http://192.171.1.108:4000/api/service/")
+    fetch("http://192.171.1.16:4000/api/service/")
       .then(res => res.json())
       .then(data =>
         setAllServices(data.map((s: any) => ({ _id: s._id, serviceName: s.serviceName, price: s.price || 0, quantity: 1 })))
@@ -63,7 +63,7 @@ const ReseptionForm = ({ data, nationalId, onSubmit }: ReseptionFormProps) => {
   }, []);
 
   useEffect(() => {
-    fetch("http://192.171.1.108:4000/api/doctors/")
+    fetch("http://192.171.1.16:4000/api/doctors/")
       .then(res => res.json())
       .then(data => setAllDoctors(data.map((d: any) => ({ _id: d.personnelId, fullName: d.name }))))
       .catch(err => console.error("خطا در دریافت پزشکان:", err));
