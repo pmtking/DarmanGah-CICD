@@ -23,6 +23,7 @@
     "multer": "^2.0.2",
     "node-printer": "^1.0.4",
     "node-thermal-printer": "^4.5.0",
+    "pdfkit": "^0.17.2",
     "usb": "^2.16.0"
   },
   "devDependencies": {

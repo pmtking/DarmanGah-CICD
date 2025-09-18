@@ -2,7 +2,6 @@ import ClinicService from "../models/clinicService";
 import PatientProfile from "../models/Patient";
 import DoctorProfile from "../models/DoctorProfile";
 import Reseption, { IReseptionService } from "../models/Reseption";
-import { spawn } from "child_process";
 
 // نوع داده ورودی
 interface NewReceptionData {
@@ -20,7 +19,7 @@ interface NewReceptionData {
 }
 
 // ----------------------------
-// ثبت پذیرش جدید و چاپ فیش
+// ثبت پذیرش جدید و آماده‌سازی داده برای فرانت‌اند
 export async function registerNewReception(data: NewReceptionData) {
   // 1️⃣ بررسی وجود بیمار
   let patient = await PatientProfile.findOne({ nationalId: data.nationalId });
@@ -94,46 +93,30 @@ export async function registerNewReception(data: NewReceptionData) {
   patient.visits.push(reception._id);
   await patient.save();
 
-  // 6️⃣ چاپ فیش
-printReceipt({
-  patient_name: patient.name,
-  doctor_name: doctorName,
-  doctor_specialty: doctorSpecialty,
-  services: servicesWithPrice.map((s, idx) => ({
-    name: serviceNames[idx],
-    quantity: s.quantity,
-    price: s.price,
-  })),
-  total_payment: totalAmount,      // یا total_payment اگر پایتون استفاده می‌کند
-  insurance_base: 40000,           // مقدار واقعی بیمه پایه
-  insurance_extra: 15000,          // مقدار واقعی بیمه تکمیلی
-  appointmentDate: data.appointmentDate,
-  appointmentTime: data.appointmentTime,
-  turn_number: "25",
-  bill_number: reception._id.toString(),
-  date: data.appointmentDate,
-  time: data.appointmentTime,
-  national_code: data.nationalId,
-  visit_type: data.visitType,
-  footer_text: "drfn.ir",
-  reception_user: "رضا حسینی"
-});
+  // 6️⃣ بازگشت داده‌ها برای فرانت‌اند
+  const receiptData = {
+    patient_name: patient.name,
+    doctor_name: doctorName,
+    doctor_specialty: doctorSpecialty,
+    services: servicesWithPrice.map((s, idx) => ({
+      name: serviceNames[idx],
+      quantity: s.quantity,
+      price: s.price,
+    })),
+    total_payment: totalAmount,
+    insurance_base: 40000,       // مقدار واقعی بیمه پایه
+    insurance_extra: 15000,      // مقدار واقعی بیمه تکمیلی
+    appointmentDate: data.appointmentDate,
+    appointmentTime: data.appointmentTime,
+    turn_number: "25",
+    bill_number: reception._id.toString(),
+    date: data.appointmentDate,
+    time: data.appointmentTime,
+    national_code: data.nationalId,
+    visit_type: data.visitType,
+    footer_text: "drfn.ir",
+    reception_user: "رضا حسینی",
+  };
 
-  return { reception, totalAmount };
+  return { reception, totalAmount, receiptData };
 }
-
-// ----------------------------
-// فراخوانی اسکریپت پایتون
-function printReceipt(receiptData: any) {
-   
-  const pythonPath = "C:/Users/Raman/Desktop/bug/app/Scripts/python.exe";
-  const python = spawn(pythonPath, ["./src/utils/print_receipt.py"]);
-   
-  python.stdin.write(JSON.stringify(receiptData));
-  python.stdin.end();
-
-  python.stdout.on("data", (data) => console.log(data.toString()));
-  python.stderr.on("data", (data) => console.error(data.toString()));
-  
-}
-
