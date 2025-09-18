@@ -5,7 +5,7 @@ import axios, {
 } from "axios";
 
 const api = axios.create({
-  baseURL: "http:/api.df-neyshabor.ir/",
+  baseURL: "https://api.df-neyshabor.ir/",
   timeout: 2000,
   headers: {
     "Content-Type": "application/json",
