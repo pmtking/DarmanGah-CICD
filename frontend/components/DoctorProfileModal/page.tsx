@@ -9,14 +9,7 @@ type DoctorProfileForm = {
   personnelName: string;
   nationalId: string;
   specialty: string;
-  specialtyType:
-    | "پزشک عمومی"
-    | "جراح"
-    | "داخلی"
-    | "اطفال"
-    | "پوست"
-    | "رادیولوژی"
-    | "سایر";
+  specialtyType: string;
   licenseNumber: string;
   service: string;
   workingDays: string[];
@@ -34,13 +27,33 @@ type Props = {
   personnelId?: string;
 };
 
+// همه تخصص‌ها
 const specialtyTypes = [
   "پزشک عمومی",
-  "جراح",
+  "جراح عمومی",
+  "جراح مغز و اعصاب",
+  "جراح قلب",
+  "جراح ارتوپد",
   "داخلی",
   "اطفال",
-  "پوست",
+  "پوست و مو",
   "رادیولوژی",
+  "مامائی",
+  "دندان‌پزشکی",
+  "اورولوژی",
+  "روان‌شناسی",
+  "تغذیه",
+  "زنان و زایمان",
+  "قلب و عروق",
+  "گوارش",
+  "فیزیوتراپی",
+  "عفونی",
+  "بیهوشی",
+  "چشم‌پزشکی",
+  "گوش و حلق و بینی",
+  "طب اورژانس",
+  "طب کار",
+  "طب فیزیکی و توانبخشی",
   "سایر",
 ];
 
@@ -102,10 +115,7 @@ export default function DoctorProfileModal({
           });
         })
         .catch((err) =>
-          alert(
-            "خطا در دریافت اطلاعات: " +
-              (err.response?.data?.message || err.message)
-          )
+          alert("❌ خطا در دریافت اطلاعات: " + (err.response?.data?.message || err.message))
         );
     } else if (isOpen) {
       setFormData({
@@ -209,11 +219,10 @@ export default function DoctorProfileModal({
     e.preventDefault();
 
     if (!formData.personnelName.trim()) {
-      alert("نام پرسنل نمی‌تواند خالی باشد");
+      alert("⚠️ نام پرسنل نمی‌تواند خالی باشد");
       return;
     }
 
-    // پر کردن شیفت‌های خالی با مقادیر پیش‌فرض
     const workingHoursWithDefaults = { ...formData.workingHours };
     formData.workingDays.forEach((day) => {
       const shifts = workingHoursWithDefaults[day]?.shifts || [];
@@ -227,13 +236,10 @@ export default function DoctorProfileModal({
         ...formData,
         workingHours: workingHoursWithDefaults,
       });
-      alert("اطلاعات پزشک ذخیره شد ✅");
+      alert("✅ اطلاعات پزشک ذخیره شد");
       onClose();
     } catch (err: any) {
-      alert(
-        "خطا در ذخیره اطلاعات: " +
-          (err.response?.data?.message || err.message)
-      );
+      alert("❌ خطا در ذخیره اطلاعات: " + (err.response?.data?.message || err.message));
     }
   };
 
@@ -241,184 +247,103 @@ export default function DoctorProfileModal({
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white/90 backdrop-blur-md border border-white/40 rounded-xl p-6 max-w-4xl w-full shadow-lg relative overflow-auto max-h-[90vh]">
+      <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-4xl w-full relative overflow-auto max-h-[90vh]">
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 text-gray-700 text-xl font-bold"
+          className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 text-xl font-bold"
         >
           ✕
         </button>
-        <h2 className="text-xl font-bold mb-4 text-center">
+        <h2 className="text-2xl font-bold mb-6 text-center text-[#071952]">
           ثبت یا بروزرسانی اطلاعات پزشک
         </h2>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <input
-              name="personnelName"
-              value={formData.personnelName}
-              onChange={handleChange}
-              placeholder="نام پزشک"
-              className={inputClass}
-            />
-            <input
-              name="nationalId"
-              value={formData.nationalId}
-              onChange={handleChange}
-              placeholder="کد ملی"
-              className={inputClass}
-            />
-            <input
-              name="specialty"
-              value={formData.specialty}
-              onChange={handleChange}
-              placeholder="تخصص"
-              className={inputClass}
-            />
-            <select
-              name="specialtyType"
-              value={formData.specialtyType}
-              onChange={handleChange}
-              className={inputClass}
-            >
-              {specialtyTypes.map((type) => (
-                <option key={type} value={type}>
-                  {type}
-                </option>
-              ))}
-            </select>
-            <input
-              name="licenseNumber"
-              value={formData.licenseNumber}
-              onChange={handleChange}
-              placeholder="شماره نظام پزشکی"
-              className={inputClass}
-            />
-            <input
-              name="service"
-              value={formData.service}
-              onChange={handleChange}
-              placeholder="سرویس کلینیک"
-              className={inputClass}
-            />
-            <input
-              name="roomNumber"
-              value={formData.roomNumber}
-              onChange={handleChange}
-              placeholder="شماره اتاق"
-              className={inputClass}
-            />
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* اطلاعات پایه */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input name="personnelName" value={formData.personnelName} onChange={handleChange} placeholder="نام پزشک" className={inputClass} />
+            <input name="nationalId" value={formData.nationalId} onChange={handleChange} placeholder="کد ملی" className={inputClass} />
+            <input name="specialty" value={formData.specialty} onChange={handleChange} placeholder="زیرتخصص (اختیاری)" className={inputClass} />
+
+            {/* سلکت زیباتر */}
+            <div className="relative">
+              <select
+                name="specialtyType"
+                value={formData.specialtyType}
+                onChange={handleChange}
+                className="appearance-none w-full p-2 pr-10 rounded-lg border border-gray-300 bg-gradient-to-r from-white to-gray-50 shadow-sm focus:ring-2 focus:ring-[#071952] focus:border-[#071952] transition-all text-[#071952] font-medium"
+              >
+                {specialtyTypes.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+              <span className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-500">
+                ▼
+              </span>
+            </div>
+
+            <input name="licenseNumber" value={formData.licenseNumber} onChange={handleChange} placeholder="شماره نظام پزشکی" className={inputClass} />
+            <input name="service" value={formData.service} onChange={handleChange} placeholder="سرویس کلینیک" className={inputClass} />
+            <input name="roomNumber" value={formData.roomNumber} onChange={handleChange} placeholder="شماره اتاق" className={inputClass} />
           </div>
 
+          {/* روزها و شیفت‌ها */}
           <div>
-            <p className="font-bold mb-1">روزهای حضور:</p>
-            <div className="flex flex-wrap gap-2 mb-3">
+            <p className="font-bold mb-2 text-[#071952]">روزهای حضور:</p>
+            <div className="flex flex-wrap gap-3 mb-4">
               {weekDays.map((day) => (
-                <label key={day} className="flex items-center gap-1">
-                  <input
-                    type="checkbox"
-                    checked={formData.workingDays.includes(day)}
-                    onChange={(e) =>
-                      handleWorkingDaysChange(day, e.target.checked)
-                    }
-                  />
-                  {day}
+                <label key={day} className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={formData.workingDays.includes(day)} onChange={(e) => handleWorkingDaysChange(day, e.target.checked)} />
+                  <span>{day}</span>
                 </label>
               ))}
             </div>
 
             {formData.workingDays.map((day) => (
-              <div key={day} className="mb-3 border rounded p-2">
-                <p className="font-semibold">{day}</p>
+              <div key={day} className="mb-4 border rounded-lg p-3 bg-gray-50">
+                <p className="font-semibold text-[#071952]">{day}</p>
                 {(formData.workingHours[day]?.shifts || []).map((shift, i) => (
-                  <div key={i} className="flex gap-2 items-center mb-1">
-                    <input
-                      type="time"
-                      value={shift.start}
-                      onChange={(e) =>
-                        handleShiftChange(day, i, "start", e.target.value)
-                      }
-                      className={`${inputClass} flex-1`}
-                    />
-                    <input
-                      type="time"
-                      value={shift.end}
-                      onChange={(e) =>
-                        handleShiftChange(day, i, "end", e.target.value)
-                      }
-                      className={`${inputClass} flex-1`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeShift(day, i)}
-                      className="px-2 py-1 bg-red-500 text-white rounded"
-                    >
+                  <div key={i} className="flex gap-2 items-center mb-2">
+                    <input type="time" value={shift.start} onChange={(e) => handleShiftChange(day, i, "start", e.target.value)} className={`${inputClass} flex-1`} />
+                    <input type="time" value={shift.end} onChange={(e) => handleShiftChange(day, i, "end", e.target.value)} className={`${inputClass} flex-1`} />
+                    <button type="button" onClick={() => removeShift(day, i)} className="px-2 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600">
                       حذف
                     </button>
                   </div>
                 ))}
-                <button
-                  type="button"
-                  onClick={() => addShift(day)}
-                  className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
-                >
+                <button type="button" onClick={() => addShift(day)} className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                   + اضافه کردن شیفت
                 </button>
               </div>
             ))}
           </div>
 
+          {/* مدارک */}
           <div className="space-y-2">
             {formData.documents.map((doc, i) => (
               <div key={i} className="flex gap-2">
-                <input
-                  value={doc.title}
-                  onChange={(e) =>
-                    handleDocumentChange(i, "title", e.target.value)
-                  }
-                  placeholder="عنوان"
-                  className={`${inputClass} flex-1`}
-                />
-                <input
-                  value={doc.fileUrl}
-                  onChange={(e) =>
-                    handleDocumentChange(i, "fileUrl", e.target.value)
-                  }
-                  placeholder="لینک فایل"
-                  className={`${inputClass} flex-1`}
-                />
-                <button
-                  type="button"
-                  onClick={() => removeDocument(i)}
-                  className="px-2 py-1 bg-red-500 text-white rounded"
-                >
+                <input value={doc.title} onChange={(e) => handleDocumentChange(i, "title", e.target.value)} placeholder="عنوان" className={`${inputClass} flex-1`} />
+                <input value={doc.fileUrl} onChange={(e) => handleDocumentChange(i, "fileUrl", e.target.value)} placeholder="لینک فایل" className={`${inputClass} flex-1`} />
+                <button type="button" onClick={() => removeDocument(i)} className="px-2 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600">
                   حذف
                 </button>
               </div>
             ))}
-            <button
-              type="button"
-              onClick={addDocument}
-              className="px-4 py-2 bg-[#071952] text-white rounded hover:bg-[#0a2a70]"
-            >
+            <button type="button" onClick={addDocument} className="px-4 py-2 bg-[#071952] text-white rounded-lg hover:bg-[#0a2a70]">
               + مدرک جدید
             </button>
           </div>
 
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="isAvailable"
-              checked={formData.isAvailable}
-              onChange={handleChange}
-            />
+          {/* وضعیت */}
+          <label className="flex items-center gap-2 font-medium text-[#071952]">
+            <input type="checkbox" name="isAvailable" checked={formData.isAvailable} onChange={handleChange} />
             فعال
           </label>
 
-          <button
-            type="submit"
-            className="w-full py-2 bg-[#071952] text-white rounded hover:bg-[#0a2a70]"
-          >
+          {/* دکمه ذخیره */}
+          <button type="submit" className="w-full py-3 bg-[#071952] text-white rounded-xl font-bold hover:bg-[#0a2a70] transition-all">
             ذخیره اطلاعات پزشک
           </button>
         </form>
@@ -428,4 +353,4 @@ export default function DoctorProfileModal({
 }
 
 const inputClass =
-  "p-2 rounded border border-white/40 bg-white/10 text-[#071952]";
+  "p-2 rounded-lg border border-gray-300 bg-white shadow-sm focus:ring-2 focus:ring-[#071952] focus:border-[#071952] transition-all text-[#071952]";

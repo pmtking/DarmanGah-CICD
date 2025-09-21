@@ -42,9 +42,13 @@ const basicInsurance = [
 
 // بیمه‌های تکمیلی
 const supplementaryInsurance = [
-  { name: "بیمه دانا", url: "https://www.iraninsurance.ir" },
-  { name: "بیمه دی", url: "https://www.asiainsurance.ir" },
-  
+  { name: "بیمه دانا", url: "https://www.dana-insurance.com" },
+  { name: "بیمه دی", url: "https://bimeday.ir" },
+  { name: "بیمه آتیه سازان حافظ", url: "https://atiyehsazan.ir" },
+  { name: "بیمه معلم", url: "https://mic.co.ir" },
+  { name: "بیمه ملت", url: "https://melat.ir" },
+  { name: "بیمه سینا", url: "https://sinainsurance.com" },
+  { name: "بیمه میهن", url: "https://mihaninsurance.com" },
 ];
 
 const RespontionLayout = ({ children }: RespontionLayoutType) => {
