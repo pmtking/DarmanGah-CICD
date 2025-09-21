@@ -12,7 +12,7 @@ const Login = () => {
   const {login , loading , data} = useAuth()
   const handdleLogin = () => {
     login({userName ,password })
-    location.replace('/reseption')
+    // location.replace('/reseption')
   }
   return (
     <main className="h-screen w-full flex justify-center items-center  ">

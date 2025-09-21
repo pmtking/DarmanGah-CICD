@@ -1,5 +1,5 @@
 import express from 'express' 
-import { RegisterController } from './authController';
+import { LoginController, RegisterController } from './authController';
 
 
 export const authRouter = express.Router();
@@ -11,3 +11,4 @@ authRouter.get('/test' , (req , res) => {
 // register Controller 
 
 authRouter.post('/register'  ,RegisterController)
+authRouter.post('/login' , LoginController)

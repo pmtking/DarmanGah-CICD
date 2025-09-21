@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation"; // اضافه شد
 import toast from "react-hot-toast";
 import api from "@/libs/axios";
 
@@ -13,11 +14,21 @@ import { useUser } from "@/context/UserContext";
 
 const RespontionPage = () => {
   const { user } = useUser();
+  const router = useRouter(); // هوک مسیریابی
 
   const [nationalId, setNationalId] = useState<string>("");
   const [isVerified, setIsVerified] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [patientData, setPatientData] = useState<any>(null);
+
+  // ✅ چک کردن وجود توکن و هدایت به لاگین
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("لطفاً ابتدا وارد شوید");
+      router.push("/login"); // مسیر صفحه لاگین
+    }
+  }, [router]);
 
   // استعلام کد ملی
   const handleVerify = async () => {
@@ -96,9 +107,6 @@ const RespontionPage = () => {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") handleVerify();
   };
-  useEffect(() => {
-
-  },)
 
   return (
     <div className="flex flex-col w-full justify-center items-center">

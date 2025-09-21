@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { RegisterType } from "../types/global";
 import User from "../models/UserAuth";
-import { hashPassword } from "../utils/hash";
+import { comparePassword, hashPassword } from "../utils/hash";
 import { signJWT } from "../utils/jwt";
 
 export async function RegisterController(req: Request, res: Response) {
@@ -35,9 +35,8 @@ export async function RegisterController(req: Request, res: Response) {
       return res.status(200).json({
         message: "ثبت ‌نام با موفقیت انجام شد.",
         data: {
-          user ,
+          user,
           token: token,
-
         },
       });
     }
@@ -50,6 +49,46 @@ export async function RegisterController(req: Request, res: Response) {
     }
 
     console.error("Register error:", error);
+    return res.status(500).json({ error: "خطای داخلی سرور" });
+  }
+}
+
+export async function LoginController(req: Request, res: Response) {
+  const { username, password } = req.body;
+
+  try {
+    if (!username) {
+      return res.status(400).json({ error: "شماره الزامی است." });
+    }
+
+    // پیدا کردن کاربر
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).json({ error: "کاربر یافت نشد." });
+    }
+
+    // اگر نقش ADMIN باشد باید رمز بررسی شود
+    if (user.role === "MANAGER") {
+      if (!password) {
+        return res.status(400).json({ error: "رمز عبور الزامی است." });
+      }
+
+      const isMatch = await comparePassword(password, user.password || "");
+      if (!isMatch) {
+        return res.status(401).json({ error: "رمز عبور اشتباه است." });
+      }
+    }
+
+    // ساختن توکن JWT
+    const token = signJWT({ id: user._id, role: user.role });
+
+    return res.status(200).json({
+      message: "ورود موفقیت‌آمیز بود.",
+      user,
+      token,
+    });
+  } catch (error: any) {
+    console.error("Login error:", error);
     return res.status(500).json({ error: "خطای داخلی سرور" });
   }
 }
