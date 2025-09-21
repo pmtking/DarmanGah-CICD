@@ -11,7 +11,7 @@ import {
 const router = Router();
 
 // ثبت پرسنل جدید
-router.post("/", addPersonnelController);
+router.post("/add", addPersonnelController);
 
 // ورود پرسنل و دریافت توکن JWT
 router.post("/login", loginPersonnelController);
