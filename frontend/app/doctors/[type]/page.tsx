@@ -85,7 +85,7 @@ const DoctorsPage = () => {
         if (type === "عمومی") return typeMap["عمومی"].includes(doc.specialtyType);
         if (type === "دندان‌پزشک")
           return typeMap["دندان‌پزشک"].includes(doc.specialtyType);
-        // return typeMap["متخصص"].includes(doc.specialtyType);
+        return typeMap["متخصص"].includes(doc.specialtyType);
       })
     : [];
 

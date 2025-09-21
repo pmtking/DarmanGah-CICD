@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import api from "@/libs/axios";
 
@@ -96,6 +96,9 @@ const RespontionPage = () => {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") handleVerify();
   };
+  useEffect(() => {
+
+  },)
 
   return (
     <div className="flex flex-col w-full justify-center items-center">
