@@ -33,14 +33,12 @@ const Navbar = () => {
   );
 };
 
-// بیمه‌های پایه
 const basicInsurance = [
   { name: "بیمه سلامت", url: "https://www.salamat.gov.ir" },
   { name: "بیمه تامین اجتماعی", url: "https://www.tamin.ir" },
   { name: "بیمه نیروهای مسلح", url: "https://www.alborzins.ir" },
 ];
 
-// بیمه‌های تکمیلی
 const supplementaryInsurance = [
   { name: "بیمه دانا", url: "https://www.dana-insurance.com" },
   { name: "بیمه دی", url: "https://bimeday.ir" },
@@ -51,49 +49,40 @@ const supplementaryInsurance = [
   { name: "بیمه میهن", url: "https://mihaninsurance.com" },
 ];
 
+const InsuranceGrid = ({ insurances }: { insurances: typeof basicInsurance }) => (
+  <div className="grid grid-cols-2 gap-2">
+    {insurances.map((ins) => (
+      <div
+        key={ins.name}
+        className="bg-white/20 backdrop-blur-md shadow-sm rounded p-2 flex flex-col items-center gap-1 text-center"
+      >
+        <h3 className="font-semibold text-white text-xs">{ins.name}</h3>
+        <button
+          onClick={() => window.open(ins.url, "_blank")}
+          className="bg-blue-600/80 hover:bg-blue-700/90 px-2 py-1 rounded text-white text-[10px] w-full"
+        >
+          استعلام
+        </button>
+      </div>
+    ))}
+  </div>
+);
+
 const RespontionLayout = ({ children }: RespontionLayoutType) => {
   return (
     <UserProvider>
       <div className="flex flex-col w-full h-screen">
         <Navbar />
-        <main className="flex flex-1 items-center justify-center gap-6 p-6">
+        <main className="flex flex-1 items-start justify-center gap-6 p-6">
           {/* کارت‌های بیمه */}
           <div className="flex flex-col gap-4 w-64">
-            <h2 className="text-base font-bold text-white mb-1">
-              بیمه‌های پایه
-            </h2>
-            {basicInsurance.map((ins) => (
-              <div
-                key={ins.name}
-                className="bg-white/20 backdrop-blur-md shadow-md rounded-lg p-3 flex flex-col items-center gap-2"
-              >
-                <h3 className="font-semibold text-white text-sm">{ins.name}</h3>
-                <button
-                  onClick={() => window.open(ins.url, "_blank")}
-                  className="bg-blue-600/80 hover:bg-blue-700/90 px-3 py-1.5 rounded text-white text-xs w-full"
-                >
-                  استعلام
-                </button>
-              </div>
-            ))}
+            <h2 className="text-base font-bold text-white mb-1">بیمه‌های پایه</h2>
+            <InsuranceGrid insurances={basicInsurance} />
 
             <h2 className="text-base font-bold text-white mt-4 mb-1">
               بیمه‌های تکمیلی
             </h2>
-            {supplementaryInsurance.map((ins) => (
-              <div
-                key={ins.name}
-                className="bg-white/20 backdrop-blur-md shadow-md rounded-lg p-3 flex flex-col items-center gap-2"
-              >
-                <h3 className="font-semibold text-white text-sm">{ins.name}</h3>
-                <button
-                  onClick={() => window.open(ins.url, "_blank")}
-                  className="bg-blue-600/80 hover:bg-blue-700/90 px-3 py-1.5 rounded text-white text-xs w-full"
-                >
-                  استعلام
-                </button>
-              </div>
-            ))}
+            <InsuranceGrid insurances={supplementaryInsurance} />
           </div>
 
           {/* بخش پذیرش */}

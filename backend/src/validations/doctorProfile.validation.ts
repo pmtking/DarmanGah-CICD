@@ -1,41 +1,61 @@
 import Joi from "joi";
 
+const weekDays = [
+  "شنبه",
+  "یک‌شنبه",
+  "دوشنبه",
+  "سه‌شنبه",
+  "چهارشنبه",
+  "پنج‌شنبه",
+  "جمعه",
+];
+
+const specialtyTypes = [
+  "پزشک عمومی",
+  "جراح عمومی",
+  "جراح مغز و اعصاب",
+  "جراح قلب",
+  "جراح ارتوپد",
+  "داخلی",
+  "اطفال",
+  "پوست و مو",
+  "رادیولوژی",
+  "مامائی",
+  "دندان‌پزشکی",
+  "اورولوژی",
+  "روان‌شناسی",
+  "تغذیه",
+  "زنان و زایمان",
+  "قلب و عروق",
+  "گوارش",
+  "فیزیوتراپی",
+  "عفونی",
+  "بیهوشی",
+  "چشم‌پزشکی",
+  "گوش و حلق و بینی",
+  "طب اورژانس",
+  "طب کار",
+  "طب فیزیکی و توانبخشی",
+  "سایر",
+];
+
 export const createDoctorProfileSchema = Joi.object({
   personnelName: Joi.string().required().label("نام پرسنل"),
   nationalId: Joi.string().required().label("کد ملی"),
   service: Joi.string().required().label("سرویس کلینیک"),
-  specialty: Joi.string().required().label("تخصص"),
+  specialty: Joi.string().allow("").optional().label("زیرتخصص"),
   specialtyType: Joi.string()
-    .valid("پزشک عمومی", "جراح", "داخلی", "اطفال", "پوست", "رادیولوژی", "سایر")
+    .valid(...specialtyTypes)
     .required()
     .label("نوع تخصص"),
   licenseNumber: Joi.string().required().label("شماره نظام پزشکی"),
-  bio: Joi.string().max(10000).optional().label("بیوگرافی"),
   workingDays: Joi.array()
-    .items(
-      Joi.string().valid(
-        "شنبه",
-        "یک‌شنبه",
-        "دوشنبه",
-        "سه‌شنبه",
-        "چهارشنبه",
-        "پنج‌شنبه",
-        "جمعه"
-      )
-    )
+    .items(Joi.string().valid(...weekDays))
     .optional()
     .label("روزهای کاری"),
   workingHours: Joi.object()
     .pattern(
-      Joi.string().valid(
-        "شنبه",
-        "یک‌شنبه",
-        "دوشنبه",
-        "سه‌شنبه",
-        "چهارشنبه",
-        "پنج‌شنبه",
-        "جمعه"
-      ),
+      Joi.string().valid(...weekDays),
       Joi.object({
         shifts: Joi.array()
           .items(
@@ -49,8 +69,7 @@ export const createDoctorProfileSchema = Joi.object({
     )
     .optional()
     .label("ساعات کاری"),
-  roomNumber: Joi.string().optional().label("شماره اتاق"),
-  avatarUrl: Joi.string().uri().optional().label("آواتار"),
+  roomNumber: Joi.string().allow("").optional().label("شماره اتاق"),
   isAvailable: Joi.boolean().optional().label("وضعیت فعال"),
   documents: Joi.array()
     .items(
@@ -61,5 +80,4 @@ export const createDoctorProfileSchema = Joi.object({
     )
     .optional()
     .label("مدارک"),
-  serviceGroup: Joi.string().optional().label("گروه سرویس"),
 });

@@ -8,7 +8,7 @@ import DoctorProfileModal from "@/components/DoctorProfileModal/page";
 type Doctor = {
   _id: string;
   name: string;
-  nationalCode: string;
+  nationalId: string;
 };
 
 export default function ClientDoctorsTable() {
@@ -39,6 +39,7 @@ export default function ClientDoctorsTable() {
 
   useEffect(() => {
     fetchDoctors();
+
   }, []);
 
   return (
@@ -55,7 +56,7 @@ export default function ClientDoctorsTable() {
           {doctors.map((doctor) => (
             <tr key={doctor._id} className="hover:bg-white/20 transition">
               <td className="py-4 px-6 text-right">{doctor.name}</td>
-              <td className="py-4 px-6 text-right">{doctor.nationalCode}</td>
+              <td className="py-4 px-6 text-right">{doctor.nationalId}</td>
               <td className="py-4 px-6 text-right">
                 <button
                   onClick={() => openModal(doctor)}
@@ -74,7 +75,7 @@ export default function ClientDoctorsTable() {
           isOpen={modalOpen}
           onClose={closeModal}
           doctorName={selectedDoctor.name}
-          nationalId={selectedDoctor.nationalCode}
+          nationalId={selectedDoctor.nationalId}
           personnelId={selectedDoctor._id}
         />
       )}
