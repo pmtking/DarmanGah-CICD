@@ -1,6 +1,7 @@
 "use client";
+
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation"; // 🟢 اضافه شد
+import { useParams, useRouter } from "next/navigation";
 import api from "@/libs/axios";
 
 interface Shift {
@@ -10,20 +11,18 @@ interface Shift {
 }
 
 interface Doctor {
-  personnelId: string; // 🟢 کلید اصلی
+  personnelId: string;
   _id: string;
   name: string;
   specialty: string;
   specialtyType: string;
-  email: string;
+  email?: string;
   workingDays: string[];
-  workingHours: {
-    [day: string]: { shifts: Shift[] };
-  };
+  workingHours: Record<string, { shifts: Shift[] }>;
   avatarUrl?: string;
 }
 
-// Modal component
+// ================= کامپوننت مودال =================
 const Modal = ({
   children,
   onClose,
@@ -44,6 +43,7 @@ const Modal = ({
   </div>
 );
 
+// ================= صفحه پزشکان =================
 const DoctorsPage = () => {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,59 +51,57 @@ const DoctorsPage = () => {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
 
+  const router = useRouter();
   const params = useParams();
-  const router = useRouter(); // 🟢 اضافه شد
+  const typeSlug = typeof params?.type === "string" ? params.type.trim() : undefined;
 
-  const type =
-    typeof params?.type === "string"
-      ? decodeURIComponent(params.type).trim()
-      : undefined;
-
-  const fetchDoctors = async () => {
-    try {
-      const res = await api.get<Doctor[]>(`/api/doctors`);
-      setDoctors(res.data);
-    } catch (error) {
-      console.error("Error fetching doctors:", error);
-    } finally {
-      setLoading(false);
-    }
+  // نگاشت مسیر URL به برچسب فارسی و specialtyType
+  const typeMap: Record<string, { label: string; specialtyTypes: string[] }> = {
+    general: { label: "عمومی", specialtyTypes: ["پزشک عمومی"] },
+    dentist: { label: "دندان‌پزشکی", specialtyTypes: ["دندان‌پزشکی"] },
+    specialist: {
+      label: "متخصص",
+      specialtyTypes: ["جراح", "داخلی", "اطفال", "پوست", "رادیولوژی", "سایر"],
+    },
   };
 
+  // تابع نرمال‌سازی برای حذف کاراکترهای صفرعرض
+  const normalize = (str: string) => str.replace(/\u200c/g, "").trim();
+
+  // گرفتن لیست پزشکان
   useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const res = await api.get<Doctor[]>("/api/doctors");
+        setDoctors(res.data);
+      } catch (err) {
+        console.error("خطا در دریافت پزشکان:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchDoctors();
   }, []);
 
-  const typeMap: Record<string, string[]> = {
-    عمومی: ["پزشک عمومی"],
-    "دندان‌پزشک": ["دندان‌پزشک"],
-    متخصص: ["جراح", "داخلی", "اطفال", "پوست", "رادیولوژی", "سایر"],
-  };
+  if (loading) return <p className="text-center mt-10 text-gray-600">در حال بارگذاری پزشکان...</p>;
 
-  const filteredDoctors = type
-    ? doctors.filter((doc) => {
-        if (type === "عمومی") return typeMap["عمومی"].includes(doc.specialtyType);
-        if (type === "دندان‌پزشک")
-          return typeMap["دندان‌پزشک"].includes(doc.specialtyType);
-        return typeMap["متخصص"].includes(doc.specialtyType);
-      })
+  // فیلتر پزشکان بر اساس specialtyType
+  const filteredDoctors = typeSlug
+    ? doctors.filter((doc) =>
+        typeMap[typeSlug]?.specialtyTypes.some(
+          (type) => normalize(type) === normalize(doc.specialtyType)
+        )
+      )
     : [];
-
-  if (loading)
-    return (
-      <p className="text-center mt-10 text-gray-600">در حال بارگذاری...</p>
-    );
 
   return (
     <section className="p-6 doctors-page">
       <h1 className="text-3xl font-bold mb-8 text-center text-white">
-        {type ? `لیست پزشکان ${type}` : "هیچ دسته‌ای انتخاب نشده است"}
+        {typeSlug ? `لیست پزشکان ${typeMap[typeSlug]?.label || typeSlug}` : "هیچ دسته‌ای انتخاب نشده است"}
       </h1>
 
       {filteredDoctors.length === 0 ? (
-        <p className="text-center text-gray-500 mt-10">
-          هیچ پزشکی برای این دسته موجود نیست
-        </p>
+        <p className="text-center text-gray-500 mt-10">هیچ پزشکی برای این دسته موجود نیست</p>
       ) : (
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           {filteredDoctors.map((doctor) => (
@@ -119,22 +117,16 @@ const DoctorsPage = () => {
                 />
               ) : (
                 <div className="w-28 h-28 rounded-full bg-gray-200/50 flex items-center justify-center mb-4 text-gray-500">
-                  عکس ندارد
+                  بدون تصویر
                 </div>
               )}
 
-              <h3 className="text-xl font-semibold mb-1 text-center text-white">
-                {doctor.name}
-              </h3>
-              <p className="text-blue-300 font-medium mb-3 text-center">
-                {doctor.specialty}
-              </p>
+              <h3 className="text-xl font-semibold mb-1 text-center text-white">{doctor.name}</h3>
+              <p className="text-blue-300 font-medium mb-3 text-center">{doctor.specialty}</p>
 
               <div className="w-full mb-3">
                 <p className="text-sm font-bold text-white">روزهای حضور:</p>
-                <p className="text-sm text-gray-200">
-                  {doctor.workingDays?.join(" ، ") || "-"}
-                </p>
+                <p className="text-sm text-gray-200">{doctor.workingDays?.join(" ، ") || "-"}</p>
               </div>
 
               <button
@@ -152,7 +144,7 @@ const DoctorsPage = () => {
         </div>
       )}
 
-      {/* Modal */}
+      {/* مودال */}
       {showModal && selectedDoctor && (
         <Modal onClose={() => setShowModal(false)}>
           <h4 className="font-bold text-gray-800 mb-2">انتخاب روز:</h4>
@@ -174,23 +166,19 @@ const DoctorsPage = () => {
             <>
               <h4 className="font-bold text-gray-800 mb-2">انتخاب ساعت:</h4>
               <div className="flex flex-wrap gap-2">
-                {selectedDoctor.workingHours[selectedDay]?.shifts.map((shift, i) => {
-                  const label = `${shift.start} - ${shift.end}`;
-                  return (
-                    <button
-                      key={i}
-                      onClick={() => {
-                        // 🟢 بجای alert → ریدایرکت به صفحه رزرو
-                        router.push(
-                          `/reserve/${selectedDoctor.personnelId}?day=${selectedDay}&time=${shift.start}`
-                        );
-                      }}
-                      className="px-3 py-1 rounded bg-gray-200/50 hover:bg-green-500 hover:text-white transition"
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
+                {selectedDoctor.workingHours[selectedDay]?.shifts.map((shift, i) => (
+                  <button
+                    key={i}
+                    onClick={() =>
+                      router.push(
+                        `/reserve/${selectedDoctor.personnelId}?day=${selectedDay}&time=${shift.start}`
+                      )
+                    }
+                    className="px-3 py-1 rounded bg-gray-200/50 hover:bg-green-500 hover:text-white transition"
+                  >
+                    {shift.start} - {shift.end}
+                  </button>
+                ))}
               </div>
             </>
           )}

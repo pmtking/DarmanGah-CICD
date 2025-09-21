@@ -12,11 +12,12 @@ const Services = () => {
           <p className="servise_box_right_p">طرف قرار داد با تمامی بیمه ها</p>
         </div>
         <div className=" flex flex-col gap-3 absolute top-2 left-2">
-          <ServiseBox name="دکتر عمومی" href="/doctors/عمومی" />
-          <ServiseBox name=" پزشک متخصص" href="/doctors/متخصص" />
-          <ServiseBox name="دندانپزشکی " href="/doctors/دندان پزشک" />
+          <ServiseBox name="دکتر عمومی" href="/doctors/general" />
+          <ServiseBox name=" پزشک متخصص" href="/doctors/specialist" />
+          <ServiseBox name="دندانپزشکی " href="/doctors/dentist" />
           <ServiseBox name=" ازمایشگاه" href="/lab" />
           <ServiseBox name=" فیزیو تراپی " href="/" />
+          
           <ServiseBox name=" بینایی سنجی و تجویز عینک" href="/" />
           <ServiseBox name="مامائی " href="/" />
           <ServiseBox name=" شنوایی سنجی" href="/" />

@@ -63,7 +63,7 @@ const useAuth = () => {
   const login = async (credentials: Credentials) => {
     try {
       setLoading(true);
-      const res = await api.post("/api/auth/login", credentials);
+      const res = await api.post("/api/personel/login", credentials);
 
       const user = res.data.user;
       const token = res.data.token;
