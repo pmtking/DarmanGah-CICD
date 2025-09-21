@@ -1,0 +1,16 @@
+@use './variables' as *;
+
+:root {
+  --color-bg: #{$color-bg};
+  --color-surface: #{$color-surface};
+  --color-primary: #{$color-primary};
+  --color-accent: #{$color-accent};
+  --color-text: #{$color-text};
+  --color-text-muted: #{$color-text-muted};
+
+ 
+}
+
+.dark-theme {
+  // در صورت نیاز به تغییر در آینده
+}

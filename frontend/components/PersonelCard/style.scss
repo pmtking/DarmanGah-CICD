@@ -1,0 +1,87 @@
+.personel-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.1); // نیمه شفاف
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 1rem;
+  padding: 1rem 1.5rem;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.3);
+  }
+
+  .personel-image {
+    flex-shrink: 0;
+    img {
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      object-fit: cover;
+    }
+  }
+
+  .personel-info {
+    flex: 1;
+    margin-left: 1rem;
+    color: #fff;
+
+    h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    p {
+      font-size: 0.9rem;
+      opacity: 0.8;
+      margin: 0.2rem 0 0;
+    }
+  }
+
+  .personel-actions {
+    display: flex;
+    gap: 0.6rem;
+
+    button {
+      border: none;
+      padding: 0.4rem 0.8rem;
+      border-radius: 0.5rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.3s ease, transform 0.2s ease;
+
+      &:hover {
+        transform: scale(1.05);
+      }
+    }
+
+    .delete-btn {
+      background: rgba(255, 0, 0, 0.226);
+      color: #000;
+      &:hover {
+        background: rgba(255, 0, 0, 0.459);
+      }
+    }
+
+    .update-btn {
+      background: rgba(0, 123, 255, 0.2);
+      color: #4da6ff;
+      &:hover {
+        background: rgba(0, 123, 255, 0.4);
+      }
+    }
+
+    .docs-btn {
+      background: rgba(0, 255, 150, 0.2);
+      color: #00e699;
+      &:hover {
+        background: rgba(0, 255, 150, 0.4);
+      }
+    }
+  }
+}

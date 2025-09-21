@@ -1,0 +1,53 @@
+// variables
+@use "../../styles/sass/abstracts/variables" as *;
+
+.about_box {
+  width: 40%;
+  background: rgba(hsl(228, 100%, 96%), $alpha: 0.2);
+  height: 100%;
+  padding-block:20px;
+  border-radius: 10px;
+  padding-inline: 20px;
+  border: 1px solid #c7c6c6;
+
+  .about_box_header {
+    padding-bottom: 10px;
+  }
+}
+
+// دکمه زرد
+.btn-yellow-important {
+  background-color: #facc15 !important; // معادل yellow-400
+  color: #000 !important;
+}
+
+/* ------------------------------
+   Responsive Styles
+--------------------------------*/
+
+// موبایل کوچک (تا 640px)
+@media (max-width: 640px) {
+  .about_box {
+    width: 90%;
+    height: auto;
+    padding-inline: 12px;
+    margin: 0 auto;
+  }
+}
+
+// تبلت (641px تا 1024px)
+@media (min-width: 641px) and (max-width: 1024px) {
+  .about_box {
+    width: 60%;
+    height: auto;
+    margin: 0 auto;
+  }
+}
+
+// دسکتاپ (بزرگتر از 1024px)
+@media (min-width: 1025px) {
+  .about_box {
+    width: 30%;
+    height: 45vh;
+  }
+}

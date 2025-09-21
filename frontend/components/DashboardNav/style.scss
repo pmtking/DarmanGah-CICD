@@ -1,0 +1,36 @@
+// varibels
+@use "../../styles/sass/abstracts/variables" as *;
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.notife {
+  position: relative;
+
+  span {
+    position: absolute;
+    top: -10px;
+    left: 12px;
+    background: $color-primary;
+    border-radius: 100%;
+    color: #fff;
+    font-size: 12px;
+    padding: 2px 3px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: pulse 1.5s infinite ease-in-out;
+  }
+}

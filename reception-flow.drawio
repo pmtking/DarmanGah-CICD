@@ -1,0 +1,52 @@
+<mxfile host="65bd71144e">
+    <diagram id="flow1" name="پذیرش بیمار">
+        <mxGraphModel dx="954" dy="779" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="start" value="شروع پذیرش" style="ellipse;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+                    <mxGeometry x="210" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="getCode" value="گرفتن کد ملی" style="rounded=0;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+                    <mxGeometry x="200" y="120" width="140" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="checkPatient" value="بیمار ثبت شده است؟" style="rhombus;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="1" vertex="1">
+                    <mxGeometry x="200" y="220" width="160" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="newPatient" value="ثبت بیمار جدید" style="rounded=0;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+                    <mxGeometry x="380" y="340" width="160" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="showInfo" value="نمایش اطلاعات بیمار" style="rounded=0;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="340" width="160" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="chooseDoctor" value="انتخاب پزشک" style="rounded=0;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+                    <mxGeometry x="200" y="460" width="140" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="end" value="پایان" style="ellipse;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+                    <mxGeometry x="210" y="585" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge1" parent="1" source="start" target="getCode" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge2" parent="1" source="getCode" target="checkPatient" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge3" parent="1" source="checkPatient" target="newPatient" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge4" parent="1" source="checkPatient" target="showInfo" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge5" parent="1" source="newPatient" target="chooseDoctor" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge6" parent="1" source="showInfo" target="chooseDoctor" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge7" parent="1" source="chooseDoctor" target="end" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

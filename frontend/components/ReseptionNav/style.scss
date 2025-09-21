@@ -1,0 +1,41 @@
+.reseption-nav {
+  position: fixed;
+  top: 8px;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 1rem 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+//   border-bottom: 1px solid #eee;
+
+  //   font-family: "IRANSans", sans-serif;
+
+  .nav-item {
+    
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    flex-direction: column;
+    align-items: flex-start;
+    margin: 0 1rem;
+
+    span {
+      font-size: 0.9rem;
+      color: #555;
+    }
+
+    strong {
+      font-size: 1.2rem;
+      color: #222;
+    }
+  }
+
+  // دکمه
+  .nav-item:last-child {
+    margin-left: auto;
+  }
+}

@@ -1,0 +1,81 @@
+.add-personnel-page {
+  width: 100%;
+  min-height: 100vh;
+  padding: 2.5rem 1.5rem;
+  border-radius: 1rem;
+
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.form-wrapper {
+  width: 100%;
+  max-width: 700px;
+}
+
+.personnel-form {
+  margin-top: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  padding: 2rem;
+  border-radius: 1rem;
+  backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+}
+
+.input-style {
+  border: 1px solid rgb(255, 255, 255);
+  border-radius: 0.5rem;
+  padding: 0.6rem 1rem;
+  background: rgba(255, 255, 255, 0.151);
+  color: #fff;
+  font-size: 0.95rem;
+
+  &::placeholder {
+    color: #d1d5db;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: #cef63b;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+  }
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #fff;
+
+  input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #10b981;
+  }
+}
+
+/* استایل مخصوص select box */
+select.input-style {
+  appearance: none; // حذف استایل پیش‌فرض مرورگر
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  background: rgba(255, 255, 255, 0.027)
+    url("data:image/svg+xml;utf8,<svg fill='white' height='16' viewBox='0 0 24 24' width='16' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>")
+    no-repeat right 0.8rem center;
+  background-size: 1rem;
+
+  padding-right: 2rem; // فاصله برای فلش
+  cursor: pointer;
+
+  option {
+    background: #1f2937; // پس‌زمینه منوی باز شونده
+    color: #fff; // متن سفید
+  }
+}
