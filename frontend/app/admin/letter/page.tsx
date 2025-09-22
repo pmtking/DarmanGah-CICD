@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { logo } from "./svg"; // SVG رشته کامل باشد
+import { logo } from "./svg";
 
 type Letter = {
   title: string;
@@ -43,89 +43,111 @@ const LetterForm = () => {
 
     printWindow.document.write(`
       <html dir="rtl" lang="fa">
-        <head>
-          <meta charset="UTF-8">
-          <title>${letter.title}</title>
-          <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v30.1.0/dist/font-face.css" rel="stylesheet">
-          <style>
-            @page { size: A5; margin: 15mm; }
+      <head>
+        <meta charset="UTF-8">
+        <title>${letter.title}</title>
+        <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v30.1.0/dist/font-face.css" rel="stylesheet">
+        <style>
+          @page { size: auto; margin: 10mm; }
+          body, html {
+            font-family: "Vazir", "IRANSans", sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #fff;
+          }
 
-            body {
-              font-family: "Vazir", "IRANSans", sans-serif;
-              color: #222;
-              line-height: 1.8;
-              font-size: 14px;
-              position: relative;
-              margin: 0;
-              padding: 15px;
-            }
+          .page {
+            position: relative;
+            min-height: 100vh;
+            padding: 10mm 10mm 10mm 10mm;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+          }
 
-            /* SVG پس‌زمینه بزرگ‌تر */
-            .watermark {
-              position: absolute;
-              top: 50%;
-              left: 50%;
-              transform: translate(-50%, -50%);
-              width: 70%;       /* بزرگ‌تر */
-              height: auto;
-              max-width: 130mm;  /* محدودیت برای چاپ */
-              opacity: 0.08;
-              z-index: -1;
-            }
+          /* سر برگ */
+          .header {
+            flex-shrink: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border: 1px dashed #999;
+            border-radius: 12px;
+            padding: 12px;
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 12px;
+            font-size: 12px;
+            background: rgba(255,255,255,0.85);
+            z-index: 1;
+          }
 
-            .header {
-              display: flex;
-              justify-content: space-between;
-              align-items: flex-start;
-              border-bottom: 1px solid #444;
-              padding-bottom: 10px;
-              margin-bottom: 15px;
-              font-size: 11px; /* کوچک‌تر برای فضای بیشتر */
-            }
+          .header-right { text-align: right; }
+          .header-left { text-align: left; }
+          .header-center {
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+          }
 
-            .header-right { text-align: right; }
-            .header-left { text-align: left; }
-            .header-center {
-              text-align: center;
-              font-size: 14px;
-              font-weight: bold;
-              margin-top: 5px;
-            }
+          .receiver,
+          .title,
+          .content {
+            width: 100%;
+            max-width: 600px;
+            z-index: 1;
+          }
 
-            .receiver {
-              margin-top: 10px;
-              font-weight: bold;
-              font-size: 14px;
-            }
+          .receiver { margin-top: 10px; font-weight: bold; font-size: 14px; }
+          .title { text-align: right; font-weight: bold; font-size: 16px; text-decoration: underline; margin: 8px 0; }
+          .content { white-space: pre-wrap; text-align: justify; font-size: 14px; }
 
-            /* عنوان نامه سمت راست */
-            .title {
-              text-align: right;
-              font-weight: bold;
-              font-size: 16px;
-              text-decoration: underline;
-              margin: 15px 0;
-            }
+          /* لوگو بزرگ وسط زیر متن‌ها */
+          .logo-center {
+            position: absolute;
+            top: 40%;
+            left: 55%;
+           
+            transform: translate(-50%, -50%);
+            width:500px;
+            max-width: 500mm;
+            height: auto;
+            opacity: 0.25;
+            z-index: 0;
+          }
 
-            .content {
-              white-space: pre-wrap;
-              text-align: justify;
-              font-size: 14px;
-              margin-top: 10px;
-              min-height: 120mm; /* فضای کافی برای بادی نامه */
-            }
+          /* فوتر */
+          .footer {
+            font-weight: bold;
+            text-align: left;
+            font-size: 18px;
+            margin-top: 100px; /* فاصله از متن */
+            z-index: 1;
+            width: 100%;
+            max-width: 600px;
+          }
 
-            .footer {
-              margin-top: 30px;
-              font-weight: bold;
-              text-align: left;
-              font-size: 14px;
+          @media print {
+            .page { padding: 5mm; }
+            .logo-center {
+             position: absolute;
+            top: 40%;
+            left: 62%;
+           
+            // transform: translate(-50%, -50%);
+            width:430px;
+            max-width: 380mm;
+            height: auto;
+            opacity: 0.2;
+            z-index: 0;
             }
-          </style>
-        </head>
-        <body>
-          <!-- SVG بزرگ در پس‌زمینه -->
-          ${logo.replace('<svg', '<svg class="watermark"')}
+          }
+        </style>
+      </head>
+      <body>
+        <div class="page">
+          ${logo.replace("<svg", '<svg class="logo-center"')}
 
           <div class="header">
             <div class="header-right">
@@ -150,7 +172,8 @@ const LetterForm = () => {
             رسول پارسا<br/>
             مدیریت درمانگاه
           </div>
-        </body>
+        </div>
+      </body>
       </html>
     `);
 
