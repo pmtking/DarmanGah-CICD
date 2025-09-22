@@ -109,16 +109,16 @@ const LetterForm = () => {
           /* واترمارک همیشه وسط */
           .watermark {
             position: fixed;
-            top: 48%;
-            left: 62%;
+            top: 51%;
+            left: 67%;
             transform: translate(-50%, -50%);
             z-index: 0;
             pointer-events: none;
           }
           .watermark svg {
-            width: 420px;
+            width: 530px;
             height: auto;
-            opacity: 0.1;
+            opacity: 0.08;
           }
 
           /* متن نامه */
