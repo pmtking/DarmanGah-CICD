@@ -14,7 +14,15 @@ export interface IDoctorProfile extends Document {
     | "سایر";
   licenseNumber: string;
   service: Schema.Types.ObjectId;
-  workingDays: ("شنبه" | "یک‌شنبه" | "دوشنبه" | "سه‌شنبه" | "چهارشنبه" | "پنج‌شنبه" | "جمعه")[];
+  workingDays: (
+    | "شنبه"
+    | "یک‌شنبه"
+    | "دوشنبه"
+    | "سه‌شنبه"
+    | "چهارشنبه"
+    | "پنج‌شنبه"
+    | "جمعه"
+  )[];
   workingHours: {
     [day: string]: {
       shifts: { start: string; end: string; booked?: string[] }[];
@@ -38,7 +46,34 @@ const DoctorProfileSchema = new Schema<IDoctorProfile>(
 
     specialtyType: {
       type: String,
-      enum: ["پزشک عمومی", "جراح", "داخلی", "اطفال", "پوست", "رادیولوژی", "سایر"],
+      enum: [
+        "پزشک عمومی",
+        "جراح عمومی",
+        "جراح مغز و اعصاب",
+        "جراح قلب",
+        "جراح ارتوپد",
+        "داخلی",
+        "اطفال",
+        "پوست و مو",
+        "رادیولوژی",
+        "مامائی",
+        "دندان‌پزشکی",
+        "اورولوژی",
+        "روان‌شناسی",
+        "تغذیه",
+        "زنان و زایمان",
+        "قلب و عروق",
+        "گوارش",
+        "فیزیوتراپی",
+        "عفونی",
+        "بیهوشی",
+        "چشم‌پزشکی",
+        "گوش و حلق و بینی",
+        "طب اورژانس",
+        "طب کار",
+        "طب فیزیکی و توانبخشی",
+        "سایر",
+      ],
       required: true,
     },
 
@@ -48,7 +83,15 @@ const DoctorProfileSchema = new Schema<IDoctorProfile>(
 
     workingDays: {
       type: [String],
-      enum: ["شنبه", "یک‌شنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنج‌شنبه", "جمعه"],
+      enum: [
+        "شنبه",
+        "یک‌شنبه",
+        "دوشنبه",
+        "سه‌شنبه",
+        "چهارشنبه",
+        "پنج‌شنبه",
+        "جمعه",
+      ],
       default: [],
     },
 

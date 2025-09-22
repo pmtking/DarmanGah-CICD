@@ -138,7 +138,7 @@ const LetterForm = () => {
           .footer .manager { font-size: 16px; font-weight: bold; }
           .footer .title { font-size: 14px; }
 
-          @media print {
+          @media print {      
             .page { padding: 10mm; }
             .watermark svg { opacity: 0.08; }
           }
