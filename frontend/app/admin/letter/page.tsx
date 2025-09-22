@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { logo } from "./svg"; // svg باید رشته کامل SVG باشد
+import { logo } from "./svg"; // SVG رشته کامل باشد
 
 type Letter = {
   title: string;
@@ -57,18 +57,18 @@ const LetterForm = () => {
               font-size: 14px;
               position: relative;
               margin: 0;
-              padding: 20px;
+              padding: 15px;
             }
 
-            /* لوگوی پس‌زمینه به صورت نسبی */
+            /* SVG پس‌زمینه بزرگ‌تر */
             .watermark {
               position: absolute;
               top: 50%;
               left: 50%;
               transform: translate(-50%, -50%);
-              width: 50%;      /* اندازه نسبی برای همه صفحه‌ها */
+              width: 70%;       /* بزرگ‌تر */
               height: auto;
-              max-width: 100mm; /* محدودیت حداکثر اندازه برای چاپ */
+              max-width: 130mm;  /* محدودیت برای چاپ */
               opacity: 0.08;
               z-index: -1;
             }
@@ -77,33 +77,30 @@ const LetterForm = () => {
               display: flex;
               justify-content: space-between;
               align-items: flex-start;
-              border-bottom: 2px solid #444;
-              padding-bottom: 15px;
-              margin-bottom: 20px;
-            }
-
-            .header-right, .header-left {
-              font-size: 13px;
-              line-height: 1.6;
+              border-bottom: 1px solid #444;
+              padding-bottom: 10px;
+              margin-bottom: 15px;
+              font-size: 11px; /* کوچک‌تر برای فضای بیشتر */
             }
 
             .header-right { text-align: right; }
             .header-left { text-align: left; }
             .header-center {
               text-align: center;
-              font-size: 18px;
+              font-size: 14px;
               font-weight: bold;
-              margin-top: 10px;
+              margin-top: 5px;
             }
 
             .receiver {
-              margin-top: 15px;
+              margin-top: 10px;
               font-weight: bold;
-              font-size: 15px;
+              font-size: 14px;
             }
 
+            /* عنوان نامه سمت راست */
             .title {
-              text-align: center;
+              text-align: right;
               font-weight: bold;
               font-size: 16px;
               text-decoration: underline;
@@ -115,10 +112,11 @@ const LetterForm = () => {
               text-align: justify;
               font-size: 14px;
               margin-top: 10px;
+              min-height: 120mm; /* فضای کافی برای بادی نامه */
             }
 
             .footer {
-              margin-top: 50px;
+              margin-top: 30px;
               font-weight: bold;
               text-align: left;
               font-size: 14px;
@@ -126,7 +124,7 @@ const LetterForm = () => {
           </style>
         </head>
         <body>
-          <!-- SVG لوگوی پس‌زمینه -->
+          <!-- SVG بزرگ در پس‌زمینه -->
           ${logo.replace('<svg', '<svg class="watermark"')}
 
           <div class="header">
