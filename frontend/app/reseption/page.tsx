@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation"; // اضافه شد
+import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import api from "@/libs/axios";
+import Cookies from "js-cookie"; // ✅ اضافه شد
 
 import Button from "@/components/Button/page";
 import Input from "@/components/Input/page";
@@ -14,19 +15,22 @@ import { useUser } from "@/context/UserContext";
 
 const RespontionPage = () => {
   const { user } = useUser();
-  const router = useRouter(); // هوک مسیریابی
+  const router = useRouter();
 
   const [nationalId, setNationalId] = useState<string>("");
   const [isVerified, setIsVerified] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [patientData, setPatientData] = useState<any>(null);
 
-  // ✅ چک کردن وجود توکن و هدایت به لاگین
+  // ✅ چک کردن وجود توکن از کوکی
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = Cookies.get("token"); // ⬅️ گرفتن توکن از کوکی
     if (!token) {
       toast.error("لطفاً ابتدا وارد شوید");
-      router.push("/login"); // مسیر صفحه لاگین
+      router.push("/login");
+    } else {
+      // ست کردن توکن در هدر axios برای درخواست‌ها
+      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
     }
   }, [router]);
 
@@ -91,10 +95,7 @@ const RespontionPage = () => {
       const payload = { ...formData, nationalId };
       const res = await api.post("/api/reseption/add", payload, { responseType: "json" });
 
-      // فرض: سرور داده‌های رسید شامل خدمات و total را برمی‌گرداند
       const receiptData = res.data;
-
-      // ارسال داده‌ها به سرور چاپ Flask
       await printReceiptServer(receiptData);
 
       toast.success("پذیرش با موفقیت ثبت شد ✅");

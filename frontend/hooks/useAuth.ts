@@ -5,17 +5,16 @@ import api from "@/libs/axios";
 import Cookies from "js-cookie";
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import { useRouter } from "next/navigation"; // ✅ اضافه شد
+import { useRouter } from "next/navigation";
 
 // =======================
 // 🔸 Type Definitions
 // =======================
 interface User {
-  id: number;
+  id: string;
+  username: string;
   name: string;
-  email: string;
-  password: string;
-  role?: string; // نقش کاربر
+  role: "ADMIN" | "USER" | "RECEPTION"; // ✅ اصلاح شد
 }
 
 interface Credentials {
@@ -27,7 +26,7 @@ interface RegisterData {
   name?: string;
   number: string;
   password: string;
-  role: "ADMIN" | "USER" | "RESEPTION";
+  role: "ADMIN" | "USER" | "RECEPTION"; // ✅ اصلاح شد
 }
 
 // =======================
@@ -38,7 +37,7 @@ const useAuth = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | boolean>(false);
   const { setUser } = useUser();
-  const router = useRouter(); // ✅
+  const router = useRouter();
 
   // 🔸 Fetch current user on mount
   useEffect(() => {
@@ -47,7 +46,7 @@ const useAuth = () => {
         setLoading(true);
         const res = await api.get("/api/auth/user");
         setData(res.data);
-        setUser(res.data.user); // ذخیره در context
+        setUser(res.data.user);
       } catch (err: any) {
         setError(err.message || "خطا در دریافت اطلاعات کاربر");
         setUser(null);
@@ -65,8 +64,8 @@ const useAuth = () => {
       setLoading(true);
       const res = await api.post("/api/personel/login", credentials);
 
-      const user = res.data.user;
-      const token = res.data.token;
+      const user: User = res.data.user;
+      const token: string = res.data.token;
 
       setUser(user);
       setData(user);
@@ -79,14 +78,14 @@ const useAuth = () => {
 
       toast.success("ورود با موفقیت انجام شد ✅");
 
-      // ✅ بر اساس role ریدایرکت
-      if (user.role === "RESEPTION") {
-        router.push("/reseption");
-      } else if (user.role === "ADMIN") {
-        router.push("/admin");
-      } else {
-        router.push("/dashboard");
-      }
+      // ✅ مسیردهی بر اساس role
+      const roleRoutes: Record<User["role"], string> = {
+        ADMIN: "/admin",
+        USER: "/user",
+        RECEPTION: "/reseption", // دقت کن spelling درست باشه
+      };
+
+      router.push(roleRoutes[user.role] || "/");
     } catch (err: any) {
       const message = err.response?.data?.message || "خطا در ورود";
       setError(message);
@@ -114,7 +113,6 @@ const useAuth = () => {
     }
   };
 
-  // 🔸 Return hook values
   return {
     loading,
     error,

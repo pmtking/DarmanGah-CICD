@@ -120,7 +120,7 @@ const NavBar = () => {
             لغو نوبت
           </button>
         </div>
-      )}
+      )} 
 
       {/* مودال لغو نوبت */}
       {showCancelModal && (

@@ -4,8 +4,11 @@ import axios, {
   InternalAxiosRequestConfig,
 } from "axios";
 
+
+const BASE_URL = 'http://192.171.1.121:4000'
+// const BASE_URL = 'https://api.df-neyshabor.ir/'
 const api = axios.create({
-  baseURL: "https://api.df-neyshabor.ir/",
+  baseURL:BASE_URL ,
   timeout: 2000,
   headers: {
     "Content-Type": "application/json",

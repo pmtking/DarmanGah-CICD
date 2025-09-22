@@ -21,7 +21,7 @@ const SideBar = () => {
     { name: "خدمات", icon: <Home size="20" />, href: "/admin/service" },
     { name: "حسابداری", icon: <Home size="20" />, href: "/" },
     { name: "دسترسی‌ها", icon: <Home size="20" />, href: "/" },
-    { name: "تیکت ها", icon: <Home size="20" />, href: "/" },
+    { name: "پذیرش", icon: <Home size="20" />, href: "/admin/res" },
   ];
 
   return (
