@@ -48,9 +48,9 @@ const LetterForm = () => {
         <title>${letter.title}</title>
         <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v30.1.0/dist/font-face.css" rel="stylesheet">
         <style>
-          @page { size: auto; margin: 10mm; }
+          @page { size: auto; margin: 12mm; }
           body, html {
-            font-family: "Vazir", "IRANSans", sans-serif;
+            font-family: "Vazir", sans-serif;
             margin: 0;
             padding: 0;
             background: #fff;
@@ -59,96 +59,131 @@ const LetterForm = () => {
           .page {
             position: relative;
             min-height: 100vh;
-            padding: 10mm 10mm 10mm 10mm;
+            padding: 14mm;
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
             align-items: center;
           }
 
-          /* سر برگ */
+          /* هدر */
           .header {
-            flex-shrink: 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            border: 1px dashed #999;
-            border-radius: 12px;
-            padding: 12px;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: start;
             width: 100%;
-            max-width: 600px;
-            margin-bottom: 12px;
-            font-size: 12px;
-            background: rgba(255,255,255,0.85);
-            z-index: 1;
+            max-width: 720px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #1976d2;
+            padding-bottom: 8px;
+            border-radius:10px;
           }
 
-          .header-right { text-align: right; }
-          .header-left { text-align: left; }
+          .header-right {
+            text-align: right;
+            font-size: 11px;
+            font-weight: bold;
+            color: #333;
+          }
+          .header-left {
+            text-align: left;
+            font-size: 12px;
+            color: #333;
+            justify-self: end;
+          }
           .header-center {
             text-align: center;
-            font-size: 14px;
+            font-size: 15px;
             font-weight: bold;
+            color: #1976d2;
           }
 
+          .logo-header {
+            display: block;
+            margin: 8px auto 0 auto;
+            width: 90px;
+            height: auto;
+            opacity: 0.95;
+          }
+
+          /* واترمارک همیشه وسط */
+          .watermark {
+            position: fixed;
+            top: 48%;
+            left: 62%;
+            transform: translate(-50%, -50%);
+            z-index: 0;
+            pointer-events: none;
+          }
+          .watermark svg {
+            width: 420px;
+            height: auto;
+            opacity: 0.1;
+          }
+
+          /* متن نامه */
           .receiver,
           .title,
           .content {
             width: 100%;
-            max-width: 600px;
+            max-width: 720px;
             z-index: 1;
+            position: relative;
           }
-
-          .receiver { margin-top: 10px; font-weight: bold; font-size: 14px; }
-          .title { text-align: right; font-weight: bold; font-size: 16px; text-decoration: underline; margin: 8px 0; }
-          .content { white-space: pre-wrap; text-align: justify; font-size: 14px; }
-
-          /* لوگو بزرگ وسط زیر متن‌ها */
-          .logo-center {
-            position: absolute;
-            top: 40%;
-            left: 55%;
-           
-            transform: translate(-50%, -50%);
-            width:500px;
-            max-width: 500mm;
-            height: auto;
-            opacity: 0.25;
-            z-index: 0;
-          }
-
-          /* فوتر */
-          .footer {
+          .receiver {
+            margin-top: 12px;
             font-weight: bold;
-            text-align: left;
-            font-size: 18px;
-            margin-top: 100px; /* فاصله از متن */
+            font-size: 14px;
+          }
+          .title {
+            text-align: right;
+            font-weight: bold;
+            font-size: 17px;
+            text-decoration: underline;
+            margin: 12px 0;
+            color: #222;
+          }
+          .content {
+            white-space: pre-wrap;
+            text-align: justify;
+            font-size: 14px;
+            line-height: 1.9;
+            color: #333;
+          }
+
+          /* فوتر سمت چپ پایین */
+          .footer {
+            position: fixed;
+            bottom: 12mm;
+            left: 14mm;
+            text-align: center;
             z-index: 1;
-            width: 100%;
-            max-width: 600px;
+            font-weight: bold;
+            color: #444;
+            // text-align:center;
+          }
+          .footer .manager {
+            font-size: 16px;
+            font-weight: bold;
+          }
+          .footer .title {
+            font-size: 14px;
           }
 
           @media print {
-            .page { padding: 5mm; }
-            .logo-center {
-             position: absolute;
-            top: 40%;
-            left: 62%;
-           
-            // transform: translate(-50%, -50%);
-            width:430px;
-            max-width: 380mm;
-            height: auto;
-            opacity: 0.2;
-            z-index: 0;
-            }
+            .page { padding: 10mm; }
+            .watermark svg { opacity: 0.08; }
           }
         </style>
       </head>
       <body>
         <div class="page">
-          ${logo.replace("<svg", '<svg class="logo-center"')}
+          <!-- واترمارک -->
+          <div class="watermark">
+            ${logo}
+          </div>
 
+          <!-- سربرگ -->
           <div class="header">
             <div class="header-right">
               جمهوری اسلامی ایران<br/>
@@ -156,7 +191,10 @@ const LetterForm = () => {
               مرکز بهداشتی و درمانی فرهنگیان<br/>
               شهرستان نیشابور
             </div>
-            <div class="header-center">بسمه تعالی</div>
+            <div class="header-center">
+        
+              ${logo.replace("<svg", '<svg class="logo-header"')}
+            </div>
             <div class="header-left">
               شماره: ${letter.number}<br/>
               تاریخ: ${letter.date}<br/>
@@ -164,13 +202,15 @@ const LetterForm = () => {
             </div>
           </div>
 
+          <!-- متن نامه -->
           <div class="receiver">به: ${letter.receiver}</div>
           <div class="title">${letter.title}</div>
           <div class="content">${letter.content}</div>
 
+          <!-- فوتر -->
           <div class="footer">
-            رسول پارسا<br/>
-            مدیریت درمانگاه
+            <div class="manager">رسول پارسا</div>
+            <div class="title">مدیریت درمانگاه فرهنگیان نیشابور</div>
           </div>
         </div>
       </body>
