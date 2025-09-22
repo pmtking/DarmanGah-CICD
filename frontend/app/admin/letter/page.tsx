@@ -46,7 +46,9 @@ const LetterForm = () => {
       <head>
         <meta charset="UTF-8">
         <title>${letter.title}</title>
+        <!-- فونت‌ها -->
         <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v30.1.0/dist/font-face.css" rel="stylesheet">
+        <link href="https://cdn.jsdelivr.net/gh/rastikerdar/IranNastaliq@v1.0.0/font-face.css" rel="stylesheet">
         <style>
           @page { size: auto; margin: 12mm; }
           body, html {
@@ -76,99 +78,65 @@ const LetterForm = () => {
             margin-bottom: 20px;
             border-bottom: 1px solid #1976d2;
             padding-bottom: 8px;
-            border-radius:10px;
+            border-radius: 10px;
           }
+          .header-right { text-align: right; font-size: 11px; font-weight: bold; color: #333; }
+          .header-left { text-align: left; font-size: 12px; color: #333; justify-self: end; }
+          .header-center { text-align: center; }
 
-          .header-right {
-            text-align: right;
-            font-size: 11px;
-            font-weight: bold;
-            color: #333;
-          }
-          .header-left {
-            text-align: left;
-            font-size: 12px;
-            color: #333;
-            justify-self: end;
-          }
-          .header-center {
-            text-align: center;
-            font-size: 15px;
-            font-weight: bold;
+          /* بسمه تعالی با فونت نستعلیق کوچک */
+          .bism {
+            font-family: "IranNastaliq", "Vazir", serif;
+            font-size: 18px;
+            font-weight: normal;
+            text-align:center;
+            margin-right:40px;
             color: #1976d2;
+            margin-top:-25px;
+            margin-bottom: 4px;
           }
 
           .logo-header {
             display: block;
-            margin: 8px auto 0 auto;
-            width: 90px;
+            margin: 0 auto;
+            width: 100px;
             height: auto;
             opacity: 0.95;
           }
 
-          /* واترمارک همیشه وسط */
+          /* واترمارک */
           .watermark {
             position: fixed;
-            top: 51%;
+            top: 50%;
             left: 67%;
             transform: translate(-50%, -50%);
             z-index: 0;
             pointer-events: none;
           }
-          .watermark svg {
-            width: 530px;
-            height: auto;
-            opacity: 0.08;
-          }
+          .watermark svg { width: 500px; height: auto; opacity: 0.08; }
 
           /* متن نامه */
-          .receiver,
-          .title,
-          .content {
+          .receiver, .title, .content {
             width: 100%;
             max-width: 720px;
             z-index: 1;
             position: relative;
           }
-          .receiver {
-            margin-top: 12px;
-            font-weight: bold;
-            font-size: 14px;
-          }
-          .title {
-            text-align: right;
-            font-weight: bold;
-            font-size: 17px;
-            text-decoration: underline;
-            margin: 12px 0;
-            color: #222;
-          }
-          .content {
-            white-space: pre-wrap;
-            text-align: justify;
-            font-size: 14px;
-            line-height: 1.9;
-            color: #333;
-          }
+          .receiver { margin-top: 12px; font-weight: bold; font-size: 14px; }
+          .title { text-align: right; font-weight: bold; font-size: 17px; text-decoration: underline; margin: 12px 0; color: #222; }
+          .content { white-space: pre-wrap; text-align: justify; font-size: 14px; line-height: 1.9; color: #333; }
 
-          /* فوتر سمت چپ پایین */
+          /* فوتر */
           .footer {
             position: fixed;
             bottom: 12mm;
             left: 14mm;
-            text-align: center;
             z-index: 1;
             font-weight: bold;
             color: #444;
-            // text-align:center;
           }
-          .footer .manager {
-            font-size: 16px;
-            font-weight: bold;
-          }
-          .footer .title {
-            font-size: 14px;
-          }
+          .footer .manager { font-size: 16px; font-weight: bold; }
+          .footer .title { font-size: 14px; }
 
           @media print {
             .page { padding: 10mm; }
@@ -179,9 +147,7 @@ const LetterForm = () => {
       <body>
         <div class="page">
           <!-- واترمارک -->
-          <div class="watermark">
-            ${logo}
-          </div>
+          <div class="watermark">${logo}</div>
 
           <!-- سربرگ -->
           <div class="header">
@@ -192,7 +158,7 @@ const LetterForm = () => {
               شهرستان نیشابور
             </div>
             <div class="header-center">
-        
+              <p class="bism">بسمه تعالی</p>
               ${logo.replace("<svg", '<svg class="logo-header"')}
             </div>
             <div class="header-left">
