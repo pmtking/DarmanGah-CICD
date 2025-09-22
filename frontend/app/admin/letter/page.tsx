@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { svgLogo } from "./svg"; // svgLogo باید به صورت رشته کامل SVG باشد
+import { logo } from "./svg"; // svgLogo باید رشته کامل SVG باشد
 
 type Letter = {
   title: string;
@@ -44,11 +44,10 @@ const LetterForm = () => {
     printWindow.document.write(`
       <html dir="rtl" lang="fa">
         <head>
-          <meta charset="UTF-8" />
+          <meta charset="UTF-8">
           <title>${letter.title}</title>
           <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v30.1.0/dist/font-face.css" rel="stylesheet">
           <style>
-            /* تنظیم صفحه برای A5 */
             @page { size: A5; margin: 15mm; }
 
             body {
@@ -59,18 +58,19 @@ const LetterForm = () => {
               position: relative;
               margin: 0;
               padding: 20px;
-              width: 148mm;  /* عرض A5 */
-              height: 210mm; /* ارتفاع A5 */
+              width: 148mm;
+              height: 210mm;
             }
 
             .watermark {
               position: absolute;
-              top: 60%;
-              left: 40%;
+              top: 50%;
+              left:75%;
+            //   right:50%;
               transform: translate(-50%, -50%);
-              opacity: 0.2;
-              width: 170mm; /* اندازه مناسب برای A5 */
-              height: 170mm;
+              width: 200mm;  /* کوچکتر برای چاپ */
+              height: auto;
+              opacity: 0.09;
               z-index: -1;
             }
 
@@ -127,8 +127,8 @@ const LetterForm = () => {
           </style>
         </head>
         <body>
-          <!-- SVG لوگو در پس زمینه -->
-          ${svgLogo.replace('<svg', '<svg class="watermark"')}
+          <!-- SVG لوگو کوچک در پس‌زمینه -->
+          ${logo.replace('<svg', '<svg class="watermark"')}
 
           <div class="header">
             <div class="header-right">
