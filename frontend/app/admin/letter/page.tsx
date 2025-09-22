@@ -133,14 +133,16 @@ const LetterForm = () => {
             left: 14mm;
             z-index: 1;
             font-weight: bold;
+            text-align:center;
+            text-decoration:none;
             color: #444;
           }
           .footer .manager { font-size: 16px; font-weight: bold; }
-          .footer .title { font-size: 14px; }
+          .footer .title { font-size: 14px;  }
 
           @media print {      
             .page { padding: 10mm; }
-            .watermark svg { opacity: 0.08; }
+            .watermark svg { opacity: 0.09; }
           }
         </style>
       </head>

@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import api from "@/libs/axios";
 
+// ----------------- Types -----------------
 interface Shift {
   start: string;
   end: string;
-  booked: string[];
+  booked?: string[];
 }
 
 interface Doctor {
@@ -22,7 +23,7 @@ interface Doctor {
   avatarUrl?: string;
 }
 
-// ================= Modal Component =================
+// ----------------- Modal Component -----------------
 const Modal = ({
   children,
   onClose,
@@ -43,7 +44,7 @@ const Modal = ({
   </div>
 );
 
-// ================= Doctors Page =================
+// ----------------- Doctors Page -----------------
 const DoctorsPage = () => {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,21 +56,29 @@ const DoctorsPage = () => {
   const params = useParams();
   const typeSlug = typeof params?.type === "string" ? params.type.trim() : undefined;
 
-  // Map slugs → Persian label & specialtyType
+  // ----------------- Specialty Mapping -----------------
   const typeMap: Record<string, { label: string; specialtyTypes: string[] }> = {
     general: { label: "عمومی", specialtyTypes: ["پزشک عمومی"] },
     dentist: { label: "دندان‌پزشکی", specialtyTypes: ["دندان‌پزشکی"] },
-    specialist: { 
-      label: "متخصص", 
-      specialtyTypes: ["جراح", "داخلی", "اطفال", "پوست", "رادیولوژی", "سایر"] 
+    specialist: {
+      label: "متخصص",
+      specialtyTypes: [
+        "جراح عمومی", "جراح مغز و اعصاب", "جراح قلب", "جراح ارتوپد",
+        "داخلی", "اطفال", "پوست و مو", "رادیولوژی", "مامائی",
+        "اورولوژی", "روان‌شناسی", "تغذیه", "زنان و زایمان",
+        "قلب و عروق", "گوارش", "فیزیوتراپی", "عفونی", "بیهوشی",
+        "چشم‌پزشکی", "گوش و حلق و بینی", "طب اورژانس", "طب کار",
+        "طب فیزیکی و توانبخشی", "سایر"
+      ]
     },
   };
 
+  // ----------------- Fetch Doctors -----------------
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
         const res = await api.get<Doctor[]>("/api/doctors");
-        setDoctors(res.data);
+        setDoctors(res.data || []);
       } catch (err) {
         console.error("Error fetching doctors:", err);
       } finally {
@@ -79,23 +88,28 @@ const DoctorsPage = () => {
     fetchDoctors();
   }, []);
 
-  if (loading) return <p className="text-center mt-10 text-gray-600">Loading doctors...</p>;
+  if (loading)
+    return <p className="text-center mt-10 text-gray-600">Loading doctors...</p>;
 
-  // ✅ Filter by specialtyType using mapping
+  // ----------------- Filter Doctors -----------------
   const filteredDoctors = typeSlug
     ? doctors.filter((doc) =>
         typeMap[typeSlug]?.specialtyTypes.includes(doc.specialtyType)
       )
-    : [];
+    : doctors; // اگر typeSlug وجود نداشت، همه دکترها نمایش داده شوند
 
   return (
     <section className="p-6 doctors-page">
       <h1 className="text-3xl font-bold mb-8 text-center text-white">
-        {typeSlug ? `List of ${typeMap[typeSlug]?.label || typeSlug}` : "No category selected"}
+        {typeSlug
+          ? `List of ${typeMap[typeSlug]?.label || typeSlug}`
+          : "All Doctors"}
       </h1>
 
       {filteredDoctors.length === 0 ? (
-        <p className="text-center text-gray-500 mt-10">No doctors found for this category</p>
+        <p className="text-center text-gray-500 mt-10">
+          No doctors found for this category
+        </p>
       ) : (
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           {filteredDoctors.map((doctor) => (
@@ -138,7 +152,7 @@ const DoctorsPage = () => {
         </div>
       )}
 
-      {/* Modal */}
+      {/* ----------------- Modal ----------------- */}
       {showModal && selectedDoctor && (
         <Modal onClose={() => setShowModal(false)}>
           <h4 className="font-bold text-gray-800 mb-2">Select Day:</h4>
@@ -165,7 +179,7 @@ const DoctorsPage = () => {
                     key={i}
                     onClick={() =>
                       router.push(
-                        `/reserve/${selectedDoctor.personnelId}?day=${selectedDay}&time=${shift.start}`
+                        `/reserve/${selectedDoctor.personnelId}?day=${selectedDay}`
                       )
                     }
                     className="px-3 py-1 rounded bg-gray-200/50 hover:bg-green-500 hover:text-white transition"
