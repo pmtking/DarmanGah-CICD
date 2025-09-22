@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { logo } from "./svg"; // svgLogo باید رشته کامل SVG باشد
+import { logo } from "./svg"; // svg باید رشته کامل SVG باشد
 
 type Letter = {
   title: string;
@@ -58,19 +58,18 @@ const LetterForm = () => {
               position: relative;
               margin: 0;
               padding: 20px;
-              width: 148mm;
-              height: 210mm;
             }
 
+            /* لوگوی پس‌زمینه به صورت نسبی */
             .watermark {
               position: absolute;
               top: 50%;
-              left:75%;
-            //   right:50%;
+              left: 50%;
               transform: translate(-50%, -50%);
-              width: 200mm;  /* کوچکتر برای چاپ */
+              width: 50%;      /* اندازه نسبی برای همه صفحه‌ها */
               height: auto;
-              opacity: 0.09;
+              max-width: 100mm; /* محدودیت حداکثر اندازه برای چاپ */
+              opacity: 0.08;
               z-index: -1;
             }
 
@@ -127,7 +126,7 @@ const LetterForm = () => {
           </style>
         </head>
         <body>
-          <!-- SVG لوگو کوچک در پس‌زمینه -->
+          <!-- SVG لوگوی پس‌زمینه -->
           ${logo.replace('<svg', '<svg class="watermark"')}
 
           <div class="header">
