@@ -3,7 +3,18 @@
 import Appointment from "../models/Appointment";
 import DoctorProfile from "../models/DoctorProfile";
 
-export const reserveAppointment = async (data) => {
+// ___________________________ pmt king coding ___________________ //
+
+
+export const reserveAppointment = async (data: {
+  fullName: string;
+  phoneNumber: string;
+  insuranceType: string;
+  nationalCode: string;
+  doctorId: string;
+  appointmentDate: Date;
+  appointmentTime: string;
+}) => {
   try {
     const {
       fullName,
@@ -15,10 +26,28 @@ export const reserveAppointment = async (data) => {
       appointmentTime,
     } = data;
 
+    // بررسی پر بودن همه فیلدها
+    if (
+      !fullName ||
+      !phoneNumber ||
+      !insuranceType ||
+      !nationalCode ||
+      !doctorId ||
+      !appointmentDate ||
+      !appointmentTime
+    ) {
+      throw new Error("همه فیلدهای اجباری باید پر شوند ❌");
+    }
+
     // بررسی وجود پزشک
     const doctor = await DoctorProfile.findOne({ personnel: doctorId });
     if (!doctor) {
-      throw new Error("پزشک یافت نشد");
+      throw new Error("پزشک یافت نشد ❌");
+    }
+
+    // بررسی تاریخ گذشته
+    if (new Date(appointmentDate) < new Date()) {
+      throw new Error("نمی‌توان برای تاریخ گذشته نوبت رزرو کرد ❌");
     }
 
     // بررسی تداخل نوبت
@@ -30,7 +59,7 @@ export const reserveAppointment = async (data) => {
     });
 
     if (conflict) {
-      throw new Error("این نوبت قبلاً رزرو شده است");
+      throw new Error("این نوبت قبلاً رزرو شده است ❌");
     }
 
     // ایجاد نوبت جدید
@@ -47,7 +76,7 @@ export const reserveAppointment = async (data) => {
 
     await appointment.save();
 
-    return { success: true, message: "رزرو با موفقیت انجام شد" };
+    return { success: true, message: "رزرو با موفقیت انجام شد ✅" };
   } catch (error: any) {
     return { success: false, message: error.message };
   }
@@ -65,9 +94,12 @@ export const findAppointment = async (nationalCode: string) => {
     }
 
     // جستجوی نوبت در دیتابیس
-    const appointment = await Appointment.findOne({ nationalCode });
+    const appointments = await Appointment.find({ nationalCode }).populate(
+      "doctorId",
+      "name specialty"
+    );
 
-    if (!appointment) {
+    if (!appointments || appointments.length === 0) {
       return {
         success: false,
         message: "هیچ نوبتی برای این کد ملی ثبت نشده است ❌",
@@ -77,16 +109,55 @@ export const findAppointment = async (nationalCode: string) => {
 
     return {
       success: true,
-      message: "نوبت یافت شد ✅",
-      data: appointment,
+      message: "نوبت(ها) یافت شد ✅",
+      data: appointments,
     };
   } catch (error: any) {
     console.error("❌ خطا در استعلام نوبت:", error.message);
     return {
       success: false,
-      message: "خطا در پردازش درخواست",
+      message: "خطا در پردازش درخواست ❌",
       error: error.message,
       data: null,
     };
   }
 };
+
+
+// export const findAppointment = async (nationalCode: string) => {
+//   try {
+//     // اعتبارسنجی اولیه
+//     if (!nationalCode || nationalCode.length !== 10) {
+//       return {
+//         success: false,
+//         message: "کد ملی باید 10 رقم باشد ❌",
+//         data: null,
+//       };
+//     }
+
+//     // جستجوی نوبت در دیتابیس
+//     const appointment = await Appointment.findOne({ nationalCode });
+
+//     if (!appointment) {
+//       return {
+//         success: false,
+//         message: "هیچ نوبتی برای این کد ملی ثبت نشده است ❌",
+//         data: null,
+//       };
+//     }
+
+//     return {
+//       success: true,
+//       message: "نوبت یافت شد ✅",
+//       data: appointment,
+//     };
+//   } catch (error: any) {
+//     console.error("❌ خطا در استعلام نوبت:", error.message);
+//     return {
+//       success: false,
+//       message: "خطا در پردازش درخواست",
+//       error: error.message,
+//       data: null,
+//     };
+//   }
+// };
