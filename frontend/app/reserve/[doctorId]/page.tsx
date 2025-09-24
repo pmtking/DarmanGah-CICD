@@ -100,7 +100,7 @@ export default function DoctorsPage() {
     };
 
     try {
-      await api.post("http://192.171.1.121:4000/api/appointment/add", payload);
+      await api.post("api/appointment/add", payload);
       alert("✅ نوبت با موفقیت ثبت شد");
       setSelectedDoctor(null);
       setStep(1);
