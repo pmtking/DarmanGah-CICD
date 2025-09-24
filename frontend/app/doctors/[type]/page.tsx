@@ -11,7 +11,7 @@ interface Shift {
 }
 
 interface Doctor {
-  _id: string;
+  personnelId: string;
   name: string;
   specialty: string;
   avatarUrl?: string;
@@ -113,7 +113,7 @@ export default function DoctorsPage() {
 
     const payload = {
       ...formData,
-      doctorId: selectedDoctor._id, // ✅ اصلاح شد
+      doctorId: selectedDoctor.personnelId, // ✅ اصلاح شد
       appointmentDate,
       appointmentTime: selectedTime,
     };
@@ -159,7 +159,7 @@ export default function DoctorsPage() {
       <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
         {doctors.map((doctor) => (
           <div
-            key={doctor._id}
+            key={doctor.personnelId}
             className="doctor-card bg-white/20 backdrop-blur-md border border-white/30 rounded-3xl shadow-lg hover:shadow-xl transition p-6 flex flex-col items-center"
           >
             {doctor.avatarUrl ? (

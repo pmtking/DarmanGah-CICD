@@ -46,9 +46,9 @@ export const reserveAppointment = async (data: {
     }
 
     // بررسی تاریخ گذشته
-    if (new Date(appointmentDate) < new Date()) {
-      throw new Error("نمی‌توان برای تاریخ گذشته نوبت رزرو کرد ❌");
-    }
+    // if (new Date(appointmentDate) < new Date()) {
+    //   throw new Error("نمی‌توان برای تاریخ گذشته نوبت رزرو کرد ❌");
+    // }
 
     // بررسی تداخل نوبت
     const conflict = await Appointment.findOne({
