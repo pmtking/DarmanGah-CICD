@@ -11,34 +11,39 @@ if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 }
 
-// تنظیمات multer
+// تنظیمات multer برای آپلود تکی فایل
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
     cb(null, UPLOAD_DIR);
   },
   filename: (_req, file, cb) => {
-    const uniqueName = `${file.originalname}`;
+    // اضافه کردن timestamp برای جلوگیری از تکراری شدن نام فایل‌ها
+    const timestamp = Date.now();
+    const ext = path.extname(file.originalname);
+    const basename = path.basename(file.originalname, ext);
+    const uniqueName = `${basename}-${timestamp}${ext}`;
     cb(null, uniqueName);
   },
 });
 
-export const upload = multer({ storage });
+// فقط یک فایل با کلید 'file' آپلود می‌کنیم
+export const upload = multer({ storage }).single("file");
 
-// کنترلر برای دریافت فایل‌ها
-export const uploadFiles = (req: Request<{}, {}, {}, {}>, res: Response) => {
-  const files = req.files as Express.Multer.File[] | undefined;
+// کنترلر برای دریافت فایل
+export const uploadFiles = (req: Request, res: Response) => {
+  const file = req.file;
 
-  if (!files || files.length === 0) {
+  if (!file) {
     return res.status(400).json({ error: "هیچ فایلی ارسال نشده است." });
   }
 
-  const uploadedFiles = files.map((file) => file.filename);
-
   res.json({
-    message: "✅ فایل‌ها با موفقیت آپلود شدند.",
-    files: uploadedFiles,
+    message: "✅ فایل با موفقیت آپلود شد.",
+    file: file.filename,
   });
 };
+
+// گرفتن فایل‌ها بر اساس کد ملی
 export const getFilesByCodeMelli = (req: Request, res: Response) => {
   const { codeMelli } = req.body;
 
@@ -54,13 +59,13 @@ export const getFilesByCodeMelli = (req: Request, res: Response) => {
     return res.status(404).json({ message: "فایلی برای این کد ملی پیدا نشد." });
   }
 
-  // می‌توانیم فایل‌ها را به صورت base64 یا لینک ارسال کنیم
+  // فایل‌ها را به صورت base64 ارسال می‌کنیم
   const filesData = matchedFiles.map((filename) => {
     const filePath = path.join(UPLOAD_DIR, filename);
     const fileBuffer = fs.readFileSync(filePath);
     return {
       name: filename,
-      data: fileBuffer.toString("base64"), // encode برای ارسال در JSON
+      data: fileBuffer.toString("base64"),
     };
   });
 
