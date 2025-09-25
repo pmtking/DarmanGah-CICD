@@ -1,7 +1,7 @@
 "use client";
 
-import api from "@/libs/axios";
 import { useState, useRef } from "react";
+import api from "@/libs/axios";
 
 interface UploadFile {
   file: File;
@@ -13,42 +13,44 @@ export default function UploadLabPage() {
   const [files, setFiles] = useState<UploadFile[]>([]);
   const dropRef = useRef<HTMLDivElement>(null);
 
+  // اضافه کردن فایل‌ها به لیست
   const handleFiles = (selectedFiles: FileList | null) => {
     if (!selectedFiles) return;
-    const newFiles = Array.from(selectedFiles).map((f) => ({
-      file: f,
+    const newFiles = Array.from(selectedFiles).map((file) => ({
+      file,
       status: "pending" as const,
       progress: 0,
     }));
     setFiles((prev) => [...prev, ...newFiles]);
   };
 
+  // حذف فایل از لیست
   const handleRemoveFile = (name: string) => {
     setFiles((prev) => prev.filter((f) => f.file.name !== name));
   };
 
+  // مدیریت Drag & Drop
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     handleFiles(e.dataTransfer.files);
     dropRef.current?.classList.remove("border-blue-500");
   };
-
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     dropRef.current?.classList.add("border-blue-500");
   };
-
   const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
     dropRef.current?.classList.remove("border-blue-500");
   };
 
+  // ارسال فایل‌ها به سرور به ترتیب صف
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     for (let i = 0; i < files.length; i++) {
       const currentFile = files[i];
 
-      // ست وضعیت به uploading
+      // ست وضعیت uploading
       setFiles((prev) =>
         prev.map((f) =>
           f.file.name === currentFile.file.name
@@ -86,10 +88,8 @@ export default function UploadLabPage() {
           )
         );
 
-        // حذف بعد از ۱.۵ ثانیه
-        setTimeout(() => {
-          handleRemoveFile(currentFile.file.name);
-        }, 1500);
+        // حذف فایل بعد از 1.5 ثانیه
+        setTimeout(() => handleRemoveFile(currentFile.file.name), 1500);
       } catch (error) {
         console.error(error);
         setFiles((prev) =>
@@ -104,7 +104,7 @@ export default function UploadLabPage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen px-4 py-12 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
+    <div className="flex flex-col items-center justify-center min-h-screen px-4 py-12 bg-gradient-to-r ">
       <div className="bg-white/40 backdrop-blur-lg shadow-xl rounded-3xl p-8 w-full max-w-lg border border-white/20">
         <h1 className="text-2xl font-bold mb-6 text-gray-900 text-center">
           📤 آپلود جواب آزمایش
@@ -117,8 +117,8 @@ export default function UploadLabPage() {
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
-            className="border-4 border-dashed border-gray-300 rounded-2xl p-12 text-center text-gray-700 cursor-pointer transition-colors hover:border-blue-500 bg-white/50"
             onClick={() => document.getElementById("fileInput")?.click()}
+            className="border-4 border-dashed border-gray-300 rounded-2xl p-12 text-center text-gray-700 cursor-pointer transition-colors hover:border-blue-500 bg-white/50"
           >
             کشیدن و رها کردن فایل‌ها اینجا یا کلیک کنید
             <input
@@ -157,7 +157,7 @@ export default function UploadLabPage() {
                   {/* Progress bar */}
                   <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
                     <div
-                      className={`h-full transition-all duration-300 ${
+                      className={`h-full transition-all duration-300 ease-linear ${
                         f.status === "uploading"
                           ? "bg-blue-500"
                           : f.status === "success"
@@ -170,6 +170,7 @@ export default function UploadLabPage() {
                     />
                   </div>
 
+                  {/* درصد آپلود */}
                   <div className="flex justify-end">
                     {f.status === "uploading" && (
                       <span className="text-blue-600 text-xs">
@@ -177,9 +178,7 @@ export default function UploadLabPage() {
                       </span>
                     )}
                     {f.status === "success" && (
-                      <span className="text-green-600 text-xs">
-                        ✅ آپلود شد
-                      </span>
+                      <span className="text-green-600 text-xs">✅ آپلود شد</span>
                     )}
                     {f.status === "error" && (
                       <span className="text-red-600 text-xs">❌ خطا</span>
@@ -190,10 +189,7 @@ export default function UploadLabPage() {
             </div>
           )}
 
-          <button
-            type="submit"
-            className="bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl transition font-medium shadow-md"
-          >
+          <button className="bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl transition font-medium shadow-md">
             آپلود فایل‌ها
           </button>
         </form>
