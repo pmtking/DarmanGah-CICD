@@ -140,7 +140,7 @@ const RespontionPage = () => {
             <ReseptionForm
               data={patientData}
               nationalId={nationalId}
-              onSubmit={handleCreateReception}
+              // onSubmit={handleCreateReception}
             />
           </div>
         )}
