@@ -76,7 +76,7 @@ export default function DoctorsPage() {
   const fetchDoctors = async () => {
     try {
       const res = await api.get<Doctor[]>(
-        "http://192.171.1.121:4000/api/doctors"
+        "api/doctors"
       );
       setDoctors(res.data);
     } catch (err) {
@@ -119,7 +119,7 @@ export default function DoctorsPage() {
     };
 
     try {
-      await api.post("http://192.171.1.121:4000/api/appointment/add", payload);
+      await api.post("api/appointment/add", payload);
       alert("✅ نوبت با موفقیت ثبت شد");
 
       // ریست فرم و مودال
