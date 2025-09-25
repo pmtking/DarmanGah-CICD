@@ -4,8 +4,6 @@ import React, { useState, useEffect } from "react";
 import Input from "../Input/page";
 import Button from "../Button/page";
 import toast from "react-hot-toast";
-import { jsPDF } from "jspdf";
-// import vazirmatn from "@/public/Vazir.ttf"; // نیازمند نصب: npm install vazirmatn
 
 type ServiceItem = {
   _id: string;
@@ -34,10 +32,9 @@ type FormData = {
 type ReseptionFormProps = {
   data?: any;
   nationalId: string;
-  onSubmit: (payload: any) => void;
 };
 
-const ReseptionForm = ({ data, nationalId, onSubmit }: ReseptionFormProps) => {
+const ReseptionForm = ({ data, nationalId }: ReseptionFormProps) => {
   const today = new Date().toISOString().split("T")[0];
   const defaultTime = new Date().toLocaleTimeString("fa-IR", {
     hour: "2-digit",
@@ -61,9 +58,6 @@ const ReseptionForm = ({ data, nationalId, onSubmit }: ReseptionFormProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedServices, setSelectedServices] = useState<ServiceItem[]>([]);
   const [loading, setLoading] = useState(false);
-
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [printPayload, setPrintPayload] = useState<any>(null);
 
   // دریافت خدمات و پزشکان
   useEffect(() => {
@@ -91,6 +85,7 @@ const ReseptionForm = ({ data, nationalId, onSubmit }: ReseptionFormProps) => {
       .catch(() => toast.error("خطا در دریافت پزشکان"));
   }, []);
 
+  // اگر داده‌ی بیمار از قبل بود
   useEffect(() => {
     if (data) {
       const parts = data.fullName?.split(" ") || [];
@@ -142,6 +137,7 @@ const ReseptionForm = ({ data, nationalId, onSubmit }: ReseptionFormProps) => {
       return;
     }
 
+    // دیتا برای بک‌اند اصلی
     const backendPayload = {
       patientName: `${formData.firstName} ${formData.lastName}`,
       phoneNumber: formData.phoneNumber,
@@ -160,110 +156,66 @@ const ReseptionForm = ({ data, nationalId, onSubmit }: ReseptionFormProps) => {
       nationalId,
     };
 
-    setLoading(true);
-    await onSubmit(backendPayload);
-
-    const payload = {
-      bill_number: "123456",
-      turn_number: "01",
-      date: formData.visitDate,
+    // دیتا برای پرینتر
+    const printerPayload = {
+      footer_text: "www.drfn.ir",
+      bill_number: String(Math.floor(Math.random() * 1000000)),
+      turn_number: String(Math.floor(Math.random() * 100)),
+      date: new Date().toLocaleDateString("fa-IR"),
       time: defaultTime,
       patient_name: `${formData.firstName} ${formData.lastName}`,
       national_code: nationalId,
-      visit_type: "ویزیت سرپایی",
+      visit_type: "ویزیت حضوری",
       doctor_name:
-        allDoctors.find((d) => d._id === formData.doctorId)?.fullName || "",
-      reception_user: "رضا حسینی",
+        allDoctors.find((d) => d._id === formData.doctorId)?.fullName ||
+        "نامشخص",
+      doctor_specialty: "عمومی",
+      reception_user: "کاربر پذیرش",
       services: selectedServices.map((s) => ({
         name: s.serviceName,
         price: s.price,
-        quantity: s.quantity,
       })),
-      insurance_base: 40000,
-      insurance_extra: 15000,
-      total_payment:
-        selectedServices.reduce(
-          (sum, s) => sum + (s.price || 0) * (s.quantity || 1),
-          0
-        ) - 40000 - 15000,
+      insurance_base: 20000,
+      insurance_extra: 10000,
     };
 
-    setPrintPayload(payload);
-    setShowConfirm(true);
-    setLoading(false);
-  };
+    try {
+      setLoading(true);
 
-  const handlePrintPDF = async (payload: any) => {
-    const doc = new jsPDF({ unit: "pt", format: "a4" });
+      // ارسال به بک‌اند اصلی (اختیاری)
+      await fetch("http://192.171.1.16:4000/api/reseptions/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(backendPayload),
+      });
 
-    // بارگذاری فونت Vazirmatn
-    const fontBuffer = await fetch('../../public/Vazir.ttf').then((res) => res.arrayBuffer());
-    const base64Font = btoa(
-      new Uint8Array(fontBuffer).reduce(
-        (data, byte) => data + String.fromCharCode(byte),
-        ""
-      )
-    );
-    doc.addFileToVFS("Vazirmatn.ttf", base64Font);
-    doc.addFont("Vazirmatn.ttf", "Vazirmatn", "normal");
-    doc.setFont("Vazirmatn");
+      // ارسال به پرینتر
+      await fetch("http://127.0.0.1:5000", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(printerPayload),
+      });
 
-    let y = 50;
-    doc.setFontSize(16);
-    doc.text("قبض پذیرش بیمار", 550, y, { align: "right" });
-    y += 30;
+      toast.success("اطلاعات با موفقیت ثبت و برای چاپ ارسال شد ✅");
 
-    doc.setFontSize(12);
-    doc.text(`نام بیمار: ${payload.patient_name}`, 550, y, { align: "right" });
-    y += 20;
-    doc.text(`کد ملی: ${payload.national_code}`, 550, y, { align: "right" });
-    y += 20;
-    doc.text(`پزشک: ${payload.doctor_name}`, 550, y, { align: "right" });
-    y += 20;
-    doc.text(`تاریخ: ${payload.date} - ساعت: ${payload.time}`, 550, y, {
-      align: "right",
-    });
-    y += 30;
-
-    // جدول خدمات
-    payload.services.forEach((s: any) => {
-      doc.text(
-        `${s.name} | تعداد: ${s.quantity} | قیمت: ${s.price.toLocaleString()} | جمع: ${(s.price * s.quantity).toLocaleString()}`,
-        550,
-        y,
-        { align: "right" }
-      );
-      y += 20;
-    });
-
-    y += 20;
-    doc.setFontSize(14);
-    doc.text(
-      `جمع کل پرداختی: ${payload.total_payment.toLocaleString()} تومان`,
-      550,
-      y,
-      { align: "right" }
-    );
-
-    doc.output("dataurlnewwindow");
-  };
-
-  const confirmAndPrint = () => {
-    if (printPayload) handlePrintPDF(printPayload);
-    setShowConfirm(false);
-    setPrintPayload(null);
-    setFormData({
-      firstName: "",
-      lastName: "",
-      gender: "",
-      doctorId: "",
-      visitDate: today,
-      insuranceType: "سایر",
-      supplementaryInsurance: "سایر",
-      relation: "",
-      phoneNumber: "",
-    });
-    setSelectedServices([]);
+      // پاک کردن فرم
+      setFormData({
+        firstName: "",
+        lastName: "",
+        gender: "",
+        doctorId: "",
+        visitDate: today,
+        insuranceType: "سایر",
+        supplementaryInsurance: "سایر",
+        relation: "",
+        phoneNumber: "",
+      });
+      setSelectedServices([]);
+    } catch (err) {
+      toast.error("خطا در ثبت یا چاپ اطلاعات");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -409,31 +361,6 @@ const ReseptionForm = ({ data, nationalId, onSubmit }: ReseptionFormProps) => {
           </button>
         </div>
       </div>
-
-      {/* مدال تایید */}
-      {showConfirm && printPayload && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-[500px] p-6 text-black">
-            <h2 className="text-xl font-bold mb-4 text-right">
-              آیا می‌خواهید قبض چاپ شود؟
-            </h2>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowConfirm(false)}
-                className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500 transition"
-              >
-                لغو
-              </button>
-              <button
-                onClick={confirmAndPrint}
-                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
-              >
-                تایید و چاپ
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
