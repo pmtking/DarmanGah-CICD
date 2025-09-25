@@ -65,7 +65,7 @@ export default function DoctorsPage() {
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
-        const res = await api.get<Doctor[]>("http://192.171.1.121:4000/api/doctors");
+        const res = await api.get<Doctor[]>("/api/doctors");
         setDoctors(res.data);
       } catch (err) {
         console.error("❌ خطا در دریافت پزشکان:", err);
