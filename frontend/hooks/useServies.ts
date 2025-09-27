@@ -2,11 +2,8 @@
 // --------------- type  --------------- //
 
 import api from "@/libs/axios";
-import { AnyARecord } from "node:dns";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { flattenError } from "zod/v4/core";
-import { fi } from "zod/v4/locales";
 
 export interface Insurance {
   companyName: string;
@@ -26,38 +23,31 @@ export interface ClinicServiceType {
 }
 
 export const useService = () => {
-  const [loading, setLoading] = useState<Boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  //   ______________________  ✅ create seruvse ____________________ //
+  // ______________________ ✅ Create Service ____________________ //
   const createService = async (data: ClinicServiceType) => {
     try {
       setLoading(true);
       setError(null);
       const res = await api.post("/api/service/add", data);
-
-      toast.success(res.data.message);
+      toast.success(res.data.message || "سرویس با موفقیت ایجاد شد");
       return res.data.service as ClinicServiceType;
     } catch (err: any) {
-      setError(err.response?.data?.messgae || "خطا در ایجاد سروریس");
+      setError(err.response?.data?.message || "خطا در ایجاد سرویس");
       throw err;
     } finally {
       setLoading(false);
     }
   };
 
-  //   ____________________  get Service _____________________ //
+  // ____________________ ✅ Get Services _____________________ //
   const getService = async () => {
     try {
       setLoading(true);
       setError(null);
-
-      // ✅ باید await بذاری
       const res = await api.get("/api/service");
-
-      console.log("---------- res", res.data);
-
-      // فرض می‌کنیم بک‌اندت چیزی مثل { services: [...] } برمی‌گردونه
       return res.data as ClinicServiceType[];
     } catch (err: any) {
       setError(err?.response?.data?.message || "خطا در گرفتن سرویس‌ها");
@@ -67,6 +57,38 @@ export const useService = () => {
     }
   };
 
-  //   ________________________  🔳 export function on hooks _______________ //
-  return { createService, loading, error, getService };
+  // ____________________ ✅ Update Service _____________________ //
+  const updateService = async (id: string, data: Partial<ClinicServiceType>) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await api.put(`/api/service/${id}`, data);
+      toast.success(res.data.message || "سرویس با موفقیت ویرایش شد");
+      return res.data.service as ClinicServiceType;
+    } catch (err: any) {
+      setError(err.response?.data?.message || "خطا در ویرایش سرویس");
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ____________________ ✅ Delete Service _____________________ //
+  const deleteService = async (id: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await api.delete(`/api/service/${id}`);
+      toast.success(res.data.message || "سرویس با موفقیت حذف شد");
+      return res.data;
+    } catch (err: any) {
+      setError(err.response?.data?.message || "خطا در حذف سرویس");
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ________________________ 🔳 Export Hook Functions _______________ //
+  return { createService, getService, updateService, deleteService, loading, error };
 };

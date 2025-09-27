@@ -18,8 +18,7 @@ interface NewReceptionData {
   services: { serviceId: string; quantity: number }[];
 }
 
-// ----------------------------
-// ثبت پذیرش جدید و آماده‌سازی داده برای فرانت‌اند
+// تابع ثبت پذیرش جدید
 export async function registerNewReception(data: NewReceptionData) {
   // 1️⃣ بررسی وجود بیمار
   let patient = await PatientProfile.findOne({ nationalId: data.nationalId });
@@ -32,36 +31,49 @@ export async function registerNewReception(data: NewReceptionData) {
     });
   }
 
-  // 2️⃣ دریافت خدمات و محاسبه مبلغ
+  // 2️⃣ محاسبه خدمات با بیمه
   const servicesWithPrice: IReseptionService[] = [];
   let totalAmount = 0;
+  let totalBaseInsurance = 0;
+  let totalExtraInsurance = 0;
   const serviceNames: string[] = [];
 
   for (const s of data.services) {
     const service = await ClinicService.findById(s.serviceId);
-    if (!service) throw new Error("خدمت پیدا نشد");
+    if (!service) throw new Error(`خدمت با شناسه ${s.serviceId} پیدا نشد`);
 
     serviceNames.push(service.serviceName);
-
     let price = service.pricePublic;
+    let baseInsurancePrice = 0;
+    let extraInsurancePrice = 0;
 
-    // کسر بیمه پایه
-    const baseInsurance = service.baseInsurances.find(
-      (b) => b.companyName === data.insuranceType
-    );
-    if (baseInsurance) price -= baseInsurance.contractPrice;
-
-    // کسر بیمه تکمیلی
-    if (data.supplementaryInsurance) {
-      const extraInsurance = service.supplementaryInsurances.find(
-        (b) => b.companyName === data.supplementaryInsurance
+    // کسر بیمه پایه از تعرفه آزاد
+    if (service.baseInsurances?.length) {
+      const base = service.baseInsurances.find(
+        b => b.companyName.normalize("NFC") === data.insuranceType.normalize("NFC")
       );
-      if (extraInsurance) price -= extraInsurance.contractPrice;
+      if (base) {
+        baseInsurancePrice = base.contractPrice;
+        price -= baseInsurancePrice;
+      }
+    }
+
+    // کسر بیمه تکمیلی از مبلغ باقی‌مانده
+    if (data.supplementaryInsurance && service.supplementaryInsurances?.length) {
+      const extra = service.supplementaryInsurances.find(
+        b => b.companyName.normalize("NFC") === data.supplementaryInsurance.normalize("NFC")
+      );
+      if (extra) {
+        extraInsurancePrice = extra.contractPrice;
+        price -= extraInsurancePrice;
+      }
     }
 
     if (price < 0) price = 0;
 
     totalAmount += price * s.quantity;
+    totalBaseInsurance += baseInsurancePrice * s.quantity;
+    totalExtraInsurance += extraInsurancePrice * s.quantity;
 
     servicesWithPrice.push({
       serviceId: service._id,
@@ -70,10 +82,10 @@ export async function registerNewReception(data: NewReceptionData) {
     });
   }
 
-  // 3️⃣ دریافت نام پزشک
+  // 3️⃣ دریافت اطلاعات پزشک
   const doctor = await DoctorProfile.findById(data.doctorId);
-  const doctorName = doctor ? doctor.name : "نام پزشک";
-  const doctorSpecialty = doctor ? doctor.specialty : "تخصص";
+  const doctorName = doctor?.name || "نام پزشک";
+  const doctorSpecialty = doctor?.specialty || "تخصص";
 
   // 4️⃣ ایجاد رکورد پذیرش
   const reception = await Reseption.create({
@@ -89,11 +101,11 @@ export async function registerNewReception(data: NewReceptionData) {
     services: servicesWithPrice,
   });
 
-  // 5️⃣ اتصال پذیرش به پرونده بیمار
+  // 5️⃣ اتصال به پرونده بیمار
   patient.visits.push(reception._id);
   await patient.save();
 
-  // 6️⃣ بازگشت داده‌ها برای فرانت‌اند
+  // 6️⃣ آماده‌سازی داده برای فرانت و پرینتر
   const receiptData = {
     patient_name: patient.name,
     doctor_name: doctorName,
@@ -104,8 +116,8 @@ export async function registerNewReception(data: NewReceptionData) {
       price: s.price,
     })),
     total_payment: totalAmount,
-    insurance_base: 40000,       // مقدار واقعی بیمه پایه
-    insurance_extra: 15000,      // مقدار واقعی بیمه تکمیلی
+    insurance_base: totalBaseInsurance,
+    insurance_extra: totalExtraInsurance,
     appointmentDate: data.appointmentDate,
     appointmentTime: data.appointmentTime,
     turn_number: "25",

@@ -6,7 +6,6 @@ export interface IReseptionService {
   serviceId: Types.ObjectId;
   quantity: number;
   price: number; // قیمت هر خدمت بعد از محاسبه بیمه
-  
 }
 
 // اینترفیس Reseption
@@ -15,8 +14,8 @@ export interface IReseption extends Document {
   phoneNumber: string;
   relationWithGuardian?: string;
   visitType: "اولیه" | "پیگیری" | "اورژانسی";
-  insuranceType: "تأمین اجتماعی" | "سلامت" | "آزاد" | "نیروهای مسلح" | "سایر";
-  supplementaryInsurance?: "دی" | "آتیه" | "ایران" | "سایر";
+  insuranceType: "تامین اجتماعی" | "تأمین اجتماعی" | "سلامت" | "آزاد" | "نیروهای مسلح" | "سایر";
+  supplementaryInsurance?: "دی" | "ملت" | "آتیه سازان" | "دانا" | "آزاد" | "سایر";
   doctorId: Types.ObjectId;
   services: IReseptionService[];
   staffId: Types.ObjectId;
@@ -28,22 +27,25 @@ export interface IReseption extends Document {
 
 const reseptionSchema = new Schema<IReseption>(
   {
-    patientName: { type: String, required: true },
-    phoneNumber: { type: String, required: true },
-    relationWithGuardian: { type: String, default: "خود شخص" },
+    patientName: { type: String, required: true, trim: true },
+    phoneNumber: { type: String, required: true, trim: true },
+    relationWithGuardian: { type: String, default: "خود شخص", trim: true },
     visitType: {
       type: String,
       required: true,
       enum: ["اولیه", "پیگیری", "اورژانسی"],
+      trim: true,
     },
     insuranceType: {
       type: String,
       required: true,
-      enum: ["تأمین اجتماعی", "سلامت", "آزاد", "نیروهای مسلح", "سایر"],
+      enum: ["تامین اجتماعی", "تأمین اجتماعی", "سلامت", "آزاد", "نیروهای مسلح", "سایر"],
+      trim: true,
     },
     supplementaryInsurance: {
       type: String,
-      enum: ["دی", "آتیه", "ایران", "سایر"],
+      enum: ["دی", "ملت", "آتیه سازان", "دانا", "آزاد", "سایر"],
+      trim: true,
     },
     doctorId: { type: Schema.Types.ObjectId, ref: "DoctorProfile", required: true },
     services: [

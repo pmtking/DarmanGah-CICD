@@ -4,11 +4,18 @@ import React, { useState, useEffect } from "react";
 import Input from "../Input/page";
 import Button from "../Button/page";
 import toast from "react-hot-toast";
+import api from "@/libs/axios";
+import Cookies from "js-cookie";
 
+// ========================
+// Types
+// ========================
 type ServiceItem = {
   _id: string;
   serviceName: string;
-  price: number;
+  pricePublic: number;
+  baseInsurances: { companyName: string; contractPrice: number }[];
+  supplementaryInsurances: { companyName: string; contractPrice: number }[];
   quantity: number;
 };
 
@@ -23,10 +30,12 @@ type FormData = {
   gender: string;
   doctorId: string;
   visitDate: string;
+  visitType: string;
   insuranceType: string;
   supplementaryInsurance: string;
   relation: string;
   phoneNumber: string;
+  receptionUser: string;
 };
 
 type ReseptionFormProps = {
@@ -34,12 +43,12 @@ type ReseptionFormProps = {
   nationalId: string;
 };
 
+// ========================
+// Component
+// ========================
 const ReseptionForm = ({ data, nationalId }: ReseptionFormProps) => {
   const today = new Date().toISOString().split("T")[0];
-  const defaultTime = new Date().toLocaleTimeString("fa-IR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const defaultTime = new Date().toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" });
 
   const [formData, setFormData] = useState<FormData>({
     firstName: "",
@@ -47,49 +56,64 @@ const ReseptionForm = ({ data, nationalId }: ReseptionFormProps) => {
     gender: "",
     doctorId: "",
     visitDate: today,
+    visitType: "اولیه",
     insuranceType: "سایر",
     supplementaryInsurance: "سایر",
     relation: "",
     phoneNumber: "",
+    receptionUser: "",
   });
 
   const [allServices, setAllServices] = useState<ServiceItem[]>([]);
   const [allDoctors, setAllDoctors] = useState<DoctorItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchDoctor, setSearchDoctor] = useState("");
   const [selectedServices, setSelectedServices] = useState<ServiceItem[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // دریافت خدمات و پزشکان
+  // ========================
+  // Fetch services & doctors
+  // ========================
   useEffect(() => {
-    fetch("http://192.171.1.16:4000/api/service/")
-      .then((res) => res.json())
-      .then((data) =>
-        setAllServices(
-          data.map((s: any) => ({
-            _id: s._id,
-            serviceName: s.serviceName,
-            price: s.price || 0,
-            quantity: 1,
-          }))
-        )
-      )
+    api.get("api/service")
+      .then(res => setAllServices(res.data.map((s: any) => ({
+        _id: s._id,
+        serviceName: s.serviceName,
+        pricePublic: s.pricePublic,
+        baseInsurances: s.baseInsurances || [],
+        supplementaryInsurances: s.supplementaryInsurances || [],
+        quantity: 1,
+      }))))
       .catch(() => toast.error("خطا در دریافت خدمات"));
 
-    fetch("http://192.171.1.16:4000/api/doctors/")
-      .then((res) => res.json())
-      .then((data) =>
-        setAllDoctors(
-          data.map((d: any) => ({ _id: d.personnelId, fullName: d.name }))
-        )
-      )
+    api.get("api/doctors")
+      .then(res => setAllDoctors(res.data.map((d: any) => ({
+        _id: d.personnelId,
+        fullName: d.name,
+      }))))
       .catch(() => toast.error("خطا در دریافت پزشکان"));
   }, []);
 
-  // اگر داده‌ی بیمار از قبل بود
+  // ========================
+  // Load user from cookie
+  // ========================
+  useEffect(() => {
+    const cookieUser = Cookies.get("user");
+    if (cookieUser) {
+      try {
+        const user = JSON.parse(cookieUser);
+        setFormData(prev => ({ ...prev, receptionUser: user.name }));
+      } catch {}
+    }
+  }, []);
+
+  // ========================
+  // Pre-fill patient data
+  // ========================
   useEffect(() => {
     if (data) {
       const parts = data.fullName?.split(" ") || [];
-      setFormData((prev) => ({
+      setFormData(prev => ({
         ...prev,
         firstName: parts[0] || "",
         lastName: parts.slice(1).join(" ") || "",
@@ -100,63 +124,70 @@ const ReseptionForm = ({ data, nationalId }: ReseptionFormProps) => {
     }
   }, [data]);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
+  // ========================
+  // Handlers
+  // ========================
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const getServicePriceDetails = (service: ServiceItem) => {
+    // پیدا کردن بیمه پایه و تکمیلی با includes برای جلوگیری از mismatch نام
+    const base = service.baseInsurances.find(b => b.companyName.includes(formData.insuranceType))?.contractPrice || 0;
+    const extra = service.supplementaryInsurances.find(s => s.companyName.includes(formData.supplementaryInsurance))?.contractPrice || 0;
+
+    const patientPay = service.pricePublic - base - extra;
+    return { originalPrice: service.pricePublic, basePrice: base, supplementaryPrice: extra, patientPay };
   };
 
   const addService = (service: ServiceItem) => {
-    if (!selectedServices.find((s) => s._id === service._id)) {
+    if (!selectedServices.find(s => s._id === service._id)) {
       setSelectedServices([...selectedServices, { ...service, quantity: 1 }]);
       setSearchQuery("");
-    } else {
-      toast.error("این خدمت قبلا انتخاب شده است");
-    }
+    } else toast.error("این خدمت قبلا انتخاب شده است");
   };
 
-  const updateQuantity = (_id: string, quantity: number) => {
-    setSelectedServices((prev) =>
-      prev.map((s) => (s._id === _id ? { ...s, quantity } : s))
-    );
+  const updateQuantity = (_id: string, quantity: number) =>
+    setSelectedServices(prev => prev.map(s => s._id === _id ? { ...s, quantity } : s));
+
+  const removeService = (_id: string) =>
+    setSelectedServices(prev => prev.filter(s => s._id !== _id));
+
+  const calculateTotal = () => {
+    return selectedServices.reduce((sum, s) => {
+      const { patientPay } = getServicePriceDetails(s);
+      return sum + patientPay * s.quantity;
+    }, 0);
   };
 
-  const removeService = (_id: string) => {
-    setSelectedServices((prev) => prev.filter((s) => s._id !== _id));
-  };
-
+  // ========================
+  // Submit
+  // ========================
   const handleSubmit = async () => {
-    if (
-      !formData.firstName ||
-      !formData.lastName ||
-      !formData.doctorId ||
-      selectedServices.length === 0
-    ) {
+    if (!formData.firstName || !formData.lastName || !formData.doctorId || selectedServices.length === 0) {
       toast.error("لطفا فیلدهای ضروری را پر کنید");
       return;
     }
 
-    // دیتا برای بک‌اند اصلی
     const backendPayload = {
       patientName: `${formData.firstName} ${formData.lastName}`,
       phoneNumber: formData.phoneNumber,
       relationWithGuardian: formData.relation || "خود شخص",
-      visitType: "ویزیت سرپایی",
+      visitType: formData.visitType,
       insuranceType: formData.insuranceType,
       supplementaryInsurance: formData.supplementaryInsurance,
       doctorId: formData.doctorId,
       staffId: "650f0c1a2f3b3a0012345679",
       appointmentDate: formData.visitDate,
       appointmentTime: defaultTime,
-      services: selectedServices.map((s) => ({
-        serviceId: s._id,
-        quantity: s.quantity,
-      })),
-      nationalId,
+      services: selectedServices.map(s => {
+        const { originalPrice, basePrice, supplementaryPrice } = getServicePriceDetails(s);
+        return { serviceId: s._id, quantity: s.quantity, price: originalPrice, basePrice, supplementaryPrice };
+      }),
+      nationalId
     };
 
-    // دیتا برای پرینتر
     const printerPayload = {
       footer_text: "www.drfn.ir",
       bill_number: String(Math.floor(Math.random() * 1000000)),
@@ -165,86 +196,65 @@ const ReseptionForm = ({ data, nationalId }: ReseptionFormProps) => {
       time: defaultTime,
       patient_name: `${formData.firstName} ${formData.lastName}`,
       national_code: nationalId,
-      visit_type: "ویزیت حضوری",
-      doctor_name:
-        allDoctors.find((d) => d._id === formData.doctorId)?.fullName ||
-        "نامشخص",
+      visit_type: formData.visitType,
+      doctor_name: allDoctors.find(d => d._id === formData.doctorId)?.fullName || "نامشخص",
       doctor_specialty: "عمومی",
-      reception_user: "کاربر پذیرش",
-      services: selectedServices.map((s) => ({
-        name: s.serviceName,
-        price: s.price,
-      })),
-      insurance_base: 20000,
-      insurance_extra: 10000,
+      reception_user: formData.receptionUser,
+      insurance_base: formData.insuranceType,
+      insurance_extra: formData.supplementaryInsurance,
+      services: selectedServices.map(s => {
+        const { originalPrice, basePrice, supplementaryPrice, patientPay } = getServicePriceDetails(s);
+        return {
+          name: s.serviceName,
+          quantity: s.quantity,
+          original_price: originalPrice * s.quantity,
+          base_price: basePrice * s.quantity,
+          supplementary_price: supplementaryPrice * s.quantity,
+          patient_pay: patientPay * s.quantity,
+          supplementary_name: formData.supplementaryInsurance
+        };
+      })
     };
 
     try {
       setLoading(true);
-
-      // ارسال به بک‌اند اصلی (اختیاری)
-      await fetch("http://192.171.1.16:4000/api/reseptions/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(backendPayload),
-      });
-
-      // ارسال به پرینتر
-      await fetch("http://127.0.0.1:5000", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(printerPayload),
-      });
-
+      await api.post("/api/reseption/add", backendPayload);
+      await api.post("http://127.0.0.1:5000", printerPayload);
       toast.success("اطلاعات با موفقیت ثبت و برای چاپ ارسال شد ✅");
 
-      // پاک کردن فرم
-      setFormData({
+      // Reset form
+      setFormData(prev => ({
+        ...prev,
         firstName: "",
         lastName: "",
         gender: "",
         doctorId: "",
         visitDate: today,
+        visitType: "اولیه",
         insuranceType: "سایر",
         supplementaryInsurance: "سایر",
         relation: "",
         phoneNumber: "",
-      });
+      }));
       setSelectedServices([]);
-    } catch (err) {
+    } catch {
       toast.error("خطا در ثبت یا چاپ اطلاعات");
     } finally {
       setLoading(false);
     }
   };
 
+  // ========================
+  // Render
+  // ========================
   return (
     <div className="flex flex-col justify-center items-center p-4">
       <div className="flex flex-col w-full gap-3">
         {/* نام و نام خانوادگی و جنسیت */}
         <div className="flex justify-between gap-3 w-full">
-          <Input
-            type="text"
-            name="firstName"
-            value={formData.firstName}
-            onChange={handleChange}
-            className="w-full py-2 px-4 mb-4 border rounded text-black"
-            placeholder="نام"
-          />
-          <Input
-            type="text"
-            name="lastName"
-            value={formData.lastName}
-            onChange={handleChange}
-            className="w-full py-2 px-4 mb-4 border rounded text-black"
-            placeholder="نام خانوادگی"
-          />
-          <select
-            name="gender"
-            value={formData.gender}
-            onChange={handleChange}
-            className="w-full py-2 px-4 mb-4 border rounded text-black"
-          >
+          <Input type="text" name="firstName" value={formData.firstName} onChange={handleChange} placeholder="نام" className="w-full py-2 px-4 mb-4 border rounded text-black"/>
+          <Input type="text" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="نام خانوادگی" className="w-full py-2 px-4 mb-4 border rounded text-black"/>
+          <select name="gender" value={formData.gender} onChange={handleChange} className="w-full py-2 px-4 mb-4 border rounded text-black">
             <option value="">جنسیت</option>
             <option value="مرد">مرد</option>
             <option value="زن">زن</option>
@@ -253,112 +263,103 @@ const ReseptionForm = ({ data, nationalId }: ReseptionFormProps) => {
 
         {/* نسبت و شماره تماس */}
         <div className="flex justify-between gap-3 w-full">
-          <Input
-            type="text"
-            name="relation"
-            value={formData.relation}
-            onChange={handleChange}
-            className="w-full py-2 px-4 mb-4 border rounded text-black"
-            placeholder="نسبت با سرپرست"
-          />
-          <Input
-            type="text"
-            name="phoneNumber"
-            value={formData.phoneNumber}
-            onChange={handleChange}
-            className="w-full py-2 px-4 mb-4 border rounded text-black"
-            placeholder="شماره تماس"
-          />
+          <Input type="text" name="relation" value={formData.relation} onChange={handleChange} placeholder="نسبت با سرپرست" className="w-full py-2 px-4 mb-4 border rounded text-black"/>
+          <Input type="text" name="phoneNumber" value={formData.phoneNumber} onChange={handleChange} placeholder="شماره تماس" className="w-full py-2 px-4 mb-4 border rounded text-black"/>
         </div>
 
-        {/* تاریخ و پزشک */}
-        <Input
-          type="date"
-          name="visitDate"
-          value={formData.visitDate}
-          onChange={handleChange}
-          className="w-full py-2 px-4 mb-4 border rounded text-black"
-        />
-
-        <select
-          name="doctorId"
-          value={formData.doctorId}
-          onChange={handleChange}
-          className="w-full py-2 px-4 mb-4 border rounded text-black"
-        >
-          <option value="">انتخاب پزشک</option>
-          {allDoctors.map((d) => (
-            <option key={d._id} value={d._id}>
-              {d.fullName}
-            </option>
-          ))}
+        {/* نوع ویزیت */}
+        <select name="visitType" value={formData.visitType} onChange={handleChange} className="w-full py-2 px-4 mb-4 border rounded text-black">
+          <option value="اولیه">اولیه</option>
+          <option value="پیگیری">پیگیری</option>
+          <option value="اورژانسی">اورژانسی</option>
         </select>
 
-        {/* خدمات */}
-        <div className="flex flex-col w-full relative mb-4">
-          <Input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="جستجوی خدمات..."
-            className="w-full py-2 px-4 mb-2 border rounded text-black"
-          />
-          {searchQuery && (
+        {/* بیمه پایه و تکمیلی */}
+        <div className="flex justify-between gap-3 w-full">
+          <select name="insuranceType" value={formData.insuranceType} onChange={handleChange} className="w-full py-2 px-4 mb-4 border rounded text-black">
+            <option value="">انتخاب بیمه پایه</option>
+            <option value="تامین اجتماعی">تامین اجتماعی</option>
+            <option value="سلامت">سلامت</option>
+            <option value="آزاد">آزاد</option>
+            <option value="نیروهای مسلح">نیروهای مسلح</option>
+            <option value="سایر">سایر</option>
+          </select>
+          <select name="supplementaryInsurance" value={formData.supplementaryInsurance} onChange={handleChange} className="w-full py-2 px-4 mb-4 border rounded text-black">
+            <option value="">انتخاب بیمه تکمیلی</option>
+            <option value="دی">دی</option>
+            <option value="ملت">ملت</option>
+            <option value="آتیه سازان">آتیه سازان</option>
+            <option value="دانا">دانا</option>
+            <option value="آزاد">آزاد</option>
+            <option value="سایر">سایر</option>
+          </select>
+        </div>
+
+        {/* تاریخ */}
+        <Input type="date" name="visitDate" value={formData.visitDate} onChange={handleChange} className="w-full py-2 px-4 mb-4 border rounded text-black"/>
+
+        {/* پزشک */}
+        <div className="relative w-full mb-4">
+          <Input type="text" value={searchDoctor} onChange={(e) => setSearchDoctor(e.target.value)} placeholder="جستجوی پزشک..." className="w-full py-2 px-4 border rounded text-black"/>
+          {searchDoctor && (
             <ul className="absolute top-full left-0 right-0 bg-white border rounded max-h-40 overflow-y-auto z-10">
-              {allServices
-                .filter((s) =>
-                  s.serviceName
-                    .toLowerCase()
-                    .includes(searchQuery.toLowerCase())
-                )
-                .map((s) => (
-                  <li
-                    key={s._id}
-                    onClick={() => addService(s)}
-                    className="px-4 py-2 cursor-pointer hover:bg-gray-100 text-black"
-                  >
-                    {s.serviceName} - {s.price.toLocaleString()} تومان
-                  </li>
+              {allDoctors.filter(d => d.fullName.toLowerCase().includes(searchDoctor.toLowerCase()))
+                .map(d => (
+                  <li key={d._id} onClick={() => { setFormData(prev => ({ ...prev, doctorId: d._id })); setSearchDoctor(d.fullName); }} className="px-4 py-2 cursor-pointer hover:bg-gray-100 text-black">{d.fullName}</li>
                 ))}
             </ul>
           )}
-          <div className="flex flex-wrap gap-2 mt-2">
-            {selectedServices.map((s) => (
-              <div
-                key={s._id}
-                className="flex items-center gap-1 bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm"
-              >
-                <span>
-                  {s.serviceName} - {s.price.toLocaleString()} تومان
-                </span>
-                <input
-                  type="number"
-                  min={1}
-                  value={s.quantity}
-                  onChange={(e) =>
-                    updateQuantity(s._id, Number(e.target.value))
-                  }
-                  className="w-12 px-1 py-0.5 border rounded text-xs text-black"
-                />
-                <button
-                  onClick={() => removeService(s._id)}
-                  className="text-red-500 font-bold px-1"
-                >
-                  ×
-                </button>
-              </div>
-            ))}
+        </div>
+
+        {/* خدمات */}
+        <div className="flex flex-col w-full relative mb-4">
+          <Input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="جستجوی خدمات..." className="w-full py-2 px-4 mb-2 border rounded text-black"/>
+          {searchQuery && (
+            <ul className="absolute top-full left-0 right-0 bg-white border rounded max-h-40 overflow-y-auto z-10">
+              {allServices.filter(s => s.serviceName.toLowerCase().includes(searchQuery.toLowerCase()))
+                .map(s => (
+                  <li key={s._id} onClick={() => addService(s)} className="px-4 py-2 cursor-pointer hover:bg-gray-100 text-black">{s.serviceName}</li>
+                ))}
+            </ul>
+          )}
+
+          {/* خدمات انتخابی */}
+          <div className="flex flex-col gap-2 mt-2">
+            {selectedServices.map(s => {
+              const { patientPay } = getServicePriceDetails(s);
+              const totalPrice = patientPay * s.quantity;
+              return (
+                <div key={s._id} className="flex items-center justify-between bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">
+                  <div className="flex items-center gap-2">
+                    <span>{s.serviceName}</span>
+                    <input type="number" min={1} value={s.quantity} onChange={(e) => updateQuantity(s._id, Number(e.target.value))} className="w-12 px-1 py-0.5 border rounded text-xs text-black"/>
+                    <button onClick={() => removeService(s._id)} className="text-red-500 font-bold px-1">×</button>
+                  </div>
+                  <span className="text-sm">جمع: {totalPrice.toLocaleString()} تومان</span>
+                </div>
+              )
+            })}
           </div>
         </div>
 
+        {/* جمع کل */}
+        {selectedServices.length > 0 && (
+          <div className="flex justify-end text-lg font-bold mt-2">
+            جمع کل: {calculateTotal().toLocaleString()} تومان
+          </div>
+        )}
+
+        {/* دکمه‌ها */}
         <div className="flex w-full gap-4 mt-5">
-          <Button
-            name={loading ? "در حال ارسال..." : "ثبت اطلاعات"}
-            onClick={handleSubmit}
-          />
-          <button className="w-full bg-gray-500 text-white rounded-lg py-2">
-            صرف نظر
-          </button>
+          <Button name={loading ? "در حال ارسال..." : "ثبت اطلاعات"} onClick={handleSubmit}/>
+          <button className="w-full bg-gray-500 text-white rounded-lg py-2" onClick={() => {
+            setFormData({
+              firstName:"", lastName:"", gender:"", doctorId:"", visitDate:today,
+              visitType:"اولیه", insuranceType:"سایر", supplementaryInsurance:"سایر",
+              relation:"", phoneNumber:"", receptionUser: formData.receptionUser
+            });
+            setSelectedServices([]);
+          }}>صرف نظر</button>
         </div>
       </div>
     </div>

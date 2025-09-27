@@ -10,11 +10,11 @@ import { useRouter } from "next/navigation";
 // =======================
 // 🔸 Type Definitions
 // =======================
-interface User {
+export interface User {
   id: string;
   username: string;
   name: string;
-  role: "ADMIN" | "USER" | "RECEPTION"; // ✅ اصلاح شد
+  role: "ADMIN" | "USER" | "RECEPTION";
 }
 
 interface Credentials {
@@ -26,7 +26,7 @@ interface RegisterData {
   name?: string;
   number: string;
   password: string;
-  role: "ADMIN" | "USER" | "RECEPTION"; // ✅ اصلاح شد
+  role: "ADMIN" | "USER" | "RECEPTION";
 }
 
 // =======================
@@ -35,56 +35,52 @@ interface RegisterData {
 const useAuth = () => {
   const [data, setData] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | boolean>(false);
+  const [error, setError] = useState<string | null>(null);
   const { setUser } = useUser();
   const router = useRouter();
 
-  // 🔸 Fetch current user on mount
+  // 🔸 Load user from cookies on mount
   useEffect(() => {
-    const fetchUser = async () => {
+    const cookieUser = Cookies.get("user");
+    if (cookieUser) {
       try {
-        setLoading(true);
-        const res = await api.get("/api/auth/user");
-        setData(res.data);
-        setUser(res.data.user);
-      } catch (err: any) {
-        setError(err.message || "خطا در دریافت اطلاعات کاربر");
+        const parsedUser: User = JSON.parse(cookieUser);
+        setUser(parsedUser);
+        setData(parsedUser);
+      } catch {
         setUser(null);
-      } finally {
-        setLoading(false);
+        setData(null);
+        Cookies.remove("user");
       }
-    };
-
-    fetchUser();
+    }
   }, [setUser]);
 
   // 🔸 Login function
   const login = async (credentials: Credentials) => {
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
       const res = await api.post("/api/personel/login", credentials);
 
       const user: User = res.data.user;
       const token: string = res.data.token;
 
+      // Set user state
       setUser(user);
       setData(user);
 
-      Cookies.set("token", token, {
-        expires: 1,
-        secure: true,
-        sameSite: "Strict",
-      });
+      // Store token and user in cookies
+      Cookies.set("token", token, { expires: 1, secure: true, sameSite: "Strict" });
+      Cookies.set("user", JSON.stringify(user), { expires: 1, secure: true, sameSite: "Strict" });
 
       toast.success("ورود با موفقیت انجام شد ✅");
 
-      // ✅ مسیردهی بر اساس role
+      // Redirect based on role
       const roleRoutes: Record<User["role"], string> = {
         ADMIN: "/admin",
         USER: "/user",
-        RECEPTION: "/reseption", // دقت کن spelling درست باشه
+        RECEPTION: "/reseption",
       };
-
       router.push(roleRoutes[user.role] || "/");
     } catch (err: any) {
       const message = err.response?.data?.message || "خطا در ورود";
@@ -97,28 +93,34 @@ const useAuth = () => {
 
   // 🔸 Register function
   const register = async (registerData: RegisterData) => {
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
       const res = await api.post("/api/auth/register", registerData);
 
-      setUser(res.data.user);
-      setData(res.data.user);
+      const user: User = res.data.user;
+      setUser(user);
+      setData(user);
+
+      // Store user in cookies
+      Cookies.set("user", JSON.stringify(user), { expires: 1, secure: true, sameSite: "Strict" });
 
       toast.success("ثبت‌نام با موفقیت انجام شد ✅");
     } catch (err: any) {
-      setError(err.message || "خطا در ثبت‌نام");
-      toast.error(err.message);
+      const message = err.response?.data?.message || "خطا در ثبت‌نام";
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
   };
 
   return {
+    data,
     loading,
     error,
-    data,
-    register,
     login,
+    register,
   };
 };
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import api from "@/libs/axios";
 import jalaali from "jalaali-js";
 
@@ -15,7 +16,7 @@ interface Doctor {
   name: string;
   specialty: string;
   avatarUrl?: string;
-  workingDays: string[]; // بهتره تاریخ باشه (مثل "1403-07-01")
+  workingDays: string[];
   workingHours: Record<string, { shifts: Shift[] }>;
 }
 
@@ -58,6 +59,7 @@ const Modal = ({
 );
 
 export default function DoctorsPage() {
+  const pathname = usePathname(); // 📌 مسیر فعلی مثل /doctors یا /doctors/dentist
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -73,12 +75,23 @@ export default function DoctorsPage() {
     insuranceType: "",
   });
 
+  // 📌 دریافت پزشکان
   const fetchDoctors = async () => {
     try {
-      const res = await api.get<Doctor[]>(
-        "api/doctors"
-      );
-      setDoctors(res.data);
+      const res = await api.get<Doctor[]>("api/doctors");
+      let filtered = res.data;
+
+      if (pathname.includes("general")) {
+        filtered = res.data.filter((doc) => doc.specialty === "عمومی");
+      } else if (pathname.includes("dentist")) {
+        filtered = res.data.filter((doc) => doc.specialty === "دندان پزشک");
+      } else if (pathname.includes("specialist")) {
+        filtered = res.data.filter(
+          (doc) => doc.specialty !== "عمومی" && doc.specialty !== "دندان پزشک"
+        );
+      }
+
+      setDoctors(filtered);
     } catch (err) {
       console.error("❌ خطا در دریافت پزشکان:", err);
     } finally {
@@ -88,8 +101,9 @@ export default function DoctorsPage() {
 
   useEffect(() => {
     fetchDoctors();
-  }, []);
+  }, [pathname]);
 
+  // 📌 ثبت نوبت
   const handleReserve = async () => {
     if (!selectedDoctor || !selectedDay || !selectedTime) {
       return alert("❌ لطفاً روز و ساعت را انتخاب کنید");
@@ -103,17 +117,16 @@ export default function DoctorsPage() {
       return alert("❌ اطلاعات وارد شده معتبر نیست");
     }
 
-    // تبدیل روز شمسی به میلادی (فرض: selectedDay = "1403-07-01")
+    // تبدیل روز شمسی به میلادی
     const [jy, jm, jd] = selectedDay.split("-").map(Number);
     const { gy, gm, gd } = jalaali.toGregorian(jy, jm, jd);
-    const appointmentDate = `${gy}-${String(gm).padStart(
-      2,
-      "0"
-    )}-${String(gd).padStart(2, "0")}`;
+    const appointmentDate = `${gy}-${String(gm).padStart(2, "0")}-${String(
+      gd
+    ).padStart(2, "0")}`;
 
     const payload = {
       ...formData,
-      doctorId: selectedDoctor.personnelId, // ✅ اصلاح شد
+      doctorId: selectedDoctor.personnelId,
       appointmentDate,
       appointmentTime: selectedTime,
     };
@@ -122,7 +135,7 @@ export default function DoctorsPage() {
       await api.post("api/appointment/add", payload);
       alert("✅ نوبت با موفقیت ثبت شد");
 
-      // ریست فرم و مودال
+      // ریست حالت‌ها
       setSelectedDoctor(null);
       setStep(1);
       setSelectedDay(null);
@@ -134,7 +147,7 @@ export default function DoctorsPage() {
         insuranceType: "",
       });
 
-      // بروزرسانی پزشکان برای آپدیت شدن booked
+      // بروزرسانی پزشکان
       await fetchDoctors();
     } catch (err: any) {
       console.error(err);
@@ -153,48 +166,58 @@ export default function DoctorsPage() {
   return (
     <section className="p-6 doctors-page">
       <h1 className="text-3xl font-bold mb-8 text-center text-white">
-        لیست پزشکان
+        {pathname.includes("general")
+          ? "پزشکان عمومی"
+          : pathname.includes("dentist")
+          ? "پزشکان دندان پزشک"
+          : pathname.includes("specialist")
+          ? "پزشکان متخصص"
+          : "لیست همه پزشکان"}
       </h1>
 
-      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-        {doctors.map((doctor) => (
-          <div
-            key={doctor.personnelId}
-            className="doctor-card bg-white/20 backdrop-blur-md border border-white/30 rounded-3xl shadow-lg hover:shadow-xl transition p-6 flex flex-col items-center"
-          >
-            {doctor.avatarUrl ? (
-              <img
-                src={doctor.avatarUrl}
-                alt={doctor.name}
-                className="w-28 h-28 rounded-full object-cover mb-4 border-2 border-blue-400"
-              />
-            ) : (
-              <div className="w-28 h-28 rounded-full bg-gray-200/50 flex items-center justify-center mb-4 text-gray-500">
-                بدون تصویر
-              </div>
-            )}
-            <h3 className="text-xl font-semibold mb-1 text-center text-white">
-              {doctor.name}
-            </h3>
-            <p className="text-blue-300 font-medium mb-3 text-center">
-              {doctor.specialty}
-            </p>
-            <button
-              onClick={() => {
-                setSelectedDoctor(doctor);
-                setStep(1);
-                setSelectedDay(null);
-                setSelectedTime(null);
-              }}
-              className="w-full bg-blue-600/70 text-white py-2 rounded-xl hover:bg-blue-700/80 transition font-medium backdrop-blur-sm"
+      {doctors.length === 0 ? (
+        <p className="text-center text-gray-300">❌ هیچ پزشکی موجود نیست</p>
+      ) : (
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+          {doctors.map((doctor) => (
+            <div
+              key={doctor.personnelId}
+              className="doctor-card bg-white/20 backdrop-blur-md border border-white/30 rounded-3xl shadow-lg hover:shadow-xl transition p-6 flex flex-col items-center"
             >
-              نوبت گرفتن
-            </button>
-          </div>
-        ))}
-      </div>
+              {doctor.avatarUrl ? (
+                <img
+                  src={doctor.avatarUrl}
+                  alt={doctor.name}
+                  className="w-28 h-28 rounded-full object-cover mb-4 border-2 border-blue-400"
+                />
+              ) : (
+                <div className="w-28 h-28 rounded-full bg-gray-200/50 flex items-center justify-center mb-4 text-gray-500">
+                  بدون تصویر
+                </div>
+              )}
+              <h3 className="text-xl font-semibold mb-1 text-center text-white">
+                {doctor.name}
+              </h3>
+              <p className="text-blue-300 font-medium mb-3 text-center">
+                {doctor.specialty}
+              </p>
+              <button
+                onClick={() => {
+                  setSelectedDoctor(doctor);
+                  setStep(1);
+                  setSelectedDay(null);
+                  setSelectedTime(null);
+                }}
+                className="w-full bg-blue-600/70 text-white py-2 rounded-xl hover:bg-blue-700/80 transition font-medium backdrop-blur-sm"
+              >
+                نوبت گرفتن
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
-      {/* مودال رزرو */}
+      {/* 📌 مودال رزرو */}
       {selectedDoctor && (
         <Modal onClose={() => setSelectedDoctor(null)}>
           {step === 1 && (
