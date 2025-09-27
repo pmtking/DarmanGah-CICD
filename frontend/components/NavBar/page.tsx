@@ -51,7 +51,7 @@ const NavBar = () => {
     if (!nationalId) return;
     try {
       setLoading(true);
-      const res = await api.post("/appointment/find", { nationalCode: nationalId });
+      const res = await api.post("api/appointment/find", { nationalCode: nationalId });
       setAppointments(res.data.data || []);
     } catch (err) {
       console.error("❌ خطا در دریافت نوبت‌ها:", err);
