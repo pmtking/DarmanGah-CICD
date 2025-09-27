@@ -6,7 +6,7 @@ import {
   reserveAppointment,
 } from "../services/appointmentService";
 import Appointment from "../models/Appointment";
-import jalaali from "jalaali-js";
+
 
 // ----------------- رزرو نوبت -----------------
 export const ReserveAppointmentController = async (
@@ -98,5 +98,63 @@ export const GetAppointmentController = async (req: Request, res: Response) => {
       success: false,
       message: "خطا در دریافت نوبت‌ها",
     });
+  }
+};
+// ----------------- استعلام + لغو نوبت با کد ملی -----------------
+export const CancelByNationalCodeController = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { nationalCode, appointmentId } = req.body;
+
+    if (!nationalCode) {
+      return res.status(400).json({ message: "کد ملی الزامی است ❌" });
+    }
+
+    // مرحله ۱: همه نوبت‌ها با این کد ملی
+    const appointments = await Appointment.find({ nationalCode })
+      .populate("doctorId", "name specialty")
+      .sort({ appointmentDate: 1, appointmentTime: 1 });
+
+    if (!appointments || appointments.length === 0) {
+      return res.status(404).json({ message: "هیچ نوبتی یافت نشد ❌" });
+    }
+
+    // مرحله ۲: اگر appointmentId داده شده → لغو همون نوبت
+    if (appointmentId) {
+      const appointment = await Appointment.findOne({
+        _id: appointmentId,
+        nationalCode,
+      });
+
+      if (!appointment) {
+        return res.status(404).json({ message: "نوبت موردنظر یافت نشد ❌" });
+      }
+
+      if (appointment.status === "cancelled") {
+        return res.status(400).json({ message: "این نوبت قبلاً لغو شده ⚠️" });
+      }
+
+      appointment.status = "cancelled";
+      await appointment.save();
+
+      return res.status(200).json({
+        success: true,
+        message: "✅ نوبت با موفقیت لغو شد",
+        canceled: appointment,
+        remaining: appointments.filter((a) => a.id !== appointmentId),
+      });
+    }
+
+    // مرحله ۳: اگر فقط کد ملی بود → لیست نوبت‌ها رو برگردون
+    return res.status(200).json({
+      success: true,
+      count: appointments.length,
+      appointments,
+    });
+  } catch (error) {
+    console.error("❌ Error in CancelByNationalCodeController:", error);
+    return res.status(500).json({ message: "خطای داخلی سرور" });
   }
 };

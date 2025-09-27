@@ -5,23 +5,8 @@ import NavItem from "../navItem/page";
 import SearchBar from "../SearchBar/page";
 import "./style.scss";
 import { Menu, CloseSquare } from "iconsax-reactjs";
+import api from "@/libs/axios";
 
-// تست داده نوبت‌ها
-const mockAppointments = [
-  { nationalId: "1234567890", doctor: "دکتر علی", day: "شنبه", time: "09:00" },
-  {
-    nationalId: "1234567890",
-    doctor: "دکتر زهرا",
-    day: "یک‌شنبه",
-    time: "11:00",
-  },
-  {
-    nationalId: "0987654321",
-    doctor: "دکتر محمد",
-    day: "دوشنبه",
-    time: "10:00",
-  },
-];
 
 const navItems = [
   { name: "بخش دندان پزشکی", link: "/" },
@@ -58,13 +43,38 @@ const NavBar = () => {
   // ======== مودال لغو نوبت ========
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [nationalId, setNationalId] = useState("");
-  const [appointments, setAppointments] = useState<typeof mockAppointments>([]);
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const handleCheckAppointments = () => {
-    const userAppointments = mockAppointments.filter(
-      (a) => a.nationalId === nationalId
-    );
-    setAppointments(userAppointments);
+  // دریافت لیست نوبت‌ها از سرور
+  const handleCheckAppointments = async () => {
+    if (!nationalId) return;
+    try {
+      setLoading(true);
+      const res = await api.post("/appointment/find", { nationalCode: nationalId });
+      setAppointments(res.data.data || []);
+    } catch (err) {
+      console.error("❌ خطا در دریافت نوبت‌ها:", err);
+      setAppointments([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // لغو نوبت
+  const handleCancelAppointment = async (appointmentId: string) => {
+    try {
+      const res = await api.post("api/appointment/cancel-by-code", {
+        nationalCode: nationalId,
+        appointmentId,
+      });
+
+      if (res.data.success) {
+        setAppointments((prev) => prev.filter((a) => a._id !== appointmentId));
+      }
+    } catch (err) {
+      console.error("❌ خطا در لغو نوبت:", err);
+    }
   };
 
   return (
@@ -120,7 +130,7 @@ const NavBar = () => {
             لغو نوبت
           </button>
         </div>
-      )} 
+      )}
 
       {/* مودال لغو نوبت */}
       {showCancelModal && (
@@ -138,21 +148,17 @@ const NavBar = () => {
               onClick={handleCheckAppointments}
               className="w-full bg-blue-600 text-white py-2 rounded mb-3"
             >
-              نمایش نوبت‌ها
+              {loading ? "در حال بارگذاری..." : "نمایش نوبت‌ها"}
             </button>
 
             {appointments.length > 0 ? (
               <ul className="text-gray-700">
-                {appointments.map((app, i) => (
-                  <li key={i} className="mb-2 border-b border-gray-200 pb-1">
-                    {app.doctor} - {app.day} - {app.time}{" "}
+                {appointments.map((app) => (
+                  <li key={app._id} className="mb-2 border-b border-gray-200 pb-1">
+                    {app.doctorId?.name} - {app.appointmentDate} - {app.appointmentTime}
                     <button
                       className="text-red-500 mr-2"
-                      onClick={() =>
-                        setAppointments((prev) =>
-                          prev.filter((_, idx) => idx !== i)
-                        )
-                      }
+                      onClick={() => handleCancelAppointment(app._id)}
                     >
                       لغو
                     </button>
@@ -160,10 +166,8 @@ const NavBar = () => {
                 ))}
               </ul>
             ) : (
-              nationalId && (
-                <p className="text-gray-500">
-                  نوبتی برای این شماره ملی موجود نیست
-                </p>
+              nationalId && !loading && (
+                <p className="text-gray-500">نوبتی برای این شماره ملی موجود نیست</p>
               )
             )}
           </Modal>
