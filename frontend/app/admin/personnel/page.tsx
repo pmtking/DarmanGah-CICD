@@ -13,6 +13,7 @@ interface Personnel {
   role: string;
   nationalId: string;
   username?: string;
+  photoUrl?: string;
 }
 
 interface ApiResponse {
@@ -22,25 +23,27 @@ interface ApiResponse {
 
 const PersonnelsPage: React.FC = () => {
   const [personnels, setPersonnels] = useState<Personnel[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [search, setSearch] = useState<string>("");
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState("");
 
-  // 📌 برای مدال و آپدیت
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  // مدال و ویرایش
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [editPersonnel, setEditPersonnel] = useState<Personnel | null>(null);
 
-  const [newName, setNewName] = useState<string>("");
-  const [newNationalId, setNewNationalId] = useState<string>("");
-  const [newUsername, setNewUsername] = useState<string>("");
-  const [newPassword, setNewPassword] = useState<string>("");
+  const [newName, setNewName] = useState("");
+  const [newNationalId, setNewNationalId] = useState("");
+  const [newUsername, setNewUsername] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [newPhoto, setNewPhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string>("");
 
   const fetchPersonnels = async () => {
     setLoading(true);
     try {
       const res = await api.get<ApiResponse>("/api/personel/find");
       setPersonnels(res.data.data);
-    } catch (error) {
-      console.error("❌ خطا در دریافت پرسنل‌ها:", error);
+    } catch (err) {
+      console.error("❌ خطا در دریافت پرسنل‌ها:", err);
     } finally {
       setLoading(false);
     }
@@ -54,60 +57,74 @@ const PersonnelsPage: React.FC = () => {
     p.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  // 📌 حذف پرسنل
   const handleDelete = async (id: string) => {
     if (!confirm("آیا مطمئن هستید که می‌خواهید این پرسنل را حذف کنید؟")) return;
-
     try {
       await api.delete(`/api/personel/${id}`);
       setPersonnels((prev) => prev.filter((p) => p._id !== id));
       alert("✅ پرسنل با موفقیت حذف شد.");
-    } catch (error) {
-      console.error("❌ خطا در حذف پرسنل:", error);
+    } catch (err) {
+      console.error("❌ خطا در حذف پرسنل:", err);
       alert("خطا در حذف پرسنل!");
     }
   };
 
-  // 📌 باز کردن مدال ویرایش
   const openUpdateModal = (person: Personnel) => {
     setEditPersonnel(person);
     setNewName(person.name);
     setNewNationalId(person.nationalId);
     setNewUsername(person.username || "");
     setNewPassword("");
+    setPhotoPreview(person.photoUrl || "");
+    setNewPhoto(null);
     setIsModalOpen(true);
   };
 
-  // 📌 ذخیره تغییرات
+  const handlePhotoChange = (file: File | null) => {
+    setNewPhoto(file);
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => setPhotoPreview(reader.result as string);
+      reader.readAsDataURL(file);
+    } else {
+      setPhotoPreview(editPersonnel?.photoUrl || "");
+    }
+  };
+
   const handleSaveUpdate = async () => {
     if (!editPersonnel) return;
 
     try {
-      const res = await api.put(`/api/personel/${editPersonnel._id}`, {
-        name: newName,
-        nationalId: newNationalId,
-        username: newUsername,
-        password: newPassword || undefined, // فقط اگه چیزی وارد شد
-      });
+      const formData = new FormData();
+      formData.append("name", newName);
+      formData.append("nationalId", newNationalId);
+      formData.append("username", newUsername);
+      if (newPassword) formData.append("password", newPassword);
+      if (newPhoto) formData.append("photo", newPhoto);
+
+      const res = await api.put(
+        `/api/personel/${editPersonnel._id}`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
 
       setPersonnels((prev) =>
-        prev.map((p) =>
-          p._id === editPersonnel._id
-            ? { ...p, name: res.data.data.name, nationalId: res.data.data.nationalId }
-            : p
-        )
+        prev.map((p) => (p._id === editPersonnel._id ? res.data.data : p))
       );
 
       setIsModalOpen(false);
       setEditPersonnel(null);
+      setNewPhoto(null);
+      setPhotoPreview("");
       alert("✅ پرسنل با موفقیت ویرایش شد.");
-    } catch (error) {
-      console.error("❌ خطا در ویرایش پرسنل:", error);
+    } catch (err) {
+      console.error("❌ خطا در ویرایش پرسنل:", err);
       alert("خطا در ویرایش پرسنل!");
     }
   };
 
-  // 📌 نمایش مدارک پرسنل (فعلاً فقط console)
   const handleViewDocuments = (id: string) => {
     console.log("📄 مشاهده مدارک پرسنل با شناسه:", id);
   };
@@ -130,10 +147,7 @@ const PersonnelsPage: React.FC = () => {
       </div>
 
       {/* Content */}
-      <main
-        className="flex-grow backdrop-blur-2xl bg-white/10 rounded-2xl border border-white/20 shadow-2xl px-10 py-4 overflow-y-auto mt-5 max-h-[650px] 
-        scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent hover:scrollbar-thumb-white/50 transition-colors"
-      >
+      <main className="flex-grow backdrop-blur-2xl bg-white/10 rounded-2xl border border-white/20 shadow-2xl px-10 py-4 overflow-y-auto mt-5 max-h-[650px] scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent hover:scrollbar-thumb-white/50 transition-colors">
         <div className="flex flex-col gap-4">
           {loading ? (
             <p className="text-white text-center py-4">در حال بارگذاری...</p>
@@ -148,13 +162,14 @@ const PersonnelsPage: React.FC = () => {
                 onDelete={() => handleDelete(person._id)}
                 onUpdate={() => openUpdateModal(person)}
                 onViewDocuments={() => handleViewDocuments(person._id)}
+                imageUrl={person.photoUrl} // ← همین باید باشد، نه photoUrl
               />
             ))
           )}
         </div>
       </main>
 
-      {/* 📌 مدال ویرایش */}
+      {/* مدال ویرایش */}
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
           <div className="bg-white p-6 rounded-xl shadow-xl w-[400px]">
@@ -188,8 +203,27 @@ const PersonnelsPage: React.FC = () => {
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               placeholder="رمز عبور جدید (اختیاری)"
-              className="w-full border px-3 py-2 rounded-lg mb-4"
+              className="w-full border px-3 py-2 rounded-lg mb-3"
             />
+
+            <div className="mb-3">
+              <label className="block mb-1 text-gray-700">عکس پروفایل</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) =>
+                  handlePhotoChange(e.target.files ? e.target.files[0] : null)
+                }
+                className="w-full"
+              />
+              {photoPreview && (
+                <img
+                  src={photoPreview}
+                  alt="پیش‌نمایش عکس"
+                  className="mt-2 w-24 h-24 object-cover rounded-full border"
+                />
+              )}
+            </div>
 
             <div className="flex justify-end gap-2">
               <button

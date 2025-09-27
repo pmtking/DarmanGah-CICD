@@ -3,9 +3,10 @@ import { Router } from "express";
 import {
   addPersonnelController,
   loginPersonnelController,
-  findPersonel,
+
   updatePersonnelController,
   deletePersonnelController,
+  findPersonnelController,
 } from "../controllers/personnelController";
 
 const router = Router();
@@ -17,7 +18,7 @@ router.post("/add", addPersonnelController);
 router.post("/login", loginPersonnelController);
 
 // گرفتن لیست پرسنل
-router.get("/find", findPersonel);
+router.get("/find", findPersonnelController);
 
 // ویرایش پرسنل
 router.put("/:id", updatePersonnelController);

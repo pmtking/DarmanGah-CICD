@@ -1,28 +1,25 @@
-import mongoose, { Document, model, Schema } from "mongoose";
-//  ---------------------- types --------------------//
-//  roles
+import mongoose, { Document, Schema, model } from "mongoose";
+
 export type Role = "DOCTOR" | "NURSE" | "RECEPTION" | "MANAGER" | "SERVICE";
-// ن.ع slaryTypes
 export type SalaryType = "FIXED" | "PERCENTAGE";
-// types presonnel
+
 export interface IPersonnel extends Document {
   name: string;
   nationalId: string;
   phone?: string;
-  gender?: "MALE " | "FEMALE" | "OTHER";
+  gender?: "MALE" | "FEMALE" | "OTHER";
   role: Role;
   salaryType: SalaryType;
   isActive: boolean;
   hireAt: Date;
-  lastLogin: Date;
+  lastLogin?: Date;
   currentShift?: mongoose.Types.ObjectId;
   shifts: mongoose.Types.ObjectId[];
   performances: mongoose.Types.ObjectId[];
+  avatar?: string; // مسیر عکس پروفایل
   createdAt: Date;
   updatedAt: Date;
 }
-
-//  ------------------------------------ schma mongo ----------------- //
 
 const personnelSchema = new Schema<IPersonnel>(
   {
@@ -43,20 +40,14 @@ const personnelSchema = new Schema<IPersonnel>(
     isActive: { type: Boolean, default: true },
     hireAt: { type: Date, default: Date.now },
     lastLogin: { type: Date },
-    currentShift: {
-      type: Schema.Types.ObjectId,
-      ref: "Shift",
-      default: null,
-    },
+    currentShift: { type: Schema.Types.ObjectId, ref: "Shift", default: null },
     shifts: [{ type: Schema.Types.ObjectId, ref: "Shift" }],
     performances: [{ type: Schema.Types.ObjectId, ref: "Performance" }],
+    avatar: { type: String }, // مسیر عکس
   },
   {
     timestamps: true,
   }
 );
 
-
-const Personnel = model<IPersonnel>("Personnel", personnelSchema)
-
-export default Personnel ;
+export default model<IPersonnel>("Personnel", personnelSchema);
