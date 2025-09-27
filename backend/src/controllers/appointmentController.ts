@@ -83,49 +83,9 @@ export const FindAppointmentController = async (
 // ----------------- دریافت نوبت‌های روزانه -----------------
 export const GetAppointmentController = async (req: Request, res: Response) => {
   try {
-    const { date, doctorId } = req.query;
-
-    let targetDate: Date;
-
-    if (date) {
-      // اگر تاریخ از query بیاد (yyyy-mm-dd)
-      targetDate = new Date(date as string);
-    } else {
-      // تاریخ امروز به شمسی → برگردوندن به میلادی
-      const today = new Date();
-      const { jy, jm, jd } = jalaali.toJalaali(today);
-      const { gy, gm, gd } = jalaali.toGregorian(jy, jm, jd);
-      targetDate = new Date(gy, gm - 1, gd);
-    }
-
-    const startOfDay = new Date(
-      targetDate.getFullYear(),
-      targetDate.getMonth(),
-      targetDate.getDate(),
-      0,
-      0,
-      0,
-      0
-    );
-    const endOfDay = new Date(
-      targetDate.getFullYear(),
-      targetDate.getMonth(),
-      targetDate.getDate(),
-      23,
-      59,
-      59,
-      999
-    );
-
-    const filter: any = {
-      appointmentDate: { $gte: startOfDay, $lte: endOfDay },
-      status: "reserved",
-    };
-    if (doctorId) filter.doctorId = doctorId;
-
-    const appointments = await Appointment.find(filter)
-      .populate("doctorId", "name specialty") // اصلاح فیلدها مطابق مدل Doctor
-      .sort({ appointmentTime: 1 });
+    const appointments = await Appointment.find()
+      .populate("doctorId", "name specialty")
+      .sort({ appointmentDate: 1, appointmentTime: 1 });
 
     return res.status(200).json({
       success: true,
