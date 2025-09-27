@@ -88,7 +88,7 @@ const NavBar = () => {
         {/* Actions */}
         <div className="hidden md:flex items-center gap-3 sm:gap-5">
           <button
-            className="px-6 py-2 rounded-xl bg-[#facc15] text-white shadow hover:bg-red-600 transition"
+            className="px-6 py-2 rounded-xl bg-[#facc15] text-black shadow hover:bg-red-600 transition"
             onClick={() => setShowCancelModal(true)}
           >
             لغو نوبت
