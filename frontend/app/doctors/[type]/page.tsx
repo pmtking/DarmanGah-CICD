@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import api from "@/libs/axios";
 import jalaali from "jalaali-js";
+import toast from "react-hot-toast";
 
 interface Shift {
   start: string;
@@ -133,7 +134,7 @@ export default function DoctorsPage() {
 
     try {
       await api.post("api/appointment/add", payload);
-      alert("✅ نوبت با موفقیت ثبت شد");
+      toast.success("✅ نوبت با موفقیت ثبت شد");
 
       // ریست حالت‌ها
       setSelectedDoctor(null);

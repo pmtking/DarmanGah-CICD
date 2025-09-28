@@ -1,9 +1,8 @@
-// imports
+// appointmentService.ts
 import Appointment from "../models/Appointment";
 import DoctorProfile from "../models/DoctorProfile";
-import { sendAppointmentSMS } from "../utils/sendSms";
+import { sendCancelSMS, sendReserveSMS } from "../utils/sendSms";
 
-const WEEK_DAYS = ["یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنج‌شنبه", "جمعه", "شنبه"];
 
 interface ReserveData {
   fullName: string;
@@ -16,6 +15,7 @@ interface ReserveData {
   forceSMS?: boolean;
 }
 
+// ---------------- رزرو نوبت ----------------
 export const reserveAppointment = async (data: ReserveData) => {
   try {
     const {
@@ -29,14 +29,25 @@ export const reserveAppointment = async (data: ReserveData) => {
       forceSMS = false,
     } = data;
 
-    if (!fullName || !phoneNumber || !insuranceType || !nationalCode || !doctorId || !appointmentDate || !appointmentTime) {
+    if (
+      !fullName ||
+      !phoneNumber ||
+      !insuranceType ||
+      !nationalCode ||
+      !doctorId ||
+      !appointmentDate ||
+      !appointmentTime
+    ) {
       throw new Error("همه فیلدهای اجباری باید پر شوند ❌");
     }
 
     const doctor = await DoctorProfile.findOne({ personnel: doctorId });
     if (!doctor) throw new Error("پزشک یافت نشد ❌");
 
-    const dateObj = appointmentDate instanceof Date ? appointmentDate : new Date(appointmentDate);
+    const dateObj =
+      appointmentDate instanceof Date
+        ? appointmentDate
+        : new Date(appointmentDate);
 
     const conflict = await Appointment.findOne({
       doctorId,
@@ -62,12 +73,11 @@ export const reserveAppointment = async (data: ReserveData) => {
 
     await appointment.save();
 
-    // ---------------- ارسال پیامک با روز هفته و زمان ----------------
-    const dayName = WEEK_DAYS[dateObj.getDay()];
-    await sendAppointmentSMS({
+    // ارسال پیامک رزرو با روز هفته + زمان
+    await sendReserveSMS({
       phoneNumber,
-      day: dayName,
-      time: appointmentTime
+      appointmentDate: dateObj,
+      appointmentTime,
     });
 
     return {
@@ -81,10 +91,43 @@ export const reserveAppointment = async (data: ReserveData) => {
   }
 };
 
+// ---------------- لغو نوبت ----------------
+export const cancelAppointment = async (appointmentId: string) => {
+  try {
+    const appointment = await Appointment.findById(appointmentId);
+    if (!appointment) throw new Error("نوبت موردنظر یافت نشد ❌");
+    if (appointment.status === "cancelled")
+      throw new Error("این نوبت قبلاً لغو شده ⚠️");
+
+    appointment.status = "cancelled";
+    await appointment.save();
+
+    // ارسال پیامک لغو فقط با تاریخ YYYY/MM/DD
+    await sendCancelSMS({
+      phoneNumber: appointment.phoneNumber,
+      appointmentDate: appointment.appointmentDate,
+    });
+
+    return {
+      success: true,
+      message: "نوبت با موفقیت لغو شد ✅",
+      canceled: appointment,
+    };
+  } catch (error: any) {
+    console.error("❌ Error in cancelAppointment:", error.message);
+    return { success: false, message: error.message };
+  }
+};
+
+// ---------------- استعلام نوبت بر اساس کد ملی ----------------
 export const findAppointment = async (nationalCode: string) => {
   try {
     if (!nationalCode || nationalCode.length !== 10) {
-      return { success: false, message: "کد ملی باید 10 رقم باشد ❌", data: null };
+      return {
+        success: false,
+        message: "کد ملی باید 10 رقم باشد ❌",
+        data: null,
+      };
     }
 
     const appointments = await Appointment.find({ nationalCode })
@@ -92,24 +135,25 @@ export const findAppointment = async (nationalCode: string) => {
       .sort({ appointmentDate: 1, appointmentTime: 1 });
 
     if (!appointments || appointments.length === 0) {
-      return { success: false, message: "هیچ نوبتی برای این کد ملی ثبت نشده است ❌", data: null };
+      return {
+        success: false,
+        message: "هیچ نوبتی برای این کد ملی ثبت نشده است ❌",
+        data: null,
+      };
     }
 
-    const nextAppointment = appointments.find(a => a.status === "reserved");
-    if (nextAppointment) {
-      const dateObj = nextAppointment.appointmentDate instanceof Date ? nextAppointment.appointmentDate : new Date(nextAppointment.appointmentDate);
-      const dayName = WEEK_DAYS[dateObj.getDay()];
-
-      await sendAppointmentSMS({
-        phoneNumber: nextAppointment.phoneNumber,
-        day: dayName,
-        time: nextAppointment.appointmentTime
-      });
-    }
-
-    return { success: true, message: "نوبت(ها) یافت شد ✅", data: appointments };
+    return {
+      success: true,
+      message: "نوبت(ها) یافت شد ✅",
+      data: appointments,
+    };
   } catch (error: any) {
     console.error("❌ Error in findAppointment:", error.message);
-    return { success: false, message: "خطا در پردازش درخواست ❌", error: error.message, data: null };
+    return {
+      success: false,
+      message: "خطا در پردازش درخواست ❌",
+      error: error.message,
+      data: null,
+    };
   }
 };
