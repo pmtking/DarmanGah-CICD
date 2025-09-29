@@ -4,6 +4,7 @@ import os from "os";
 import { mongoConnected } from "./db";
 import { dotenvConfig } from "./config/dotenv";
 import { router } from "./routes";
+import path from "path";
 
 // بارگذاری env
 dotenvConfig();
@@ -11,6 +12,7 @@ dotenvConfig();
 // اپلیکیشن
 export const app = express();
 app.use("/files", express.static("/home/ubuntu-website/darmanBot/files/"));
+app.use("/uploads", express.static(path.join(__dirname, "/uploads/")));
 
 // میان‌افزارها
 app.use(cors({ origin: process.env.ALLOWED_ORIGINS || "*" }));

@@ -1,8 +1,7 @@
 "use client";
 
 import React from "react";
-import Image, { StaticImageData } from "next/image";
-import defaultUserImage from "@/public/images/default.png"; // مسیر عکس پیش‌فرض
+import Image from "next/image";
 import "./style.scss";
 
 interface PersonelCardProps {
@@ -22,9 +21,13 @@ const PersonelCard: React.FC<PersonelCardProps> = ({
   onUpdate,
   onViewDocuments,
 }) => {
-  // مقدار نهایی تصویر: اگر imageUrl موجود و معتبر باشد، از آن استفاده کن؛ در غیر این صورت از defaultUserImage
-  const finalImage: string | StaticImageData =
-    imageUrl && imageUrl.trim() !== "" ? imageUrl:"" ;
+  // مسیر کامل تصویر
+  const finalImage: string =
+    imageUrl && imageUrl.trim() !== ""
+      ? `${
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"
+        }${imageUrl}`
+      : "/images/defult.png";
 
   return (
     <div className="personel-card flex items-center gap-4 p-3 bg-white/10 backdrop-blur-md rounded-xl shadow-md">

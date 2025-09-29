@@ -1,13 +1,16 @@
-// next.config.ts
 import { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   images: {
-    domains: ["df-neyshabor.ir"], // فقط نام دامنه
+    // همه دامنه‌های مورد نیاز (پروداکشن + لوکال)
+    domains: [
+      "localhost",        // برای توسعه لوکال
+      "df-neyshabor.ir",  // دامین اول پروداکشن
+      "drfn.ir"          // دامین دوم پروداکشن
+    ],
   },
-  // این تنظیم برای ساخت یک سرور بهینه برای دیپلوی در نظر گرفته شده است.
-  output: "standalone"
+  output: "standalone", // برای دیپلوی
 };
 
 export default nextConfig;

@@ -13,7 +13,7 @@ interface Personnel {
   role: string;
   nationalId: string;
   username?: string;
-  photoUrl?: string;
+  avatar?: string; // ← اضافه شد
 }
 
 interface ApiResponse {
@@ -75,7 +75,11 @@ const PersonnelsPage: React.FC = () => {
     setNewNationalId(person.nationalId);
     setNewUsername(person.username || "");
     setNewPassword("");
-    setPhotoPreview(person.photoUrl || "");
+    setPhotoPreview(
+      person.avatar
+        ? `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}${person.avatar}`
+        : ""
+    );
     setNewPhoto(null);
     setIsModalOpen(true);
   };
@@ -87,7 +91,11 @@ const PersonnelsPage: React.FC = () => {
       reader.onloadend = () => setPhotoPreview(reader.result as string);
       reader.readAsDataURL(file);
     } else {
-      setPhotoPreview(editPersonnel?.photoUrl || "");
+      setPhotoPreview(
+        editPersonnel?.avatar
+          ? `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}${editPersonnel.avatar}`
+          : ""
+      );
     }
   };
 
@@ -102,13 +110,9 @@ const PersonnelsPage: React.FC = () => {
       if (newPassword) formData.append("password", newPassword);
       if (newPhoto) formData.append("photo", newPhoto);
 
-      const res = await api.put(
-        `/api/personel/${editPersonnel._id}`,
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        }
-      );
+      const res = await api.put(`/api/personel/${editPersonnel._id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
       setPersonnels((prev) =>
         prev.map((p) => (p._id === editPersonnel._id ? res.data.data : p))
@@ -162,20 +166,18 @@ const PersonnelsPage: React.FC = () => {
                 onDelete={() => handleDelete(person._id)}
                 onUpdate={() => openUpdateModal(person)}
                 onViewDocuments={() => handleViewDocuments(person._id)}
-                imageUrl={person.photoUrl} // ← همین باید باشد، نه photoUrl
+                imageUrl={person.avatar} // ← حالا TS قبول می‌کند
               />
             ))
           )}
         </div>
       </main>
 
-      {/* مدال ویرایش */}
+      {/* Modal ویرایش */}
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
           <div className="bg-white p-6 rounded-xl shadow-xl w-[400px]">
-            <h2 className="text-xl font-bold mb-4 text-gray-800">
-              ویرایش پرسنل
-            </h2>
+            <h2 className="text-xl font-bold mb-4 text-gray-800">ویرایش پرسنل</h2>
 
             <input
               type="text"

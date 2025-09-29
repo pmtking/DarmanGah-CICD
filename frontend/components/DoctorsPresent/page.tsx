@@ -51,14 +51,12 @@ const DoctorsPresent: React.FC = () => {
             const [sh, sm] = shift.start.split(":").map(Number);
             const [eh, em] = shift.end.split(":").map(Number);
 
-            // شیفت‌های صفر طول نادیده گرفته شوند
-            if (sh === eh && sm === em) return;
+            if (sh === eh && sm === em) return; // شیفت صفر طول را نادیده بگیر
 
             let start = sh * 60 + sm;
             let end = eh * 60 + em;
             let nowComparable = nowMinutes;
 
-            // شیفتی که از نیمه شب رد می‌شود
             if (end <= start && nowMinutes < start) nowComparable += 24 * 60;
             if (end <= start) end += 24 * 60;
 
@@ -74,10 +72,15 @@ const DoctorsPresent: React.FC = () => {
             }
           });
 
+          // مسیر کامل آواتار
+          const avatarUrl = doc.avatarUrl
+            ? `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}${doc.avatarUrl.startsWith("/") ? "" : "/"}${doc.avatarUrl}`
+            : "/images/default.png"; // عکس پیش‌فرض
+
           return {
             personnelId: doc.personnelId,
             name: doc.name,
-            avatarUrl: doc.avatarUrl,
+            avatarUrl,
             specialty: doc.specialty,
             phone: doc.phone,
             status,
@@ -125,6 +128,8 @@ const DoctorsPresent: React.FC = () => {
             specialty={d.specialty}
             status={d.status}
             nextShift={d.nextShift}
+            avatarUrl={d.avatarUrl} // ← اصلاح شد
+            
           />
         ))}
       </div>

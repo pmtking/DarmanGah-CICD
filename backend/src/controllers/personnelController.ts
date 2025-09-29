@@ -13,7 +13,22 @@ const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 // ================== ایجاد پرسنل ==================
 export const addPersonnelController = async (req: Request, res: Response) => {
   try {
-    const personnel = await createpersonnel(req.body);
+    const bodyData = req.body;
+
+    // اگر عکس آپلود شده بود (avatar یا photo)
+    if (req.file) {
+      bodyData.avatar = `/uploads/avatars/${req.file.filename}`;
+    }
+    if (req.files) {
+      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+      if (files.avatar) {
+        bodyData.avatar = `/uploads/avatars/${files.avatar[0].filename}`;
+      } else if (files.photo) {
+        bodyData.avatar = `/uploads/avatars/${files.photo[0].filename}`;
+      }
+    }
+
+    const personnel = await createpersonnel(bodyData);
 
     return res.status(201).json({
       success: true,
@@ -32,12 +47,10 @@ export const loginPersonnelController = async (req: Request, res: Response) => {
     const { userName, password } = req.body;
 
     if (!userName || !password) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Username and password are required",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Username and password are required",
+      });
     }
 
     const user = await LoginpersonelService({ userName, password });
@@ -92,6 +105,19 @@ export const updatePersonnelController = async (
   try {
     const { id } = req.params;
     const updateData = req.body;
+
+    // اگر عکس جدید آپلود شده بود (avatar یا photo)
+    if (req.file) {
+      updateData.avatar = `/uploads/avatars/${req.file.filename}`;
+    }
+    if (req.files) {
+      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+      if (files.avatar) {
+        updateData.avatar = `/uploads/avatars/${files.avatar[0].filename}`;
+      } else if (files.photo) {
+        updateData.avatar = `/uploads/avatars/${files.photo[0].filename}`;
+      }
+    }
 
     const updatedPersonnel = await updatePersonnel(id, updateData);
 

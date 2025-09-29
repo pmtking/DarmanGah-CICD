@@ -3,6 +3,8 @@
 import Personnel, { IPersonnel } from "../models/Personnel";
 import UserAuth from "../models/UserAuth";
 import bcrypt from "bcrypt";
+import fs from "fs";
+import path from "path";
 
 export interface CreatePersonnelWithAuthInput {
   name: string;
@@ -14,8 +16,10 @@ export interface CreatePersonnelWithAuthInput {
   gender?: IPersonnel["gender"];
   username: string;
   password: string;
+  avatar?: string; // مسیر عکس پروفایل
 }
 
+// ---------------- Create Personnel ---------------- //
 export async function createpersonnel(data: CreatePersonnelWithAuthInput) {
   console.log("------------>> ", data.nationalId);
 
@@ -42,9 +46,10 @@ export async function createpersonnel(data: CreatePersonnelWithAuthInput) {
     percentageRate:
       data.salaryType === "PERCENTAGE" ? data.percentageRate || 0 : 0,
     phone: data.phone || "",
-    gender: data.gender || "UNKNOWN",
+    gender: data.gender || "OTHER",
     hireAt: new Date(),
     isActive: true,
+    avatar: data.avatar || "", // ✅ ذخیره مسیر عکس اگر موجود بود
   });
 
   await personnel.save();
@@ -93,17 +98,32 @@ export async function LoginpersonelService(data) {
 }
 
 // ---------------- Update Personnel ---------------- //
-export async function updatePersonnel(id: string, updateData: Partial<IPersonnel>) {
+export async function updatePersonnel(
+  id: string,
+  updateData: Partial<IPersonnel> & { avatar?: string }
+) {
   const personnel = await Personnel.findById(id);
   if (!personnel) {
     throw new Error("Personnel not found.");
+  }
+
+  // اگر آواتار جدید ارسال شده باشد
+  if (updateData.avatar) {
+    if (personnel.avatar) {
+      try {
+        fs.unlinkSync(path.resolve(personnel.avatar)); // حذف عکس قبلی
+      } catch (err) {
+        console.warn("Could not delete old avatar:", err);
+      }
+    }
+    personnel.avatar = updateData.avatar;
   }
 
   // به‌روزرسانی داده‌های پرسنلی
   Object.assign(personnel, updateData);
   await personnel.save();
 
-  // در صورت نیاز نقش یا وضعیت کاربری هم آپدیت شود
+  // در صورت نیاز نقش کاربری هم آپدیت شود
   if (updateData.role) {
     await UserAuth.findOneAndUpdate(
       { personnel: id },
@@ -119,6 +139,15 @@ export async function deletePersonnel(id: string) {
   const personnel = await Personnel.findById(id);
   if (!personnel) {
     throw new Error("Personnel not found.");
+  }
+
+  // حذف آواتار از سیستم فایل (اگر وجود دارد)
+  if (personnel.avatar) {
+    try {
+      fs.unlinkSync(path.resolve(personnel.avatar));
+    } catch (err) {
+      console.warn("Could not delete avatar:", err);
+    }
   }
 
   // حذف کاربر مرتبط

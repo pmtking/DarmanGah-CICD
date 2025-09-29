@@ -14,10 +14,10 @@ import Personnel from "../models/Personnel";
 import DoctorProfile from "../models/DoctorProfile";
 
 // ---------------------- ایجاد پروفایل پزشک ---------------------- //
-export const findDoctor = async (req: Request, res: Response) => {
-  const doctors = await Personnel.find({ role: "DOCTOR" });
-  res.status(200).json(doctors);
-};
+// export const findDoctor = async (req: Request, res: Response) => {
+//   const doctors = await Personnel.find({ role: "DOCTOR" });
+//   res.status(200).json(doctors);
+// };
 // کنترلر
 export const createProfile = async (req: Request, res: Response) => {
   try {
@@ -53,31 +53,96 @@ export const createProfile = async (req: Request, res: Response) => {
   }
 };
 
-// ---------------------- دریافت همه پروفایل‌ها ---------------------- //
+// ---------------------- دریافت همه پروفایل‌ها با عکس پرسنل ---------------------- //
 export const getProfiles = async (_req: Request, res: Response) => {
   try {
-    const profiles = await getAllDoctorProfiles();
-    res.status(200).json(profiles);
+    // پروفایل‌ها را با اطلاعات پرسنل populate می‌کنیم
+    const profiles = await DoctorProfile.find().populate({
+      path: "personnel", // فیلد reference به پرسنل
+      select: "name avatar phone role", // فقط فیلدهای مورد نیاز
+    });
+
+    // ساخت خروجی مناسب برای فرانت
+    const formattedProfiles = profiles.map((profile: any) => ({
+      profileId: profile._id,
+      personnelId: profile.personnel?._id,
+      name: profile.personnel?.name || "",
+      phone: profile.personnel?.phone || "",
+      specialty: profile.specialty,
+      specialtyType: profile.specialtyType,
+      licenseNumber: profile.licenseNumber,
+      isAvailable: profile.isAvailable,
+      workingHours: profile.workingHours,
+      avatarUrl: profile.personnel?.avatar
+        ? `${profile.personnel.avatar}`
+        : "/images/default.png",
+    }));
+
+    res.status(200).json(formattedProfiles);
   } catch (err: any) {
-    res
-      .status(500)
-      .json({ message: "خطا در دریافت لیست پزشکان", error: err.message });
+    res.status(500).json({
+      message: "خطا در دریافت لیست پزشکان",
+      error: err.message,
+    });
   }
 };
+
 // -------------------------دریافت با type ------------------------ //
+// ------------------------- دریافت همه پزشکان با آواتار ------------------------ //
 export const getAllDoctorsController = async (req: Request, res: Response) => {
   try {
-    
-    const doctors = await DoctorProfile.find();
-    // اگه بخوای سرویس هم بیاد
+    // پروفایل دکتر و اطلاعات پرسنل را populate می‌کنیم
+    const doctors = await DoctorProfile.find().populate({
+      path: "personnel",
+      select: "name avatar role", // فقط فیلدهای مورد نیاز
+    });
 
-    res.status(200).json(doctors);
+    // ساخت خروجی مناسب برای فرانت
+    const formattedDoctors = doctors.map((doc: any) => ({
+      profileId: doc._id,
+      personnelId: doc.personnel._id,
+      name: doc.personnel.name,
+      avatarUrl: doc.personnel.avatar
+        ? `/uploads/avatars/${doc.personnel.avatar.split("/").pop()}`
+        : "/images/default.png",
+      specialty: doc.specialty,
+      phone: doc.phone,
+      workingHours: doc.workingHours,
+      isAvailable: doc.isAvailable,
+    }));
+
+    res.status(200).json(formattedDoctors);
   } catch (error) {
     console.error("❌ Error in getAllDoctorsController:", error);
     res.status(500).json({
       message: "خطا در گرفتن لیست پزشک‌ها",
       error,
     });
+  }
+};
+
+// ------------------------- پیدا کردن پزشکان از مدل پرسنل ------------------------ //
+export const findDoctor = async (req: Request, res: Response) => {
+  try {
+    const doctors = await Personnel.find({ role: "DOCTOR" }).select(
+      "name avatar _id phone"
+    );
+
+    const formatted = doctors.map((doc) => ({
+      personnelId: doc._id,
+      name: doc.name,
+      avatarUrl: doc.avatar
+        ? `/uploads/avatars/${doc.avatar.split("/").pop()}`
+        : "/images/default.png",
+      phone: doc.phone,
+      role: doc.role,
+    }));
+
+    res.status(200).json(formatted);
+  } catch (err: any) {
+    res
+      .status(500)
+      .json({ message: "خطا در دریافت پزشکان", error: err.message });
   }
 };
 
@@ -178,7 +243,9 @@ export const upsertProfile = async (req: Request, res: Response) => {
     }
 
     // بررسی وجود پروفایل دکتر
-    const existingProfile = await DoctorProfile.findOne({ personnel: personnel._id });
+    const existingProfile = await DoctorProfile.findOne({
+      personnel: personnel._id,
+    });
 
     let profile;
     if (existingProfile) {
