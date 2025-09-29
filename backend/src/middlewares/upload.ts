@@ -38,7 +38,7 @@ const fileFilter = (req: any, file: Express.Multer.File, cb: any) => {
 };
 
 // حداکثر حجم فایل (مثلاً 5 مگابایت)
-const limits = { fileSize: 10 * 1024 * 1024 };
+const limits = { fileSize: 70 * 1024 * 1024 };
 
 // ایجاد middleware آپلود
 export const upload = multer({
