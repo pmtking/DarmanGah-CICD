@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
     // همه دامنه‌های مورد نیاز (پروداکشن + لوکال)
     domains: [
       "localhost",        // برای توسعه لوکال
-      "df-neyshabor.ir",  // دامین اول پروداکشن
+      "api.df-neyshabor.ir",  // دامین اول پروداکشن
       "drfn.ir"          // دامین دوم پروداکشن
     ],
   },
