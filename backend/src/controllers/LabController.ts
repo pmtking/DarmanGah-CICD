@@ -6,12 +6,9 @@ import fs from "fs";
 // مسیر اصلی ذخیره فایل‌ها
 const UPLOAD_DIR = "/home/ubuntu-website/darmanBot/files/";
 
-// اطمینان از وجود پوشه اصلی
-if (!fs.existsSync(UPLOAD_DIR)) {
-  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-}
+if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
-// گرفتن تاریخ امروز به فرمت YYYY/MM/DD
+// مسیر امروز YYYY/MM/DD
 const getTodayPath = () => {
   const now = new Date();
   const year = now.getFullYear();
@@ -20,98 +17,91 @@ const getTodayPath = () => {
   return path.join(UPLOAD_DIR, year.toString(), month, day);
 };
 
-// تنظیمات multer برای آپلود تکی فایل
+// تنظیمات multer
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
     const todayPath = getTodayPath();
     if (!fs.existsSync(todayPath)) fs.mkdirSync(todayPath, { recursive: true });
     cb(null, todayPath);
   },
-  filename: (req, _file, cb) => {
-    const codeMelli = req.body.codeMelli;
+  filename: (req, file, cb) => {
+    const codeMelli = req.body.codeMelli?.trim();
     if (!codeMelli) return cb(new Error("کد ملی ارسال نشده است."));
 
-    const finalName = `${codeMelli}.file`;
-    const todayPath = getTodayPath();
-    const filePath = path.join(todayPath, finalName);
-
-    // بررسی وجود فایل با همان کد ملی در پوشه امروز
-    if (fs.existsSync(filePath)) {
-      return cb(new Error("فایل با این کد ملی امروز قبلا آپلود شده است."));
-    }
-
+    const ext = path.extname(file.originalname);
+    const timestamp = Date.now(); // تضمین یکتا بودن فایل
+    const finalName = `${codeMelli}_${timestamp}${ext}`;
     cb(null, finalName);
   },
 });
 
-export const upload = multer({ storage }).single("file");
+// اجازه آپلود چند فایل همزمان (تا 100 فایل)
+export const upload = multer({ storage }).array("files", 100);
 
-// middleware برای مدیریت خطای multer
+// مدیریت خطاهای multer
 export const handleMulterError = (
   err: any,
-  req: Request,
+  _req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  if (err instanceof multer.MulterError) {
+  if (err instanceof multer.MulterError)
     return res.status(400).json({ error: err.message });
-  } else if (err) {
-    return res.status(400).json({ error: err.message || "خطای سرور در آپلود فایل" });
-  }
+  else if (err)
+    return res
+      .status(400)
+      .json({ error: err.message || "خطای سرور در آپلود فایل" });
   next();
 };
 
-// کنترلر آپلود فایل
+// کنترلر آپلود چند فایل
 export const uploadFiles = (req: Request, res: Response) => {
-  const file = req.file;
-  if (!file) {
+  const files = req.files as Express.Multer.File[];
+  if (!files || files.length === 0)
     return res.status(400).json({ error: "هیچ فایلی ارسال نشده است." });
-  }
+
+  const uploadedFiles = files.map((f) => ({
+    name: f.filename,
+    path: path.relative(UPLOAD_DIR, f.path),
+  }));
+
   res.json({
-    message: "✅ فایل با موفقیت آپلود شد.",
-    file: file.filename,
+    message: `✅ ${files.length} فایل با موفقیت آپلود شد.`,
+    files: uploadedFiles,
   });
 };
 
-// تابع کمکی برای جستجوی فایل‌ها در تمام زیرپوشه‌ها
+// جستجوی فایل‌ها
 const findFilesRecursively = (dir: string, codeMelli: string): string[] => {
   let results: string[] = [];
   const list = fs.readdirSync(dir, { withFileTypes: true });
 
   list.forEach((item) => {
     const fullPath = path.join(dir, item.name);
-    if (item.isDirectory()) {
+    if (item.isDirectory())
       results = results.concat(findFilesRecursively(fullPath, codeMelli));
-    } else if (item.isFile() && item.name.startsWith(codeMelli)) {
+    else if (item.isFile() && path.basename(item.name).startsWith(codeMelli))
       results.push(fullPath);
-    }
   });
 
   return results;
 };
 
-// گرفتن فایل‌ها بر اساس کد ملی
+// دریافت فایل‌ها بر اساس کد ملی
 export const getFilesByCodeMelli = (req: Request, res: Response) => {
-  const { codeMelli } = req.body;
-
-  if (!codeMelli) {
+  const codeMelli = req.body?.codeMelli?.trim();
+  if (!codeMelli)
     return res.status(400).json({ error: "کد ملی ارسال نشده است." });
-  }
 
   const matchedFiles = findFilesRecursively(UPLOAD_DIR, codeMelli);
-
-  if (matchedFiles.length === 0) {
+  if (matchedFiles.length === 0)
     return res.status(404).json({ message: "فایلی برای این کد ملی پیدا نشد." });
-  }
 
-  const filesData = matchedFiles.map((filePath) => {
-    const fileBuffer = fs.readFileSync(filePath);
-    return {
-      name: path.basename(filePath),
-      data: fileBuffer.toString("base64"),
-      path: path.relative(UPLOAD_DIR, filePath), // مسیر نسبی برای راحتی
-    };
-  });
+  const filesData = matchedFiles.map((filePath) => ({
+    name: path.basename(filePath),
+    data: fs.readFileSync(filePath).toString("base64"),
+    path: path.relative(UPLOAD_DIR, filePath),
+  }));
 
   res.json({ files: filesData });
 };
