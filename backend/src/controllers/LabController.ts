@@ -5,7 +5,7 @@ import fs from "fs";
 import { toJalaali } from "jalaali-js";
 
 // مسیر اصلی ذخیره فایل‌ها
-const UPLOAD_DIR = "/home/ubuntu-website/darmanBot/files/";
+const UPLOAD_DIR = "/home/ubuntu-website/lab/";
 
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
