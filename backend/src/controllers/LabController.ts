@@ -5,12 +5,12 @@ import fs from "fs";
 import { toJalaali } from "jalaali-js";
 
 // مسیر اصلی ذخیره فایل‌ها
-const UPLOAD_DIR = "/home/ubuntu-website/lab/";
+const UPLOAD_DIR = "/home/ubuntu-website/lab";
 
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 // گرفتن مسیر امروز به شمسی
-const getTodayPath = () => {
+const getTodayPath = (): string => {
   const now = new Date();
   const { jy, jm, jd } = toJalaali(now.getFullYear(), now.getMonth() + 1, now.getDate());
   const todayPath = path.join(UPLOAD_DIR, `${jd}-${jm}-${jy}`);
@@ -18,7 +18,7 @@ const getTodayPath = () => {
   return todayPath;
 };
 
-// تنظیمات multer
+// تنظیمات ذخیره سازی multer
 const storage = multer.diskStorage({
   destination: (_req, file, cb) => {
     const todayPath = getTodayPath();
@@ -28,24 +28,25 @@ const storage = multer.diskStorage({
     const userDir = path.join(todayPath, codeMelli);
     if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, { recursive: true });
 
-    cb(null, userDir); // مسیر نهایی: {UPLOAD_DIR}/{تاریخ}/{کدملی}/
+    cb(null, userDir);
   },
   filename: (_req, file, cb) => {
     const codeMelli = path.parse(file.originalname).name.trim();
-    const todayPath = getTodayPath();
-    const userDir = path.join(todayPath, codeMelli);
+    const userDir = path.join(getTodayPath(), codeMelli);
 
-    // شماره‌گذاری فایل‌ها بر اساس تعداد موجود
-    const existingFiles = fs.readdirSync(userDir).filter(f => f.endsWith(".pdf"));
+    const existingFiles = fs.existsSync(userDir)
+      ? fs.readdirSync(userDir).filter(f => f.endsWith(".pdf"))
+      : [];
     const testNumber = existingFiles.length + 1;
-
-    const finalName = `${testNumber}.pdf`; // فقط اسم فایل
-    cb(null, finalName);
+    cb(null, `${testNumber}.pdf`);
   },
 });
 
-// اجازه آپلود چند فایل همزمان (تا 100 فایل)
-export const upload = multer({ storage }).array("files", 100);
+// Multer برای چند فایل همزمان (حداکثر 100 فایل و حجم 50MB برای هر فایل)
+export const upload = multer({
+  storage,
+  limits: { fileSize: 50 * 1024 * 1024 },
+}).array("files", 100);
 
 // مدیریت خطاهای multer
 export const handleMulterError = (
@@ -77,16 +78,23 @@ export const uploadFiles = (req: Request, res: Response) => {
   });
 };
 
-// جستجوی فایل‌ها بر اساس کد ملی
+// جستجوی فایل‌ها بر اساس کد ملی و شماره آزمایش (اختیاری)
 const findFilesRecursively = (dir: string, codeMelli: string): string[] => {
   let results: string[] = [];
-  const list = fs.readdirSync(dir, { withFileTypes: true });
+  if (!fs.existsSync(dir)) return results;
 
+  const list = fs.readdirSync(dir, { withFileTypes: true });
   list.forEach(item => {
     const fullPath = path.join(dir, item.name);
-    if (item.isDirectory()) results = results.concat(findFilesRecursively(fullPath, codeMelli));
-    else if (item.isFile() && fullPath.includes(path.sep + codeMelli + path.sep) && fullPath.endsWith(".pdf"))
+    if (item.isDirectory()) {
+      results = results.concat(findFilesRecursively(fullPath, codeMelli));
+    } else if (
+      item.isFile() &&
+      fullPath.includes(path.sep + codeMelli + path.sep) &&
+      fullPath.endsWith(".pdf")
+    ) {
       results.push(fullPath);
+    }
   });
 
   return results;
@@ -103,7 +111,6 @@ export const getFilesByCodeMelli = (req: Request, res: Response) => {
 
   const filesData = matchedFiles.map(filePath => ({
     name: path.basename(filePath),
-    data: fs.readFileSync(filePath).toString("base64"),
     path: path.relative(UPLOAD_DIR, filePath),
   }));
 

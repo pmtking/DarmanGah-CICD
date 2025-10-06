@@ -13,20 +13,20 @@ export default function UploadLabPage() {
   const [files, setFiles] = useState<UploadFile[]>([]);
   const dropRef = useRef<HTMLDivElement>(null);
 
-  // اضافه کردن فایل‌ها به لیست
+  // اضافه کردن فایل‌ها
   const handleFiles = (selectedFiles: FileList | null) => {
     if (!selectedFiles) return;
-    const newFiles = Array.from(selectedFiles).map((file) => ({
+    const newFiles = Array.from(selectedFiles).map(file => ({
       file,
       status: "pending" as const,
       progress: 0,
     }));
-    setFiles((prev) => [...prev, ...newFiles]);
+    setFiles(prev => [...prev, ...newFiles]);
   };
 
-  // حذف فایل از لیست
+  // حذف فایل
   const handleRemoveFile = (name: string) => {
-    setFiles((prev) => prev.filter((f) => f.file.name !== name));
+    setFiles(prev => prev.filter(f => f.file.name !== name));
   };
 
   // مدیریت Drag & Drop
@@ -44,43 +44,42 @@ export default function UploadLabPage() {
     dropRef.current?.classList.remove("border-blue-500");
   };
 
-  // ارسال همه فایل‌ها یکجا
+  // ارسال فایل‌ها با Progress مستقل
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (files.length === 0) return;
 
-    const formData = new FormData();
-    files.forEach((f) => formData.append("files", f.file)); // نام فیلد با multer هماهنگ شود
+    const updatedFiles = files.map(f => ({ ...f, status: "uploading", progress: 0 }));
+    setFiles(updatedFiles);
 
-    // ست کردن وضعیت uploading برای همه فایل‌ها
-    setFiles((prev) =>
-      prev.map((f) => ({ ...f, status: "uploading", progress: 0 }))
-    );
+    const promises = updatedFiles.map((fileObj, index) => {
+      const formData = new FormData();
+      formData.append("files", fileObj.file);
 
-    try {
-      await api.post("/api/lab/upload", formData, {
+      return api.post("/api/lab/upload", formData, {
         headers: { "Content-Type": "multipart/form-data" },
-        onUploadProgress: (event) => {
+        onUploadProgress: event => {
           const percent = Math.round((event.loaded * 100) / (event.total ?? 1));
-          setFiles((prev) =>
-            prev.map((f) => ({ ...f, progress: percent }))
+          setFiles(prev =>
+            prev.map((f, i) => (i === index ? { ...f, progress: percent } : f))
           );
         },
+      })
+      .then(() => {
+        setFiles(prev =>
+          prev.map((f, i) => (i === index ? { ...f, status: "success", progress: 100 } : f))
+        );
+      })
+      .catch(() => {
+        setFiles(prev =>
+          prev.map((f, i) => (i === index ? { ...f, status: "error" } : f))
+        );
       });
+    });
 
-      // موفقیت
-      setFiles((prev) =>
-        prev.map((f) => ({ ...f, status: "success", progress: 100 }))
-      );
-
-      // حذف فایل‌ها بعد از 1.5 ثانیه
-      setTimeout(() => setFiles([]), 1500);
-    } catch (error) {
-      console.error(error);
-      setFiles((prev) =>
-        prev.map((f) => ({ ...f, status: "error" }))
-      );
-    }
+    await Promise.all(promises);
+    // پاک کردن فایل‌ها بعد از 2 ثانیه
+    setTimeout(() => setFiles([]), 2000);
   };
 
   return (
@@ -107,22 +106,20 @@ export default function UploadLabPage() {
               multiple
               accept=".pdf,.jpg,.jpeg,.png"
               className="hidden"
-              onChange={(e) => handleFiles(e.target.files)}
+              onChange={e => handleFiles(e.target.files)}
             />
           </div>
 
           {/* لیست فایل‌ها */}
           {files.length > 0 && (
             <div className="flex flex-col gap-3 bg-white/60 p-4 rounded-lg shadow-inner max-h-60 overflow-y-auto">
-              {files.map((f) => (
+              {files.map((f, index) => (
                 <div
-                  key={f.file.name}
+                  key={f.file.name + index}
                   className="flex flex-col gap-1 border rounded-lg p-2 bg-white shadow-sm"
                 >
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-700 text-sm truncate">
-                      {f.file.name}
-                    </span>
+                    <span className="text-gray-700 text-sm truncate">{f.file.name}</span>
                     {f.status === "pending" && (
                       <button
                         type="button"
@@ -153,9 +150,7 @@ export default function UploadLabPage() {
                   {/* درصد آپلود */}
                   <div className="flex justify-end">
                     {f.status === "uploading" && (
-                      <span className="text-blue-600 text-xs">
-                        در حال آپلود... {f.progress}%
-                      </span>
+                      <span className="text-blue-600 text-xs">در حال آپلود... {f.progress}%</span>
                     )}
                     {f.status === "success" && (
                       <span className="text-green-600 text-xs">✅ آپلود شد</span>
@@ -169,7 +164,10 @@ export default function UploadLabPage() {
             </div>
           )}
 
-          <button className="bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl transition font-medium shadow-md">
+          <button
+            type="submit"
+            className="bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl transition font-medium shadow-md"
+          >
             آپلود فایل‌ها
           </button>
         </form>
