@@ -13,7 +13,7 @@ if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 const getTodayPath = () => {
   const now = new Date();
   const { jy, jm, jd } = toJalaali(now.getFullYear(), now.getMonth() + 1, now.getDate());
-  return path.join(UPLOAD_DIR, `${jy}-${jm}-${jd}`);
+  return path.join(UPLOAD_DIR, `${jd}-${jm}-${jy}`);
 };
 
 // تنظیمات multer
@@ -23,17 +23,17 @@ const storage = multer.diskStorage({
     if (!fs.existsSync(todayPath)) fs.mkdirSync(todayPath, { recursive: true });
     cb(null, todayPath);
   },
-  filename: (req, file, cb) => {
+  filename: (_req, file, cb) => {
     // استخراج کد ملی از نام فایل PDF
     const codeMelli = path.parse(file.originalname).name.trim();
     if (!codeMelli) return cb(new Error("کد ملی از نام فایل استخراج نشد."));
 
-    // مسیر کد ملی
+    // پوشه کاربر بر اساس کد ملی
     const todayPath = getTodayPath();
     const userDir = path.join(todayPath, codeMelli);
     if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, { recursive: true });
 
-    // شماره گذاری آزمایش‌ها بر اساس فایل‌های موجود
+    // شماره‌گذاری فایل‌ها بر اساس تعداد موجود
     const existingFiles = fs.readdirSync(userDir).filter(f => f.endsWith(".pdf"));
     const testNumber = existingFiles.length + 1;
 
@@ -54,10 +54,7 @@ export const handleMulterError = (
 ) => {
   if (err instanceof multer.MulterError)
     return res.status(400).json({ error: err.message });
-  else if (err)
-    return res
-      .status(400)
-      .json({ error: err.message || "خطای سرور در آپلود فایل" });
+  if (err) return res.status(400).json({ error: err.message || "خطای سرور در آپلود فایل" });
   next();
 };
 
@@ -67,7 +64,7 @@ export const uploadFiles = (req: Request, res: Response) => {
   if (!files || files.length === 0)
     return res.status(400).json({ error: "هیچ فایلی ارسال نشده است." });
 
-  const uploadedFiles = files.map((f) => ({
+  const uploadedFiles = files.map(f => ({
     name: path.basename(f.path),
     path: path.relative(UPLOAD_DIR, f.path),
   }));
@@ -83,11 +80,10 @@ const findFilesRecursively = (dir: string, codeMelli: string): string[] => {
   let results: string[] = [];
   const list = fs.readdirSync(dir, { withFileTypes: true });
 
-  list.forEach((item) => {
+  list.forEach(item => {
     const fullPath = path.join(dir, item.name);
-    if (item.isDirectory())
-      results = results.concat(findFilesRecursively(fullPath, codeMelli));
-    else if (item.isFile() && path.basename(item.name).endsWith(".pdf") && fullPath.includes(codeMelli))
+    if (item.isDirectory()) results = results.concat(findFilesRecursively(fullPath, codeMelli));
+    else if (item.isFile() && fullPath.includes(path.sep + codeMelli + path.sep) && fullPath.endsWith(".pdf"))
       results.push(fullPath);
   });
 
@@ -97,14 +93,13 @@ const findFilesRecursively = (dir: string, codeMelli: string): string[] => {
 // دریافت فایل‌ها بر اساس کد ملی
 export const getFilesByCodeMelli = (req: Request, res: Response) => {
   const codeMelli = req.body?.codeMelli?.trim();
-  if (!codeMelli)
-    return res.status(400).json({ error: "کد ملی ارسال نشده است." });
+  if (!codeMelli) return res.status(400).json({ error: "کد ملی ارسال نشده است." });
 
   const matchedFiles = findFilesRecursively(UPLOAD_DIR, codeMelli);
   if (matchedFiles.length === 0)
     return res.status(404).json({ message: "فایلی برای این کد ملی پیدا نشد." });
 
-  const filesData = matchedFiles.map((filePath) => ({
+  const filesData = matchedFiles.map(filePath => ({
     name: path.basename(filePath),
     data: fs.readFileSync(filePath).toString("base64"),
     path: path.relative(UPLOAD_DIR, filePath),
