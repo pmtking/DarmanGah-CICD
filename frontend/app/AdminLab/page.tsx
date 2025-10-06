@@ -3,9 +3,11 @@
 import { useState, useRef } from "react";
 import api from "@/libs/axios";
 
+type UploadStatus = "pending" | "uploading" | "success" | "error";
+
 interface UploadFile {
   file: File;
-  status: "pending" | "uploading" | "success" | "error";
+  status: UploadStatus;
   progress: number;
 }
 
@@ -16,9 +18,9 @@ export default function UploadLabPage() {
   // اضافه کردن فایل‌ها
   const handleFiles = (selectedFiles: FileList | null) => {
     if (!selectedFiles) return;
-    const newFiles = Array.from(selectedFiles).map(file => ({
+    const newFiles: UploadFile[] = Array.from(selectedFiles).map(file => ({
       file,
-      status: "pending" as const,
+      status: "pending",
       progress: 0,
     }));
     setFiles(prev => [...prev, ...newFiles]);
@@ -49,36 +51,46 @@ export default function UploadLabPage() {
     e.preventDefault();
     if (files.length === 0) return;
 
-    const updatedFiles = files.map(f => ({ ...f, status: "uploading", progress: 0 }));
+    const updatedFiles: UploadFile[] = files.map(f => ({
+      ...f,
+      status: "uploading",
+      progress: 0,
+    }));
     setFiles(updatedFiles);
 
     const promises = updatedFiles.map((fileObj, index) => {
       const formData = new FormData();
       formData.append("files", fileObj.file);
 
-      return api.post("/api/lab/upload", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-        onUploadProgress: event => {
-          const percent = Math.round((event.loaded * 100) / (event.total ?? 1));
+      return api
+        .post("/api/lab/upload", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+          onUploadProgress: event => {
+            const percent = Math.round((event.loaded * 100) / (event.total ?? 1));
+            setFiles(prev =>
+              prev.map((f, i) =>
+                i === index ? { ...f, progress: percent } : f
+              )
+            );
+          },
+        })
+        .then(() => {
           setFiles(prev =>
-            prev.map((f, i) => (i === index ? { ...f, progress: percent } : f))
+            prev.map((f, i) =>
+              i === index ? { ...f, status: "success", progress: 100 } : f
+            )
           );
-        },
-      })
-      .then(() => {
-        setFiles(prev =>
-          prev.map((f, i) => (i === index ? { ...f, status: "success", progress: 100 } : f))
-        );
-      })
-      .catch(() => {
-        setFiles(prev =>
-          prev.map((f, i) => (i === index ? { ...f, status: "error" } : f))
-        );
-      });
+        })
+        .catch(() => {
+          setFiles(prev =>
+            prev.map((f, i) =>
+              i === index ? { ...f, status: "error" } : f
+            )
+          );
+        });
     });
 
     await Promise.all(promises);
-    // پاک کردن فایل‌ها بعد از 2 ثانیه
     setTimeout(() => setFiles([]), 2000);
   };
 
@@ -119,7 +131,9 @@ export default function UploadLabPage() {
                   className="flex flex-col gap-1 border rounded-lg p-2 bg-white shadow-sm"
                 >
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-700 text-sm truncate">{f.file.name}</span>
+                    <span className="text-gray-700 text-sm truncate">
+                      {f.file.name}
+                    </span>
                     {f.status === "pending" && (
                       <button
                         type="button"
@@ -150,13 +164,19 @@ export default function UploadLabPage() {
                   {/* درصد آپلود */}
                   <div className="flex justify-end">
                     {f.status === "uploading" && (
-                      <span className="text-blue-600 text-xs">در حال آپلود... {f.progress}%</span>
+                      <span className="text-blue-600 text-xs">
+                        در حال آپلود... {f.progress}%
+                      </span>
                     )}
                     {f.status === "success" && (
-                      <span className="text-green-600 text-xs">✅ آپلود شد</span>
+                      <span className="text-green-600 text-xs">
+                        ✅ آپلود شد
+                      </span>
                     )}
                     {f.status === "error" && (
-                      <span className="text-red-600 text-xs">❌ خطا</span>
+                      <span className="text-red-600 text-xs">
+                        ❌ خطا
+                      </span>
                     )}
                   </div>
                 </div>
