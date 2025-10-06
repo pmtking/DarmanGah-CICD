@@ -44,67 +44,47 @@ export default function UploadLabPage() {
     dropRef.current?.classList.remove("border-blue-500");
   };
 
-  // ارسال فایل‌ها به سرور به ترتیب صف
+  // ارسال همه فایل‌ها یکجا
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    for (let i = 0; i < files.length; i++) {
-      const currentFile = files[i];
+    if (files.length === 0) return;
 
-      // ست وضعیت uploading
+    const formData = new FormData();
+    files.forEach((f) => formData.append("files", f.file)); // نام فیلد با multer هماهنگ شود
+
+    // ست کردن وضعیت uploading برای همه فایل‌ها
+    setFiles((prev) =>
+      prev.map((f) => ({ ...f, status: "uploading", progress: 0 }))
+    );
+
+    try {
+      await api.post("/api/lab/upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+        onUploadProgress: (event) => {
+          const percent = Math.round((event.loaded * 100) / (event.total ?? 1));
+          setFiles((prev) =>
+            prev.map((f) => ({ ...f, progress: percent }))
+          );
+        },
+      });
+
+      // موفقیت
       setFiles((prev) =>
-        prev.map((f) =>
-          f.file.name === currentFile.file.name
-            ? { ...f, status: "uploading", progress: 0 }
-            : f
-        )
+        prev.map((f) => ({ ...f, status: "success", progress: 100 }))
       );
 
-      const formData = new FormData();
-      formData.append("file", currentFile.file);
-
-      try {
-        await api.post("/api/lab/upload", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-          onUploadProgress: (event) => {
-            const percent = Math.round(
-              (event.loaded * 100) / (event.total ?? 1)
-            );
-            setFiles((prev) =>
-              prev.map((f) =>
-                f.file.name === currentFile.file.name
-                  ? { ...f, progress: percent }
-                  : f
-              )
-            );
-          },
-        });
-
-        // موفقیت
-        setFiles((prev) =>
-          prev.map((f) =>
-            f.file.name === currentFile.file.name
-              ? { ...f, status: "success", progress: 100 }
-              : f
-          )
-        );
-
-        // حذف فایل بعد از 1.5 ثانیه
-        setTimeout(() => handleRemoveFile(currentFile.file.name), 1500);
-      } catch (error) {
-        console.error(error);
-        setFiles((prev) =>
-          prev.map((f) =>
-            f.file.name === currentFile.file.name
-              ? { ...f, status: "error" }
-              : f
-          )
-        );
-      }
+      // حذف فایل‌ها بعد از 1.5 ثانیه
+      setTimeout(() => setFiles([]), 1500);
+    } catch (error) {
+      console.error(error);
+      setFiles((prev) =>
+        prev.map((f) => ({ ...f, status: "error" }))
+      );
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen px-4 py-12 bg-gradient-to-r ">
+    <div className="flex flex-col items-center justify-center min-h-screen px-4 py-12 bg-gradient-to-r">
       <div className="bg-white/40 backdrop-blur-lg shadow-xl rounded-3xl p-8 w-full max-w-lg border border-white/20">
         <h1 className="text-2xl font-bold mb-6 text-gray-900 text-center">
           📤 آپلود جواب آزمایش
