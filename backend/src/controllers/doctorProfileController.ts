@@ -12,6 +12,7 @@ import {
 import { createDoctorProfileSchema } from "../validations/doctorProfile.validation";
 import Personnel from "../models/Personnel";
 import DoctorProfile from "../models/DoctorProfile";
+import mongoose from "mongoose";
 
 // ---------------------- ایجاد پروفایل پزشک ---------------------- //
 // export const findDoctor = async (req: Request, res: Response) => {
@@ -240,22 +241,37 @@ export const uploadDocument = async (req: Request, res: Response) => {
   }
 };
 
+
+
+
+
 export const upsertProfile = async (req: Request, res: Response) => {
   try {
-    // اعتبارسنجی ورودی
+    // اعتبارسنجی داده‌ها
     const { error } = createDoctorProfileSchema.validate(req.body);
     if (error)
       return res.status(400).json({ message: error.details[0].message });
 
-    const { nationalId, name } = req.body;
+    const {
+      nationalId,
+      name,
+      specialty,
+      specialtyType,
+      licenseNumber,
+      service,
+      workingDays,
+      workingHours,
+      roomNumber,
+      isAvailable,
+      documents,
+    } = req.body;
 
-    // پیدا کردن پرسنل بر اساس nationalId یا name
+    // پیدا کردن پرسنل
     const personnel = await Personnel.findOne({
       $or: [{ nationalId: nationalId?.trim() }, { name: name?.trim() }],
     });
 
-    if (!personnel)
-      return res.status(404).json({ message: "پرسنل پیدا نشد" });
+    if (!personnel) return res.status(404).json({ message: "پرسنل پیدا نشد" });
 
     if (personnel.role !== "DOCTOR") {
       return res
@@ -267,31 +283,42 @@ export const upsertProfile = async (req: Request, res: Response) => {
     let profile = await DoctorProfile.findOne({ personnel: personnel._id });
 
     if (profile) {
-      // استفاده از set() برای آپدیت تمام فیلدها
-      profile.set({
-        ...req.body,
-        personnel: personnel._id,
-      });
+      // بروزرسانی همه فیلدها
+      profile.specialty = specialty;
+      profile.specialtyType = specialtyType;
+      profile.licenseNumber = licenseNumber;
+      profile.service = service ? new mongoose.Types.ObjectId(service) : undefined;
+      profile.workingDays = workingDays;
+      profile.workingHours = workingHours;
+      profile.roomNumber = roomNumber;
+      profile.isAvailable = isAvailable;
+      profile.documents = documents || [];
+      profile.personnel = personnel._id;
 
-      // اطمینان از اینکه Mongoose فیلدهای Map و nested array را track کند
-      if (req.body.workingHours) profile.markModified("workingHours");
-      if (req.body.documents) profile.markModified("documents");
-      if (req.body.workingDays) profile.markModified("workingDays");
-
+      // ذخیره تغییرات
       profile = await profile.save();
     } else {
       // ایجاد پروفایل جدید
       profile = await DoctorProfile.create({
-        ...req.body,
+        specialty,
+        specialtyType,
+        licenseNumber,
+        service: service ? new mongoose.Types.ObjectId(service) : undefined,
+        workingDays,
+        workingHours,
+        roomNumber,
+        isAvailable,
+        documents: documents || [],
         personnel: personnel._id,
       });
     }
 
-    res.status(200).json({ message: "اطلاعات پزشک ذخیره شد", profile });
+    return res.status(200).json({ message: "اطلاعات پزشک ذخیره شد", profile });
   } catch (err: any) {
     console.error("upsertProfile error:", err);
-    res
+    return res
       .status(500)
       .json({ message: "خطا در ذخیره اطلاعات", error: err.message });
   }
 };
+
