@@ -3,7 +3,7 @@ import "../public/fonts/style.css";
 import "../styles/sass/main.scss";
 import "./globals.css";
 
-import NavBar from "@/components/NavBar/page";
+
 import toast, { Toaster } from "react-hot-toast";
 
 export const metadata: Metadata = {

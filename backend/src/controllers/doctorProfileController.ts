@@ -244,7 +244,7 @@ export const uploadDocument = async (req: Request, res: Response) => {
 
 export const upsertProfile = async (req: Request, res: Response) => {
   try {
-    // 1️⃣ اعتبارسنجی
+    // 1️⃣ اعتبارسنجی داده‌ها با Joi
     const { error } = createDoctorProfileSchema.validate(req.body);
     if (error) return res.status(400).json({ message: error.details[0].message });
 
@@ -253,46 +253,50 @@ export const upsertProfile = async (req: Request, res: Response) => {
       personnelName,
       specialty,
       specialtyType,
-      service,
       workingDays,
       workingHours,
       roomNumber,
       licenseNumber,
       isAvailable,
       documents,
-      avatarUrl,
-      bio,
     } = req.body;
 
-    // 2️⃣ پیدا کردن پرسنل
+    // 2️⃣ پیدا کردن پرسنل بر اساس nationalId یا personnelName
     const personnel = await Personnel.findOne({
-      $or: [{ nationalId: nationalId?.trim() }, { name: personnelName?.trim() }],
+      $or: [
+        { nationalId: nationalId?.trim() },
+        { name: personnelName?.trim() },
+      ],
     });
 
     if (!personnel)
       return res.status(404).json({ message: "پرسنل پیدا نشد" });
 
     if (personnel.role !== "DOCTOR")
-      return res.status(400).json({ message: "فقط پرسنل با نقش پزشک قابل انتخاب است" });
+      return res
+        .status(400)
+        .json({ message: "فقط پرسنل با نقش پزشک قابل انتخاب است" });
 
-    // 3️⃣ بررسی پروفایل
-    let profile: IDoctorProfile | null = await DoctorProfile.findOne({ personnel: personnel._id });
+    // 3️⃣ بررسی وجود پروفایل دکتر
+    let profile: IDoctorProfile | null = await DoctorProfile.findOne({
+      personnel: personnel._id,
+    });
 
     if (profile) {
-      // 4️⃣ آپدیت فقط فیلدهای قابل تغییر
-      if (specialty) profile.specialty = specialty;
-      if (specialtyType) profile.specialtyType = specialtyType;
-      if (roomNumber !== undefined) profile.roomNumber = roomNumber;
-      if (licenseNumber) profile.licenseNumber = licenseNumber;
-      if (isAvailable !== undefined) profile.isAvailable = isAvailable;
-      if (workingDays) profile.workingDays = workingDays;
+      // 4️⃣ آپدیت امن فقط فیلدهای مورد نظر
+      profile.specialty = specialty ?? profile.specialty;
+      profile.specialtyType = specialtyType ?? profile.specialtyType;
+      profile.workingDays = workingDays ?? profile.workingDays;
 
       if (workingHours) {
         profile.workingHours = workingHours;
-        profile.markModified("workingHours"); // حتما برای Map
+        profile.markModified("workingHours"); // مهم برای Map / nested object
       }
 
-      if (service) profile.service = new mongoose.Types.ObjectId(service);
+      profile.roomNumber = roomNumber ?? profile.roomNumber;
+      profile.licenseNumber = licenseNumber ?? profile.licenseNumber;
+      profile.isAvailable = isAvailable ?? profile.isAvailable;
+
       if (documents) {
         profile.documents = documents.map((doc: any) => ({
           title: doc.title,
@@ -301,20 +305,15 @@ export const upsertProfile = async (req: Request, res: Response) => {
         }));
       }
 
-      if (avatarUrl) profile.avatarUrl = avatarUrl;
-      if (bio) profile.bio = bio;
-
-      // ذخیره نهایی
-      profile = await profile.save();
+      await profile.save();
     } else {
       // 5️⃣ ایجاد پروفایل جدید
       profile = await DoctorProfile.create({
         personnel: personnel._id,
-        personnelName,
-        nationalId,
-        specialty,
-        specialtyType,
-        service: service ? new mongoose.Types.ObjectId(service) : undefined,
+        personnelName: personnelName!,
+        nationalId: nationalId!,
+        specialty: specialty!,
+        specialtyType: specialtyType!,
         workingDays: workingDays ?? [],
         workingHours: workingHours ?? {},
         roomNumber,
@@ -327,14 +326,14 @@ export const upsertProfile = async (req: Request, res: Response) => {
               uploadedAt: doc.uploadedAt ? new Date(doc.uploadedAt) : new Date(),
             }))
           : [],
-        avatarUrl,
-        bio,
       });
     }
 
     return res.status(200).json({ message: "اطلاعات پزشک ذخیره شد", profile });
   } catch (err: any) {
-    console.error(err);
-    return res.status(500).json({ message: "خطا در ذخیره اطلاعات", error: err.message });
+    console.error("❌ Upsert Error:", err);
+    return res
+      .status(500)
+      .json({ message: "خطا در ذخیره اطلاعات", error: err.message });
   }
 };
