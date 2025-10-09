@@ -44,15 +44,11 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fa" dir="rtl" className="light">
       <head>
-        {/* ✅ Structured Data (برای گوگل) */}
+        {/* Structured Data برای گوگل */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -61,7 +57,7 @@ export default function RootLayout({
               "@type": "MedicalClinic",
               name: "درمانگاه فرهنگیان نیشابور",
               url: "https://df-neyshabor.ir",
-              logo: "https://df-neyshabor.ir/logo.png", // آدرس لوگوی سایتت
+              logo: "https://df-neyshabor.ir/logo.png",
               description:
                 "رزرو نوبت آنلاین درمانگاه فرهنگیان نیشابور؛ خدمات درمانی و پزشکی برای فرهنگیان و خانواده‌ها.",
               address: {
@@ -70,7 +66,7 @@ export default function RootLayout({
                 addressCountry: "IR",
               },
               sameAs: [
-                "https://www.instagram.com/yourpage", // اگه پیج داری بذار
+                "https://www.instagram.com/yourpage",
                 "https://t.me/yourchannel",
               ],
             }),
@@ -78,9 +74,12 @@ export default function RootLayout({
         />
       </head>
       <body className="w-full bg-gray-50 text-gray-900 min-h-screen">
+        {/* Toaster برای نمایش نوتیفیکیشن */}
         <Toaster position="top-center" />
+
         {/* ناوبری عمومی */}
         {/* <NavBar /> */}
+
         {/* محتوای اصلی */}
         <main className="flex flex-col px-4 sm:px-6 md:px-12 lg:px-20 py-6 gap-12">
           {children}

@@ -2,15 +2,24 @@ import { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+
+  // اجازه بارگذاری تصاویر از دامنه‌های مشخص
   images: {
-    // همه دامنه‌های مورد نیاز (پروداکشن + لوکال)
     domains: [
-      "localhost",        // برای توسعه لوکال
-      "api.df-neyshabor.ir",  // دامین اول پروداکشن
-      "drfn.ir"          // دامین دوم پروداکشن
+      "localhost",         // توسعه لوکال
+      "api.df-neyshabor.ir", // پروداکشن
+      "drfn.ir"             // پروداکشن
     ],
   },
-  output: "standalone", // برای دیپلوی
+
+  output: "standalone", // مناسب برای دیپلوی
+
+  // فعال کردن middleware و edge runtime
+  experimental: {
+    middlewarePrefetch: "strict", // prefetch برای middleware
+  },
+
+  // در صورت نیاز به basePath یا rewrites می‌توانید اینجا اضافه کنید
 };
 
 export default nextConfig;

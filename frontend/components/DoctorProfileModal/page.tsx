@@ -93,6 +93,7 @@ export default function DoctorProfileModal({
   });
 
   useEffect(() => {
+    console.log(nationalId , 'fix this code ');
     if (!isOpen) return;
 
     if (personnelId) {

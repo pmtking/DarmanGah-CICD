@@ -168,6 +168,8 @@ export default function DoctorsPage() {
               ? `${process.env.NEXT_PUBLIC_API_URL || "https://api.df-neyshabor.ir"}${doctor.avatarUrl.startsWith("/") ? "" : "/"}${doctor.avatarUrl}`
               : "/images/defult.png";
 
+            const isDentist = doctor.specialty === "دندان پزشک";
+
             return (
               <div
                 key={doctor.personnelId}
@@ -178,20 +180,30 @@ export default function DoctorsPage() {
                   alt={doctor.name}
                   width={112}
                   height={112}
-                  className="rounded-full object-cover mb-4 border-2  h-full"
+                  className="rounded-full object-cover mb-4 border-2 h-full"
                 />
                 <h3 className="text-xl font-semibold mb-1 text-center text-white">{doctor.name}</h3>
                 <p className="text-blue-300 font-medium mb-3 text-center">{doctor.specialty}</p>
+
                 <button
                   onClick={() => {
+                    if (isDentist) {
+                      toast.error("❌ نوبت‌دهی برای دندان پزشک غیرفعال است");
+                      return;
+                    }
                     setSelectedDoctor(doctor);
                     setStep(1);
                     setSelectedDay(null);
                     setSelectedTime(null);
                   }}
-                  className="w-full bg-blue-600/70 text-white py-2 rounded-xl hover:bg-blue-700/80 transition font-medium backdrop-blur-sm"
+                  disabled={isDentist}
+                  className={`w-full py-2 rounded-xl transition font-medium backdrop-blur-sm ${
+                    isDentist
+                      ? "bg-gray-500/50 text-gray-300 cursor-not-allowed"
+                      : "bg-blue-600/70 text-white hover:bg-blue-700/80"
+                  }`}
                 >
-                  نوبت گرفتن
+                  {isDentist ? "نوبت‌دهی غیرفعال" : "نوبت گرفتن"}
                 </button>
               </div>
             );
@@ -288,7 +300,9 @@ export default function DoctorsPage() {
                 placeholder="کد ملی"
                 className="border p-2 rounded w-full mb-2"
                 value={formData.nationalCode}
-                onChange={(e) => setFormData({ ...formData, nationalCode: toEnglishDigits(e.target.value) })}
+                onChange={(e) =>
+                  setFormData({ ...formData, nationalCode: toEnglishDigits(e.target.value) })
+                }
               />
               <select
                 className="border p-2 rounded w-full mb-3"
@@ -302,7 +316,10 @@ export default function DoctorsPage() {
                 <option value="نیروهای مسلح">نیروهای مسلح</option>
                 <option value="سایر">سایر</option>
               </select>
-              <button onClick={handleReserve} className="w-full bg-green-600 text-white py-2 rounded-lg mt-3">
+              <button
+                onClick={handleReserve}
+                className="w-full bg-green-600 text-white py-2 rounded-lg mt-3"
+              >
                 ثبت نهایی
               </button>
             </>

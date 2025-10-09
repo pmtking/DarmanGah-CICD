@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import NavItem from "../navItem/page";
 import SearchBar from "../SearchBar/page";
-import { Menu, CloseSquare } from "iconsax-reactjs";
+import { Menu, CloseSquare, User } from "iconsax-reactjs";
 import api from "@/libs/axios";
 
 const navItems = [
@@ -86,13 +86,24 @@ const NavBar = () => {
         </div>
 
         {/* Actions */}
-        <div className="hidden md:flex items-center gap-3 sm:gap-5">
-          <button
-            className="px-6 py-2 rounded-xl bg-[#facc15] text-black shadow hover:bg-red-600 transition"
-            onClick={() => setShowCancelModal(true)}
-          >
-            لغو نوبت
-          </button>
+        <div className="flex justify-centrer align-center gap-2">
+          <div className="hidden md:flex items-center gap-3 sm:gap-5">
+            <button
+              className="px-6 py-2 rounded-xl bg-[#facc15] text-black shadow hover:bg-red-600 transition"
+              onClick={() => setShowCancelModal(true)}
+            >
+              لغو نوبت
+            </button>
+          </div>
+          <div className="hidden md:flex items-center gap-3 sm:gap-5">
+            <button
+              className="px-6 py-2 rounded-xl bg-[#071952] text-white shadow hover:bg-red-600 transition flex item-center gap-2"
+              onClick={() =>location.replace('/login')}
+            >
+              <User />
+               ورود کاربران
+            </button>
+          </div>
         </div>
 
         {/* Mobile Menu Button */}

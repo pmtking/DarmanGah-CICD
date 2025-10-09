@@ -25,7 +25,7 @@ export default function Home() {
       <NavBar />
 
       {/* Modal */}
-      {showModal && (
+      {/* {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full text-center">
             <h2 className="text-xl font-semibold mb-3 text-gray-800">
@@ -42,7 +42,7 @@ export default function Home() {
             </button>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Main Content */}
       <main className="w-full flex flex-col-reverse items-center justify-between gap-25 px-4 sm:px-6 sm:flex-col md:px-12 md:flex-col lg:px-20 py-8 lg:flex-row">

@@ -148,15 +148,14 @@ export default function UploadLabPage() {
                   {/* Progress bar */}
                   <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
                     <div
-                      className={`h-full transition-all duration-300 ease-linear ${
-                        f.status === "uploading"
+                      className={`h-full transition-all duration-300 ease-linear ${f.status === "uploading"
                           ? "bg-blue-500"
                           : f.status === "success"
-                          ? "bg-green-500"
-                          : f.status === "error"
-                          ? "bg-red-500"
-                          : "bg-gray-400"
-                      }`}
+                            ? "bg-green-500"
+                            : f.status === "error"
+                              ? "bg-red-500"
+                              : "bg-gray-400"
+                        }`}
                       style={{ width: `${f.progress}%` }}
                     />
                   </div>

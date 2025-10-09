@@ -9,6 +9,7 @@ import service from "./clinicServiceRoutes";
 import appontment from "./appointmentRoutes";
 import reseption from './ReseptionRouter'
 import Lab from "./labRoutes";
+import { isManager } from "../middlewares/isManager";
 export const router = express.Router();
 const fs = require("fs");
 const path = "D:/key.txt"; // مسیر فلش (در ویندوز)
@@ -47,8 +48,8 @@ router.use("/auth", authRouter);
 router.use("/v/", AdminRouter);
 router.use("/v2", managerRouter);
 
-router.use("/service", service);
-router.use("/personel/", personel);
+router.use("/service",isManager,  service);
+router.use("/personel/",isManager, personel);
 router.use("/doctors", doctors);
 router.use("/appointment", appontment);
 router.use("/lab", Lab);
