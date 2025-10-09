@@ -1,8 +1,9 @@
 import mongoose, { Document, Schema } from "mongoose";
 
-// ---------------------- Interface ---------------------- //
 export interface IDoctorProfile extends Document {
   personnel: mongoose.Types.ObjectId;
+  personnelName: string; // نام پرسنل
+  nationalId: string; // شماره ملی
   specialty: string;
   specialtyType:
     | "پزشک عمومی"
@@ -35,16 +36,8 @@ export interface IDoctorProfile extends Document {
     | "پزشکی قانونی"
     | "سایر";
   licenseNumber: string;
-  service: Schema.Types.ObjectId;
-  workingDays: (
-    | "شنبه"
-    | "یک‌شنبه"
-    | "دوشنبه"
-    | "سه‌شنبه"
-    | "چهارشنبه"
-    | "پنج‌شنبه"
-    | "جمعه"
-  )[];
+  service: mongoose.Types.ObjectId | string;
+  workingDays: string[];
   workingHours: {
     [day: string]: {
       shifts: { start: string; end: string; booked?: string[] }[];
@@ -57,15 +50,17 @@ export interface IDoctorProfile extends Document {
     fileUrl: string;
     uploadedAt: Date;
   }[];
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 // ---------------------- Schema ---------------------- //
 const DoctorProfileSchema = new Schema<IDoctorProfile>(
   {
-    personnel: { type: Schema.Types.ObjectId, ref: "Personnel" },
-
+    personnel: { type: Schema.Types.ObjectId, ref: "Personnel", required: true },
+    personnelName: { type: String, required: true, trim: true },
+    nationalId: { type: String, required: true, unique: true, trim: true },
     specialty: { type: String, required: true, trim: true },
-
     specialtyType: {
       type: String,
       enum: [
@@ -101,18 +96,9 @@ const DoctorProfileSchema = new Schema<IDoctorProfile>(
       ],
       required: true,
     },
-
-    licenseNumber: { type: String, required: true, unique: true, trim: true },
-
-    service: { type: String, required: true },
-
-    workingDays: {
-      type: [String],
-      enum: ["شنبه", "یک‌شنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنج‌شنبه", "جمعه"],
-      default: [],
-    },
-
-    // شیفت‌ها
+    licenseNumber: { type: String, required: true, trim: true },
+    service: { type: Schema.Types.ObjectId, ref: "Service", required: true },
+    workingDays: { type: [String], default: [] },
     workingHours: {
       type: Map,
       of: new Schema({
@@ -126,11 +112,8 @@ const DoctorProfileSchema = new Schema<IDoctorProfile>(
       }),
       default: {},
     },
-
     roomNumber: { type: String, trim: true },
-
     isAvailable: { type: Boolean, default: true },
-
     documents: [
       {
         title: { type: String, required: true },
@@ -142,7 +125,6 @@ const DoctorProfileSchema = new Schema<IDoctorProfile>(
   { timestamps: true }
 );
 
-// ---------------------- Model ---------------------- //
-const DoctorProfile = mongoose.model("DoctorProfile", DoctorProfileSchema);
+const DoctorProfile = mongoose.model<IDoctorProfile>("DoctorProfile", DoctorProfileSchema);
 
 export default DoctorProfile;
