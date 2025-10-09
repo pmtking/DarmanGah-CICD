@@ -242,10 +242,9 @@ export const uploadDocument = async (req: Request, res: Response) => {
 };
 
 
-
 export const upsertProfile = async (req: Request, res: Response) => {
   try {
-    // اعتبارسنجی
+    // 1️⃣ اعتبارسنجی
     const { error } = createDoctorProfileSchema.validate(req.body);
     if (error) return res.status(400).json({ message: error.details[0].message });
 
@@ -261,37 +260,39 @@ export const upsertProfile = async (req: Request, res: Response) => {
       licenseNumber,
       isAvailable,
       documents,
+      avatarUrl,
+      bio,
     } = req.body;
 
-    // پیدا کردن پرسنل
+    // 2️⃣ پیدا کردن پرسنل
     const personnel = await Personnel.findOne({
       $or: [{ nationalId: nationalId?.trim() }, { name: personnelName?.trim() }],
     });
 
-    if (!personnel) return res.status(404).json({ message: "پرسنل پیدا نشد" });
-    if (personnel.role !== "DOCTOR") return res.status(400).json({ message: "فقط پرسنل با نقش پزشک قابل انتخاب است" });
+    if (!personnel)
+      return res.status(404).json({ message: "پرسنل پیدا نشد" });
 
-    // بررسی پروفایل
+    if (personnel.role !== "DOCTOR")
+      return res.status(400).json({ message: "فقط پرسنل با نقش پزشک قابل انتخاب است" });
+
+    // 3️⃣ بررسی پروفایل
     let profile: IDoctorProfile | null = await DoctorProfile.findOne({ personnel: personnel._id });
 
     if (profile) {
-      // آپدیت مرحله‌ای
-      profile.personnelName = personnelName ?? profile.personnelName;
-      profile.nationalId = nationalId ?? profile.nationalId;
-      profile.specialty = specialty ?? profile.specialty;
-      profile.specialtyType = specialtyType ?? profile.specialtyType;
-      profile.roomNumber = roomNumber ?? profile.roomNumber;
-      profile.licenseNumber = licenseNumber ?? profile.licenseNumber;
-      profile.isAvailable = isAvailable ?? profile.isAvailable;
-      profile.workingDays = workingDays ?? profile.workingDays;
+      // 4️⃣ آپدیت فقط فیلدهای قابل تغییر
+      if (specialty) profile.specialty = specialty;
+      if (specialtyType) profile.specialtyType = specialtyType;
+      if (roomNumber !== undefined) profile.roomNumber = roomNumber;
+      if (licenseNumber) profile.licenseNumber = licenseNumber;
+      if (isAvailable !== undefined) profile.isAvailable = isAvailable;
+      if (workingDays) profile.workingDays = workingDays;
 
       if (workingHours) {
         profile.workingHours = workingHours;
-        profile.markModified("workingHours");
+        profile.markModified("workingHours"); // حتما برای Map
       }
 
       if (service) profile.service = new mongoose.Types.ObjectId(service);
-
       if (documents) {
         profile.documents = documents.map((doc: any) => ({
           title: doc.title,
@@ -300,9 +301,13 @@ export const upsertProfile = async (req: Request, res: Response) => {
         }));
       }
 
+      if (avatarUrl) profile.avatarUrl = avatarUrl;
+      if (bio) profile.bio = bio;
+
+      // ذخیره نهایی
       profile = await profile.save();
     } else {
-      // ایجاد پروفایل جدید
+      // 5️⃣ ایجاد پروفایل جدید
       profile = await DoctorProfile.create({
         personnel: personnel._id,
         personnelName,
@@ -315,11 +320,15 @@ export const upsertProfile = async (req: Request, res: Response) => {
         roomNumber,
         licenseNumber,
         isAvailable: isAvailable ?? true,
-        documents: documents ? documents.map((doc: any) => ({
-          title: doc.title,
-          fileUrl: doc.fileUrl,
-          uploadedAt: doc.uploadedAt ? new Date(doc.uploadedAt) : new Date(),
-        })) : [],
+        documents: documents
+          ? documents.map((doc: any) => ({
+              title: doc.title,
+              fileUrl: doc.fileUrl,
+              uploadedAt: doc.uploadedAt ? new Date(doc.uploadedAt) : new Date(),
+            }))
+          : [],
+        avatarUrl,
+        bio,
       });
     }
 

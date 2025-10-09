@@ -2,8 +2,8 @@ import mongoose, { Document, Schema } from "mongoose";
 
 export interface IDoctorProfile extends Document {
   personnel: mongoose.Types.ObjectId;
-  personnelName: string; // نام پرسنل
-  nationalId: string; // شماره ملی
+  personnelName: string; // نام پرسنل (غیرقابل تغییر)
+  nationalId: string;    // شماره ملی (غیرقابل تغییر)
   specialty: string;
   specialtyType:
     | "پزشک عمومی"
@@ -40,7 +40,7 @@ export interface IDoctorProfile extends Document {
   workingDays: string[];
   workingHours: {
     [day: string]: {
-      shifts: { start: string; end: string; booked?: string[] }[];
+      shifts: { start: string; end: string; booked?: string[]; _id?: string }[];
     };
   };
   roomNumber?: string;
@@ -50,16 +50,17 @@ export interface IDoctorProfile extends Document {
     fileUrl: string;
     uploadedAt: Date;
   }[];
+  avatarUrl?: string;
+  bio?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-// ---------------------- Schema ---------------------- //
 const DoctorProfileSchema = new Schema<IDoctorProfile>(
   {
     personnel: { type: Schema.Types.ObjectId, ref: "Personnel", required: true },
-    personnelName: { type: String, required: true, trim: true },
-    nationalId: { type: String, required: true, unique: true, trim: true },
+    personnelName: { type: String, required: true, trim: true }, // غیرقابل آپدیت
+    nationalId: { type: String, required: true, unique: true, trim: true }, // غیرقابل آپدیت
     specialty: { type: String, required: true, trim: true },
     specialtyType: {
       type: String,
@@ -121,6 +122,8 @@ const DoctorProfileSchema = new Schema<IDoctorProfile>(
         uploadedAt: { type: Date, default: Date.now },
       },
     ],
+    avatarUrl: { type: String },
+    bio: { type: String },
   },
   { timestamps: true }
 );
