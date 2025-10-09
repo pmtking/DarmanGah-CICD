@@ -246,7 +246,8 @@ export const upsertProfile = async (req: Request, res: Response) => {
   try {
     // 1️⃣ اعتبارسنجی داده‌ها با Joi
     const { error } = createDoctorProfileSchema.validate(req.body);
-    if (error) return res.status(400).json({ message: error.details[0].message });
+    if (error)
+      return res.status(400).json({ message: error.details[0].message });
 
     const {
       nationalId,
@@ -283,7 +284,7 @@ export const upsertProfile = async (req: Request, res: Response) => {
     });
 
     if (profile) {
-      // 4️⃣ آپدیت امن فقط فیلدهای مورد نظر
+      // 4️⃣ آپدیت امن فقط فیلدهای مورد نظر (اسم و کد ملی تغییر نمی‌کند)
       profile.specialty = specialty ?? profile.specialty;
       profile.specialtyType = specialtyType ?? profile.specialtyType;
       profile.workingDays = workingDays ?? profile.workingDays;
@@ -307,11 +308,11 @@ export const upsertProfile = async (req: Request, res: Response) => {
 
       await profile.save();
     } else {
-      // 5️⃣ ایجاد پروفایل جدید
+      // 5️⃣ ایجاد پروفایل جدید از اطلاعات پرسنل (اسم و کد ملی)
       profile = await DoctorProfile.create({
         personnel: personnel._id,
-        personnelName: personnelName!,
-        nationalId: nationalId!,
+        personnelName: personnel.name, // ✅ استفاده از نام واقعی پرسنل
+        nationalId: personnel.nationalId, // ✅ استفاده از شماره ملی واقعی
         specialty: specialty!,
         specialtyType: specialtyType!,
         workingDays: workingDays ?? [],
@@ -329,7 +330,9 @@ export const upsertProfile = async (req: Request, res: Response) => {
       });
     }
 
-    return res.status(200).json({ message: "اطلاعات پزشک ذخیره شد", profile });
+    return res
+      .status(200)
+      .json({ message: "اطلاعات پزشک ذخیره شد", profile });
   } catch (err: any) {
     console.error("❌ Upsert Error:", err);
     return res
