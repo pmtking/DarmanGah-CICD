@@ -269,16 +269,19 @@ export const upsertProfile = async (req: Request, res: Response) => {
 
     let profile;
     if (existingProfile) {
-      // بروزرسانی پروفایل
-      profile = await DoctorProfile.findByIdAndUpdate(
-        existingProfile._id,
-        {
-          ...req.body,
-          personnel: personnel._id,
-          workingHours, // حتماً شیفت‌ها را درست بفرستید
-        },
-        { new: true }
-      );
+      // بروزرسانی مرحله‌ای و استفاده از save()
+      existingProfile.name = req.body.name;
+      existingProfile.nationalId = req.body.nationalId;
+      existingProfile.specialty = req.body.specialty;
+      existingProfile.service = req.body.service;
+      existingProfile.workingDays = req.body.workingDays;
+      existingProfile.workingHours = req.body.workingHours; // شیء nested
+      existingProfile.roomNumber = req.body.roomNumber;
+      existingProfile.licenseNumber = req.body.licenseNumber;
+      existingProfile.isAvailable = req.body.isAvailable;
+      existingProfile.personnel = personnel._id;
+
+      profile = await existingProfile.save(); // مهم: save() جایگزین findByIdAndUpdate
     } else {
       // ایجاد پروفایل جدید
       profile = await DoctorProfile.create({
