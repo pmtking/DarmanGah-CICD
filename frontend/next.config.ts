@@ -16,7 +16,7 @@ const nextConfig: NextConfig = {
 
   // فعال کردن middleware و edge runtime
   experimental: {
-    middlewarePrefetch: "strict", // prefetch برای middleware
+    middlewarePrefetch: "flexible", // prefetch برای middleware
   },
 
   // در صورت نیاز به basePath یا rewrites می‌توانید اینجا اضافه کنید
