@@ -48,8 +48,8 @@ router.use("/auth", authRouter);
 router.use("/v/", AdminRouter);
 router.use("/v2", managerRouter);
 
-router.use("/service",isManager,  service);
-router.use("/personel/",isManager, personel);
+router.use("/service",  service);
+router.use("/personel/", personel);
 router.use("/doctors", doctors);
 router.use("/appointment", appontment);
 router.use("/lab", Lab);
