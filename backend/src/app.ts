@@ -1,21 +1,34 @@
-import express from "express";
+import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import os from "os";
+import path from "path";
 import { mongoConnected } from "./db";
 import { dotenvConfig } from "./config/dotenv";
 import { router } from "./routes";
-import path from "path";
 
 // بارگذاری env
 dotenvConfig();
 
 // اپلیکیشن
 export const app = express();
-app.use("/files", express.static("/home/ubuntu-website/darmanBot/files/"));
-app.use("/uploads", express.static(path.join(__dirname, "/uploads/")));
 
-// میان‌افزارها
-app.use(cors({ origin: process.env.ALLOWED_ORIGINS || "*" }));
+// مسیر فایل‌ها (static)
+const UPLOADS_PATH = process.env.UPLOADS_PATH || path.join(process.cwd(), "uploads");
+const FILES_PATH = process.env.FILES_PATH || path.join(process.cwd(), "files");
+
+app.use("/uploads", express.static(UPLOADS_PATH));
+app.use("/files", express.static(FILES_PATH));
+
+// CORS
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || ["*"];
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+  })
+);
+
+// پارسر JSON و URL
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -23,20 +36,13 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api", router);
 
 // هندل خطاهای عمومی
-app.use(
-  (
-    err: any,
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction
-  ) => {
-    console.error("❌ Error:", err.message || err);
-    res.status(500).json({ error: "مشکلی در سرور رخ داده است." });
-  }
-);
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  console.error("❌ Error:", err.message || err);
+  res.status(500).json({ error: "مشکلی در سرور رخ داده است." });
+});
 
-// تابع برای گرفتن IPهای سرور
-const getServerIPs = () => {
+// گرفتن IPهای سرور
+const getServerIPs = (): string[] => {
   const nets = os.networkInterfaces();
   const results: string[] = [];
 
@@ -47,31 +53,33 @@ const getServerIPs = () => {
       }
     }
   }
+
   return results;
 };
 
-// تابع راه‌اندازی
+// تابع راه‌اندازی سرور
 export const startServer = async () => {
   try {
     await mongoConnected();
 
-    const PORT = process.env.PORT || 4000;
-    const HOST = process.env.HOST || "0.0.0.0"; // برای سرور لینوکس مهمه
-    const serverIPs = getServerIPs();
+    const PORT = Number(process.env.PORT) || 4000;
+    const HOST = process.env.HOST || "0.0.0.0"; // برای دسترسی در شبکه داخلی و سرور
 
     app.listen(PORT, HOST, () => {
       console.log("🚀 Server is running:");
       console.log(`   → Local:   http://localhost:${PORT}`);
+
+      const serverIPs = getServerIPs();
       if (serverIPs.length > 0) {
-        serverIPs.forEach((ip) =>
-          console.log(`   → Network: http://${ip}:${PORT}`)
-        );
+        serverIPs.forEach((ip) => console.log(`   → Network: http://${ip}:${PORT}`));
       } else {
         console.log(`   → Network: http://${HOST}:${PORT}`);
       }
+
+      console.log(`   → Frontend allowed origins: ${allowedOrigins.join(", ")}`);
     });
   } catch (error) {
     console.error("❌ Server failed to start:", error);
-    process.exit(1); // خروج در صورت مشکل جدی
+    process.exit(1);
   }
 };
