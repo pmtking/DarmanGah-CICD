@@ -5,8 +5,8 @@ import axios, {
 } from "axios";
 
 
-const BASE_URL = 'http://192.171.1.100:4000/'
-// const BASE_URL = 'https://api.df-neyshabor.ir/'
+// const BASE_URL = 'http://192.171.1.100:4000/'
+const BASE_URL = 'https://api.df-neyshabor.ir/'
 const api = axios.create({
   baseURL:BASE_URL ,
   timeout: 2000,
