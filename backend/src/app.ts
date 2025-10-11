@@ -17,6 +17,7 @@ app.use("/uploads", express.static(path.join(__dirname, "/uploads/")));
 // میان‌افزارها
 app.use(cors({ origin: process.env.ALLOWED_ORIGINS || "*" }));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // مسیرهای API
 app.use("/api", router);

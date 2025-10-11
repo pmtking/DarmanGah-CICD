@@ -7,9 +7,6 @@ import toast from "react-hot-toast";
 import api from "@/libs/axios";
 import Cookies from "js-cookie";
 
-// ========================
-// Types
-// ========================
 type ServiceItem = {
   _id: string;
   serviceName: string;
@@ -43,9 +40,6 @@ type ReseptionFormProps = {
   nationalId: string;
 };
 
-// ========================
-// Component
-// ========================
 const ReseptionForm = ({ data, nationalId }: ReseptionFormProps) => {
   const today = new Date().toISOString().split("T")[0];
   const defaultTime = new Date().toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" });
@@ -71,9 +65,7 @@ const ReseptionForm = ({ data, nationalId }: ReseptionFormProps) => {
   const [selectedServices, setSelectedServices] = useState<ServiceItem[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // ========================
   // Fetch services & doctors
-  // ========================
   useEffect(() => {
     api.get("api/service")
       .then(res => setAllServices(res.data.map((s: any) => ({
@@ -94,9 +86,7 @@ const ReseptionForm = ({ data, nationalId }: ReseptionFormProps) => {
       .catch(() => toast.error("خطا در دریافت پزشکان"));
   }, []);
 
-  // ========================
-  // Load user from cookie
-  // ========================
+  // Load reception user from cookie
   useEffect(() => {
     const cookieUser = Cookies.get("user");
     if (cookieUser) {
@@ -107,9 +97,7 @@ const ReseptionForm = ({ data, nationalId }: ReseptionFormProps) => {
     }
   }, []);
 
-  // ========================
-  // Pre-fill patient data
-  // ========================
+  // Prefill patient data if available
   useEffect(() => {
     if (data) {
       const parts = data.fullName?.split(" ") || [];
@@ -124,9 +112,6 @@ const ReseptionForm = ({ data, nationalId }: ReseptionFormProps) => {
     }
   }, [data]);
 
-  // ========================
-  // Handlers
-  // ========================
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -152,23 +137,18 @@ const ReseptionForm = ({ data, nationalId }: ReseptionFormProps) => {
   const removeService = (_id: string) =>
     setSelectedServices(prev => prev.filter(s => s._id !== _id));
 
-  const calculateTotal = () => {
-    return selectedServices.reduce((sum, s) => {
-      const { patientPay } = getServicePriceDetails(s);
-      return sum + patientPay * s.quantity;
-    }, 0);
-  };
+  const calculateTotal = () => selectedServices.reduce((sum, s) => {
+    const { patientPay } = getServicePriceDetails(s);
+    return sum + patientPay * s.quantity;
+  }, 0);
 
-  // ========================
-  // Submit
-  // ========================
   const handleSubmit = async () => {
     if (!formData.firstName || !formData.lastName || !formData.doctorId || selectedServices.length === 0) {
       toast.error("لطفا فیلدهای ضروری را پر کنید");
       return;
     }
 
-    const backendPayload = {
+    const payload = {
       patientName: `${formData.firstName} ${formData.lastName}`,
       phoneNumber: formData.phoneNumber,
       relationWithGuardian: formData.relation || "خود شخص",
@@ -188,10 +168,9 @@ const ReseptionForm = ({ data, nationalId }: ReseptionFormProps) => {
 
     try {
       setLoading(true);
-      await api.post("/api/reseption/add", backendPayload);
+      await api.post("/api/reseption/add", payload);
       toast.success("اطلاعات با موفقیت ثبت شد ✅");
 
-      // Reset form
       setFormData(prev => ({
         firstName: "",
         lastName: "",
@@ -213,17 +192,14 @@ const ReseptionForm = ({ data, nationalId }: ReseptionFormProps) => {
     }
   };
 
-  // ========================
-  // Render
-  // ========================
   return (
     <div className="flex flex-col justify-center items-center p-4">
-      <div className="flex flex-col w-full gap-3">
+      <div className="flex flex-col w-full gap-3 max-w-4xl">
         {/* نام و نام خانوادگی و جنسیت */}
-        <div className="flex justify-between gap-3 w-full">
-          <Input type="text" name="firstName" value={formData.firstName} onChange={handleChange} placeholder="نام" className="w-full py-2 px-4 mb-4 border rounded text-black" />
-          <Input type="text" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="نام خانوادگی" className="w-full py-2 px-4 mb-4 border rounded text-black" />
-          <select name="gender" value={formData.gender} onChange={handleChange} className="w-full py-2 px-4 mb-4 border rounded text-black">
+        <div className="flex flex-col md:flex-row gap-3 w-full">
+          <Input type="text" name="firstName" value={formData.firstName} onChange={handleChange} placeholder="نام" className="flex-1 py-2 px-4 border rounded text-black" />
+          <Input type="text" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="نام خانوادگی" className="flex-1 py-2 px-4 border rounded text-black" />
+          <select name="gender" value={formData.gender} onChange={handleChange} className="flex-1 py-2 px-4 border rounded text-black">
             <option value="">جنسیت</option>
             <option value="مرد">مرد</option>
             <option value="زن">زن</option>
@@ -231,31 +207,31 @@ const ReseptionForm = ({ data, nationalId }: ReseptionFormProps) => {
         </div>
 
         {/* نسبت با سرپرست و شماره تماس */}
-        <div className="flex justify-between gap-3 w-full">
-          <select name="relation" value={formData.relation} onChange={handleChange} className="w-full py-2 px-4 mb-4 border rounded text-black">
+        <div className="flex flex-col md:flex-row gap-3 w-full">
+          <select name="relation" value={formData.relation} onChange={handleChange} className="flex-1 py-2 px-4 border rounded text-black">
             <option value="خود شخص">خود شخص</option>
             <option value="خانواده">خانواده</option>
           </select>
-          <Input type="text" name="phoneNumber" value={formData.phoneNumber} onChange={handleChange} placeholder="شماره تماس" className="w-full py-2 px-4 mb-4 border rounded text-black" />
+          <Input type="text" name="phoneNumber" value={formData.phoneNumber} onChange={handleChange} placeholder="شماره تماس" className="flex-1 py-2 px-4 border rounded text-black" />
         </div>
 
         {/* نوع ویزیت */}
-        <select name="visitType" value={formData.visitType} onChange={handleChange} className="w-full py-2 px-4 mb-4 border rounded text-black">
+        <select name="visitType" value={formData.visitType} onChange={handleChange} className="w-full py-2 px-4 border rounded text-black">
           <option value="اولیه">اولیه</option>
           <option value="پیگیری">پیگیری</option>
           <option value="اورژانسی">اورژانسی</option>
         </select>
 
         {/* بیمه پایه و تکمیلی */}
-        <div className="flex justify-between gap-3 w-full">
-          <select name="insuranceType" value={formData.insuranceType} onChange={handleChange} className="w-full py-2 px-4 mb-4 border rounded text-black">
+        <div className="flex flex-col md:flex-row gap-3 w-full">
+          <select name="insuranceType" value={formData.insuranceType} onChange={handleChange} className="flex-1 py-2 px-4 border rounded text-black">
             <option value="سایر">انتخاب بیمه پایه</option>
             <option value="تامین اجتماعی">تامین اجتماعی</option>
             <option value="سلامت">سلامت</option>
             <option value="آزاد">آزاد</option>
             <option value="نیروهای مسلح">نیروهای مسلح</option>
           </select>
-          <select name="supplementaryInsurance" value={formData.supplementaryInsurance} onChange={handleChange} className="w-full py-2 px-4 mb-4 border rounded text-black">
+          <select name="supplementaryInsurance" value={formData.supplementaryInsurance} onChange={handleChange} className="flex-1 py-2 px-4 border rounded text-black">
             <option value="سایر">انتخاب بیمه تکمیلی</option>
             <option value="دی">دی</option>
             <option value="ملت">ملت</option>
@@ -266,17 +242,16 @@ const ReseptionForm = ({ data, nationalId }: ReseptionFormProps) => {
         </div>
 
         {/* تاریخ */}
-        <Input type="date" name="visitDate" value={formData.visitDate} onChange={handleChange} className="w-full py-2 px-4 mb-4 border rounded text-black" />
+        <Input type="date" name="visitDate" value={formData.visitDate} onChange={handleChange} className="w-full py-2 px-4 border rounded text-black" />
 
-        {/* پزشک */}
+        {/* انتخاب پزشک */}
         <div className="relative w-full mb-4">
           <Input type="text" value={searchDoctor} onChange={(e) => setSearchDoctor(e.target.value)} placeholder="جستجوی پزشک..." className="w-full py-2 px-4 border rounded text-black" />
           {searchDoctor && (
             <ul className="absolute top-full left-0 right-0 bg-white border rounded max-h-40 overflow-y-auto z-10">
-              {allDoctors.filter(d => d.fullName.toLowerCase().includes(searchDoctor.toLowerCase()))
-                .map(d => (
-                  <li key={d._id} onClick={() => { setFormData(prev => ({ ...prev, doctorId: d._id })); setSearchDoctor(d.fullName); }} className="px-4 py-2 cursor-pointer hover:bg-gray-100 text-black">{d.fullName}</li>
-                ))}
+              {allDoctors.filter(d => d.fullName.toLowerCase().includes(searchDoctor.toLowerCase())).map(d => (
+                <li key={d._id} onClick={() => { setFormData(prev => ({ ...prev, doctorId: d._id })); setSearchDoctor(d.fullName); }} className="px-4 py-2 cursor-pointer hover:bg-gray-100 text-black">{d.fullName}</li>
+              ))}
             </ul>
           )}
         </div>
@@ -286,10 +261,9 @@ const ReseptionForm = ({ data, nationalId }: ReseptionFormProps) => {
           <Input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="جستجوی خدمات..." className="w-full py-2 px-4 mb-2 border rounded text-black" />
           {searchQuery && (
             <ul className="absolute top-full left-0 right-0 bg-white border rounded max-h-40 overflow-y-auto z-10">
-              {allServices.filter(s => s.serviceName.toLowerCase().includes(searchQuery.toLowerCase()))
-                .map(s => (
-                  <li key={s._id} onClick={() => addService(s)} className="px-4 py-2 cursor-pointer hover:bg-gray-100 text-black">{s.serviceName}</li>
-                ))}
+              {allServices.filter(s => s.serviceName.toLowerCase().includes(searchQuery.toLowerCase())).map(s => (
+                <li key={s._id} onClick={() => addService(s)} className="px-4 py-2 cursor-pointer hover:bg-gray-100 text-black">{s.serviceName}</li>
+              ))}
             </ul>
           )}
 
@@ -307,7 +281,7 @@ const ReseptionForm = ({ data, nationalId }: ReseptionFormProps) => {
                   </div>
                   <span className="text-sm">جمع: {totalPrice.toLocaleString()} تومان</span>
                 </div>
-              )
+              );
             })}
           </div>
         </div>
@@ -320,9 +294,9 @@ const ReseptionForm = ({ data, nationalId }: ReseptionFormProps) => {
         )}
 
         {/* دکمه‌ها */}
-        <div className="flex w-full gap-4 mt-5">
+        <div className="flex flex-col md:flex-row w-full gap-4 mt-5">
           <Button name={loading ? "در حال ارسال..." : "ثبت اطلاعات"} onClick={handleSubmit} />
-          <button className="w-full bg-gray-500 text-white rounded-lg py-2" onClick={() => {
+          <button className="flex-1 bg-gray-500 text-white rounded-lg py-2" onClick={() => {
             setFormData(prev => ({
               firstName: "",
               lastName: "",
@@ -337,6 +311,8 @@ const ReseptionForm = ({ data, nationalId }: ReseptionFormProps) => {
               receptionUser: prev.receptionUser
             }));
             setSelectedServices([]);
+            setSearchDoctor("");
+            setSearchQuery("");
           }}>صرف نظر</button>
         </div>
       </div>
