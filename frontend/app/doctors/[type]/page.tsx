@@ -7,18 +7,12 @@ import jalaali from "jalaali-js";
 import toast from "react-hot-toast";
 import Image from "next/image";
 
-interface Shift {
-  start: string;
-  end: string;
-  booked?: string[];
-}
-
 interface Doctor {
   personnelId: string;
   name: string;
   specialty: string;
   avatarUrl?: string;
-  workingHours: Record<string, { shifts: Shift[] }>;
+  workingHours: Record<string, { shifts: { start: string; end: string }[] }>;
 }
 
 // ---------------- بلاک‌های ۱۵ دقیقه‌ای ----------------
@@ -44,7 +38,7 @@ const toEnglishDigits = (str: string) =>
     .replace(/[\u06F0-\u06F9]/g, (d) => String(d.charCodeAt(0) - 1776))
     .replace(/[\u0660-\u0669]/g, (d) => String(d.charCodeAt(0) - 1632));
 
-// ---------------- مودال ----------------
+// ---------------- مودال ساده ----------------
 const Modal = ({ children, onClose }: { children: React.ReactNode; onClose: () => void }) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
     <div className="bg-white/90 rounded-xl p-6 w-96 relative backdrop-blur-md max-h-[90vh] overflow-y-auto">
@@ -67,6 +61,7 @@ export default function DoctorsPage() {
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [step, setStep] = useState<number>(1);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [availableTimes, setAvailableTimes] = useState<string[]>([]);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
@@ -76,60 +71,81 @@ export default function DoctorsPage() {
     insuranceType: "",
   });
 
-  // 📌 دریافت پزشکان
+  // ---------------- دریافت پزشکان ----------------
   const fetchDoctors = async () => {
+    setLoading(true);
     try {
       const res = await api.get<Doctor[]>("api/doctors");
       let filtered = res.data;
 
-      if (pathname.includes("general")) filtered = res.data.filter(d => d.specialty === "عمومی");
-      else if (pathname.includes("dentist")) filtered = res.data.filter(d => d.specialty === "دندان پزشک");
-      else if (pathname.includes("specialist"))
-        filtered = res.data.filter(d => d.specialty !== "عمومی" && d.specialty !== "دندان پزشک");
+      if (pathname.includes("general")) filtered = filtered.filter(d => d.specialty === "عمومی");
+      else if (pathname.includes("dentist")) filtered = filtered.filter(d => d.specialty === "دندان پزشک");
+      else if (pathname.includes("specialist")) filtered = filtered.filter(d => d.specialty !== "عمومی" && d.specialty !== "دندان پزشک");
 
       setDoctors(filtered);
     } catch (err) {
       console.error("❌ خطا در دریافت پزشکان:", err);
+      toast.error("❌ خطا در دریافت پزشکان");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchDoctors();
-  }, [pathname]);
+  useEffect(() => { fetchDoctors(); }, [pathname]);
 
-  // 📌 ثبت نوبت
+  // ---------------- دریافت زمان‌های آزاد از سرور ----------------
+  const fetchAvailableTimes = async (doctorId: string, day: string) => {
+    let appointmentDate = day;
+    try {
+      const [jy, jm, jd] = day.split("-").map(Number);
+      const { gy, gm, gd } = jalaali.toGregorian(jy, jm, jd);
+      appointmentDate = `${gy}-${String(gm).padStart(2, "0")}-${String(gd).padStart(2, "0")}`;
+    } catch {}
+
+    try {
+      const res = await api.post<{ bookedTimes: string[] }>("api/appointment/available", {
+        doctorId,
+        appointmentDate,
+      });
+      setAvailableTimes(res.data.bookedTimes || []);
+    } catch (err) {
+      console.error("❌ خطا در دریافت تایم‌های آزاد:", err);
+      toast.error("❌ خطا در دریافت تایم‌های آزاد");
+    }
+  };
+
+  // ---------------- ثبت نوبت ----------------
   const handleReserve = async () => {
-    if (!selectedDoctor || !selectedDay || !selectedTime) return alert("❌ لطفاً روز و ساعت را انتخاب کنید");
+    if (!selectedDoctor || !selectedDay || !selectedTime) {
+      toast.error("❌ لطفاً روز و ساعت را انتخاب کنید");
+      return;
+    }
 
     const phone = toEnglishDigits(formData.phoneNumber);
     const national = toEnglishDigits(formData.nationalCode);
 
-    if (!formData.fullName || !/^09\d{9}$/.test(phone) || national.length !== 10 || !formData.insuranceType)
-      return alert("❌ اطلاعات وارد شده معتبر نیست");
+    if (!formData.fullName || !/^09\d{9}$/.test(phone) || national.length !== 10 || !formData.insuranceType) {
+      toast.error("❌ اطلاعات وارد شده معتبر نیست");
+      return;
+    }
 
     let appointmentDate = selectedDay;
     try {
       const [jy, jm, jd] = selectedDay.split("-").map(Number);
       const { gy, gm, gd } = jalaali.toGregorian(jy, jm, jd);
       appointmentDate = `${gy}-${String(gm).padStart(2, "0")}-${String(gd).padStart(2, "0")}`;
-    } catch {
-      console.warn("Day is not in yyyy-mm-dd format, sending as is.");
-    }
-
-    const payload = {
-      fullName: formData.fullName,
-      phoneNumber: phone,
-      nationalCode: national,
-      insuranceType: formData.insuranceType,
-      doctorId: selectedDoctor.personnelId,
-      appointmentDate,
-      appointmentTime: selectedTime,
-    };
+    } catch {}
 
     try {
-      await api.post("api/appointment/add", payload);
+      await api.post("api/appointment/add", {
+        fullName: formData.fullName,
+        phoneNumber: phone,
+        nationalCode: national,
+        insuranceType: formData.insuranceType,
+        doctorId: selectedDoctor.personnelId,
+        appointmentDate,
+        appointmentTime: selectedTime,
+      });
       toast.success("✅ نوبت با موفقیت ثبت شد");
 
       setSelectedDoctor(null);
@@ -138,10 +154,11 @@ export default function DoctorsPage() {
       setSelectedTime(null);
       setFormData({ fullName: "", phoneNumber: "", nationalCode: "", insuranceType: "" });
 
-      await fetchDoctors();
+      fetchDoctors();
     } catch (err: any) {
       console.error(err);
-      alert(err.response?.data?.message || "❌ خطا در ثبت نوبت");
+      if (err.response?.status === 409) toast.error("❌ این نوبت قبلاً رزرو شده است");
+      else toast.error(err.response?.data?.message || "❌ خطا در ثبت نوبت");
     }
   };
 
@@ -150,13 +167,9 @@ export default function DoctorsPage() {
   return (
     <section className="p-6 doctors-page">
       <h1 className="text-3xl font-bold mb-8 text-center text-white">
-        {pathname.includes("general")
-          ? "پزشکان عمومی"
-          : pathname.includes("dentist")
-          ? "پزشکان دندان پزشک"
-          : pathname.includes("specialist")
-          ? "پزشکان متخصص"
-          : "لیست همه پزشکان"}
+        {pathname.includes("general") ? "پزشکان عمومی" :
+         pathname.includes("dentist") ? "پزشکان دندان پزشک" :
+         pathname.includes("specialist") ? "پزشکان متخصص" : "لیست همه پزشکان"}
       </h1>
 
       {doctors.length === 0 ? (
@@ -175,33 +188,17 @@ export default function DoctorsPage() {
                 key={doctor.personnelId}
                 className="doctor-card bg-white/20 backdrop-blur-md border border-white/30 rounded-3xl shadow-lg hover:shadow-xl transition p-6 flex flex-col items-center"
               >
-                <Image
-                  src={imageSrc}
-                  alt={doctor.name}
-                  width={112}
-                  height={112}
-                  className="rounded-full object-cover mb-4 border-2 h-full"
-                />
+                <Image src={imageSrc} alt={doctor.name} width={112} height={112} className="rounded-full object-cover mb-4 border-2 h-full" />
                 <h3 className="text-xl font-semibold mb-1 text-center text-white">{doctor.name}</h3>
                 <p className="text-blue-300 font-medium mb-3 text-center">{doctor.specialty}</p>
 
                 <button
                   onClick={() => {
-                    if (isDentist) {
-                      toast.error("❌ نوبت‌دهی برای دندان پزشک غیرفعال است");
-                      return;
-                    }
-                    setSelectedDoctor(doctor);
-                    setStep(1);
-                    setSelectedDay(null);
-                    setSelectedTime(null);
+                    if (isDentist) { toast.error("❌ نوبت‌دهی برای دندان پزشک غیرفعال است"); return; }
+                    setSelectedDoctor(doctor); setStep(1); setSelectedDay(null); setSelectedTime(null);
                   }}
                   disabled={isDentist}
-                  className={`w-full py-2 rounded-xl transition font-medium backdrop-blur-sm ${
-                    isDentist
-                      ? "bg-gray-500/50 text-gray-300 cursor-not-allowed"
-                      : "bg-blue-600/70 text-white hover:bg-blue-700/80"
-                  }`}
+                  className={`w-full py-2 rounded-xl transition font-medium backdrop-blur-sm ${isDentist ? "bg-gray-500/50 text-gray-300 cursor-not-allowed" : "bg-blue-600/70 text-white hover:bg-blue-700/80"}`}
                 >
                   {isDentist ? "نوبت‌دهی غیرفعال" : "نوبت گرفتن"}
                 </button>
@@ -211,7 +208,6 @@ export default function DoctorsPage() {
         </div>
       )}
 
-      {/* مودال رزرو */}
       {selectedDoctor && (
         <Modal onClose={() => setSelectedDoctor(null)}>
           {step === 1 && (
@@ -226,10 +222,9 @@ export default function DoctorsPage() {
                         setSelectedDay(day);
                         setStep(2);
                         setSelectedTime(null);
+                        fetchAvailableTimes(selectedDoctor.personnelId, day);
                       }}
-                      className={`px-3 py-1 rounded ${
-                        selectedDay === day ? "bg-blue-500 text-white" : "bg-gray-200/50"
-                      }`}
+                      className={`px-3 py-1 rounded ${selectedDay === day ? "bg-blue-500 text-white" : "bg-gray-200/50"}`}
                     >
                       {day}
                     </button>
@@ -249,24 +244,13 @@ export default function DoctorsPage() {
                   selectedDoctor.workingHours[selectedDay].shifts
                     .flatMap((s) => generateTimeBlocks(s.start, s.end))
                     .map((time) => {
-                      const isBooked = selectedDoctor.workingHours[selectedDay].shifts.some((shift) =>
-                        shift.booked?.includes(time)
-                      );
+                      const isBooked = availableTimes.includes(time);
                       return (
                         <button
                           key={time}
                           disabled={isBooked}
-                          onClick={() => {
-                            setSelectedTime(time);
-                            setStep(3);
-                          }}
-                          className={`px-3 py-1 rounded transition ${
-                            isBooked
-                              ? "bg-red-400 text-white cursor-not-allowed"
-                              : selectedTime === time
-                              ? "bg-green-500 text-white"
-                              : "bg-gray-200/50"
-                          }`}
+                          onClick={() => { setSelectedTime(time); setStep(3); }}
+                          className={`px-3 py-1 rounded transition ${isBooked ? "bg-red-400 text-white cursor-not-allowed" : selectedTime === time ? "bg-green-500 text-white" : "bg-gray-200/50"}`}
                         >
                           {time}
                         </button>
@@ -282,33 +266,10 @@ export default function DoctorsPage() {
           {step === 3 && selectedDay && selectedTime && (
             <>
               <h4 className="font-bold text-gray-800 mb-2">اطلاعات شما:</h4>
-              <input
-                placeholder="نام و نام خانوادگی"
-                className="border p-2 rounded w-full mb-2"
-                value={formData.fullName}
-                onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-              />
-              <input
-                placeholder="شماره موبایل"
-                className="border p-2 rounded w-full mb-2"
-                value={formData.phoneNumber}
-                onChange={(e) =>
-                  setFormData({ ...formData, phoneNumber: toEnglishDigits(e.target.value) })
-                }
-              />
-              <input
-                placeholder="کد ملی"
-                className="border p-2 rounded w-full mb-2"
-                value={formData.nationalCode}
-                onChange={(e) =>
-                  setFormData({ ...formData, nationalCode: toEnglishDigits(e.target.value) })
-                }
-              />
-              <select
-                className="border p-2 rounded w-full mb-3"
-                value={formData.insuranceType}
-                onChange={(e) => setFormData({ ...formData, insuranceType: e.target.value })}
-              >
+              <input placeholder="نام و نام خانوادگی" className="border p-2 rounded w-full mb-2" value={formData.fullName} onChange={(e) => setFormData({ ...formData, fullName: e.target.value })} />
+              <input placeholder="شماره موبایل" className="border p-2 rounded w-full mb-2" value={formData.phoneNumber} onChange={(e) => setFormData({ ...formData, phoneNumber: toEnglishDigits(e.target.value) })} />
+              <input placeholder="کد ملی" className="border p-2 rounded w-full mb-2" value={formData.nationalCode} onChange={(e) => setFormData({ ...formData, nationalCode: toEnglishDigits(e.target.value) })} />
+              <select className="border p-2 rounded w-full mb-3" value={formData.insuranceType} onChange={(e) => setFormData({ ...formData, insuranceType: e.target.value })}>
                 <option value="">انتخاب بیمه</option>
                 <option value="تأمین اجتماعی">تأمین اجتماعی</option>
                 <option value="سلامت">سلامت</option>
@@ -316,12 +277,7 @@ export default function DoctorsPage() {
                 <option value="نیروهای مسلح">نیروهای مسلح</option>
                 <option value="سایر">سایر</option>
               </select>
-              <button
-                onClick={handleReserve}
-                className="w-full bg-green-600 text-white py-2 rounded-lg mt-3"
-              >
-                ثبت نهایی
-              </button>
+              <button onClick={handleReserve} className="w-full bg-green-600 text-white py-2 rounded-lg mt-3">ثبت نهایی</button>
             </>
           )}
         </Modal>

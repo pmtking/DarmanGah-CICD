@@ -59,7 +59,7 @@ const ReseptionForm = ({ data, nationalId }: ReseptionFormProps) => {
     visitType: "اولیه",
     insuranceType: "سایر",
     supplementaryInsurance: "سایر",
-    relation: "",
+    relation: "خود شخص",
     phoneNumber: "",
     receptionUser: "",
   });
@@ -103,7 +103,7 @@ const ReseptionForm = ({ data, nationalId }: ReseptionFormProps) => {
       try {
         const user = JSON.parse(cookieUser);
         setFormData(prev => ({ ...prev, receptionUser: user.name }));
-      } catch {}
+      } catch { }
     }
   }, []);
 
@@ -133,10 +133,8 @@ const ReseptionForm = ({ data, nationalId }: ReseptionFormProps) => {
   };
 
   const getServicePriceDetails = (service: ServiceItem) => {
-    // پیدا کردن بیمه پایه و تکمیلی با includes برای جلوگیری از mismatch نام
     const base = service.baseInsurances.find(b => b.companyName.includes(formData.insuranceType))?.contractPrice || 0;
     const extra = service.supplementaryInsurances.find(s => s.companyName.includes(formData.supplementaryInsurance))?.contractPrice || 0;
-
     const patientPay = service.pricePublic - base - extra;
     return { originalPrice: service.pricePublic, basePrice: base, supplementaryPrice: extra, patientPay };
   };
@@ -188,43 +186,13 @@ const ReseptionForm = ({ data, nationalId }: ReseptionFormProps) => {
       nationalId
     };
 
-    const printerPayload = {
-      footer_text: "www.drfn.ir",
-      bill_number: String(Math.floor(Math.random() * 1000000)),
-      turn_number: String(Math.floor(Math.random() * 100)),
-      date: new Date().toLocaleDateString("fa-IR"),
-      time: defaultTime,
-      patient_name: `${formData.firstName} ${formData.lastName}`,
-      national_code: nationalId,
-      visit_type: formData.visitType,
-      doctor_name: allDoctors.find(d => d._id === formData.doctorId)?.fullName || "نامشخص",
-      doctor_specialty: "عمومی",
-      reception_user: formData.receptionUser,
-      insurance_base: formData.insuranceType,
-      insurance_extra: formData.supplementaryInsurance,
-      services: selectedServices.map(s => {
-        const { originalPrice, basePrice, supplementaryPrice, patientPay } = getServicePriceDetails(s);
-        return {
-          name: s.serviceName,
-          quantity: s.quantity,
-          original_price: originalPrice * s.quantity,
-          base_price: basePrice * s.quantity,
-          supplementary_price: supplementaryPrice * s.quantity,
-          patient_pay: patientPay * s.quantity,
-          supplementary_name: formData.supplementaryInsurance
-        };
-      })
-    };
-
     try {
       setLoading(true);
       await api.post("/api/reseption/add", backendPayload);
-      await api.post("http://127.0.0.1:5000", printerPayload);
-      toast.success("اطلاعات با موفقیت ثبت و برای چاپ ارسال شد ✅");
+      toast.success("اطلاعات با موفقیت ثبت شد ✅");
 
       // Reset form
       setFormData(prev => ({
-        ...prev,
         firstName: "",
         lastName: "",
         gender: "",
@@ -233,12 +201,13 @@ const ReseptionForm = ({ data, nationalId }: ReseptionFormProps) => {
         visitType: "اولیه",
         insuranceType: "سایر",
         supplementaryInsurance: "سایر",
-        relation: "",
+        relation: "خود شخص",
         phoneNumber: "",
+        receptionUser: prev.receptionUser
       }));
       setSelectedServices([]);
     } catch {
-      toast.error("خطا در ثبت یا چاپ اطلاعات");
+      toast.error("خطا در ثبت اطلاعات");
     } finally {
       setLoading(false);
     }
@@ -252,8 +221,8 @@ const ReseptionForm = ({ data, nationalId }: ReseptionFormProps) => {
       <div className="flex flex-col w-full gap-3">
         {/* نام و نام خانوادگی و جنسیت */}
         <div className="flex justify-between gap-3 w-full">
-          <Input type="text" name="firstName" value={formData.firstName} onChange={handleChange} placeholder="نام" className="w-full py-2 px-4 mb-4 border rounded text-black"/>
-          <Input type="text" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="نام خانوادگی" className="w-full py-2 px-4 mb-4 border rounded text-black"/>
+          <Input type="text" name="firstName" value={formData.firstName} onChange={handleChange} placeholder="نام" className="w-full py-2 px-4 mb-4 border rounded text-black" />
+          <Input type="text" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="نام خانوادگی" className="w-full py-2 px-4 mb-4 border rounded text-black" />
           <select name="gender" value={formData.gender} onChange={handleChange} className="w-full py-2 px-4 mb-4 border rounded text-black">
             <option value="">جنسیت</option>
             <option value="مرد">مرد</option>
@@ -261,10 +230,13 @@ const ReseptionForm = ({ data, nationalId }: ReseptionFormProps) => {
           </select>
         </div>
 
-        {/* نسبت و شماره تماس */}
+        {/* نسبت با سرپرست و شماره تماس */}
         <div className="flex justify-between gap-3 w-full">
-          <Input type="text" name="relation" value={formData.relation} onChange={handleChange} placeholder="نسبت با سرپرست" className="w-full py-2 px-4 mb-4 border rounded text-black"/>
-          <Input type="text" name="phoneNumber" value={formData.phoneNumber} onChange={handleChange} placeholder="شماره تماس" className="w-full py-2 px-4 mb-4 border rounded text-black"/>
+          <select name="relation" value={formData.relation} onChange={handleChange} className="w-full py-2 px-4 mb-4 border rounded text-black">
+            <option value="خود شخص">خود شخص</option>
+            <option value="خانواده">خانواده</option>
+          </select>
+          <Input type="text" name="phoneNumber" value={formData.phoneNumber} onChange={handleChange} placeholder="شماره تماس" className="w-full py-2 px-4 mb-4 border rounded text-black" />
         </div>
 
         {/* نوع ویزیت */}
@@ -277,30 +249,28 @@ const ReseptionForm = ({ data, nationalId }: ReseptionFormProps) => {
         {/* بیمه پایه و تکمیلی */}
         <div className="flex justify-between gap-3 w-full">
           <select name="insuranceType" value={formData.insuranceType} onChange={handleChange} className="w-full py-2 px-4 mb-4 border rounded text-black">
-            <option value="">انتخاب بیمه پایه</option>
+            <option value="سایر">انتخاب بیمه پایه</option>
             <option value="تامین اجتماعی">تامین اجتماعی</option>
             <option value="سلامت">سلامت</option>
             <option value="آزاد">آزاد</option>
             <option value="نیروهای مسلح">نیروهای مسلح</option>
-            <option value="سایر">سایر</option>
           </select>
           <select name="supplementaryInsurance" value={formData.supplementaryInsurance} onChange={handleChange} className="w-full py-2 px-4 mb-4 border rounded text-black">
-            <option value="">انتخاب بیمه تکمیلی</option>
+            <option value="سایر">انتخاب بیمه تکمیلی</option>
             <option value="دی">دی</option>
             <option value="ملت">ملت</option>
             <option value="آتیه سازان">آتیه سازان</option>
             <option value="دانا">دانا</option>
             <option value="آزاد">آزاد</option>
-            <option value="سایر">سایر</option>
           </select>
         </div>
 
         {/* تاریخ */}
-        <Input type="date" name="visitDate" value={formData.visitDate} onChange={handleChange} className="w-full py-2 px-4 mb-4 border rounded text-black"/>
+        <Input type="date" name="visitDate" value={formData.visitDate} onChange={handleChange} className="w-full py-2 px-4 mb-4 border rounded text-black" />
 
         {/* پزشک */}
         <div className="relative w-full mb-4">
-          <Input type="text" value={searchDoctor} onChange={(e) => setSearchDoctor(e.target.value)} placeholder="جستجوی پزشک..." className="w-full py-2 px-4 border rounded text-black"/>
+          <Input type="text" value={searchDoctor} onChange={(e) => setSearchDoctor(e.target.value)} placeholder="جستجوی پزشک..." className="w-full py-2 px-4 border rounded text-black" />
           {searchDoctor && (
             <ul className="absolute top-full left-0 right-0 bg-white border rounded max-h-40 overflow-y-auto z-10">
               {allDoctors.filter(d => d.fullName.toLowerCase().includes(searchDoctor.toLowerCase()))
@@ -313,7 +283,7 @@ const ReseptionForm = ({ data, nationalId }: ReseptionFormProps) => {
 
         {/* خدمات */}
         <div className="flex flex-col w-full relative mb-4">
-          <Input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="جستجوی خدمات..." className="w-full py-2 px-4 mb-2 border rounded text-black"/>
+          <Input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="جستجوی خدمات..." className="w-full py-2 px-4 mb-2 border rounded text-black" />
           {searchQuery && (
             <ul className="absolute top-full left-0 right-0 bg-white border rounded max-h-40 overflow-y-auto z-10">
               {allServices.filter(s => s.serviceName.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -332,7 +302,7 @@ const ReseptionForm = ({ data, nationalId }: ReseptionFormProps) => {
                 <div key={s._id} className="flex items-center justify-between bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">
                   <div className="flex items-center gap-2">
                     <span>{s.serviceName}</span>
-                    <input type="number" min={1} value={s.quantity} onChange={(e) => updateQuantity(s._id, Number(e.target.value))} className="w-12 px-1 py-0.5 border rounded text-xs text-black"/>
+                    <input type="number" min={1} value={s.quantity} onChange={(e) => updateQuantity(s._id, Number(e.target.value))} className="w-12 px-1 py-0.5 border rounded text-xs text-black" />
                     <button onClick={() => removeService(s._id)} className="text-red-500 font-bold px-1">×</button>
                   </div>
                   <span className="text-sm">جمع: {totalPrice.toLocaleString()} تومان</span>
@@ -351,13 +321,21 @@ const ReseptionForm = ({ data, nationalId }: ReseptionFormProps) => {
 
         {/* دکمه‌ها */}
         <div className="flex w-full gap-4 mt-5">
-          <Button name={loading ? "در حال ارسال..." : "ثبت اطلاعات"} onClick={handleSubmit}/>
+          <Button name={loading ? "در حال ارسال..." : "ثبت اطلاعات"} onClick={handleSubmit} />
           <button className="w-full bg-gray-500 text-white rounded-lg py-2" onClick={() => {
-            setFormData({
-              firstName:"", lastName:"", gender:"", doctorId:"", visitDate:today,
-              visitType:"اولیه", insuranceType:"سایر", supplementaryInsurance:"سایر",
-              relation:"", phoneNumber:"", receptionUser: formData.receptionUser
-            });
+            setFormData(prev => ({
+              firstName: "",
+              lastName: "",
+              gender: "",
+              doctorId: "",
+              visitDate: today,
+              visitType: "اولیه",
+              insuranceType: "سایر",
+              supplementaryInsurance: "سایر",
+              relation: "خود شخص",
+              phoneNumber: "",
+              receptionUser: prev.receptionUser
+            }));
             setSelectedServices([]);
           }}>صرف نظر</button>
         </div>

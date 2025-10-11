@@ -1,83 +1,125 @@
-// _______________ pmt king coding _______________________ //
-// imports
+// ---------------- pmt king coding (optimized + Personnel populate + SMS fix) ---------------- //
 import { Response, Request } from "express";
-import {
-  findAppointment,
-  reserveAppointment,
-} from "../services/appointmentService";
 import Appointment from "../models/Appointment";
-import { sendCancelSMS } from "../utils/sendSms";
+import { sendReserveSMS, sendCancelSMS } from "../utils/sendSms";
 
+// ----------------- دریافت زمان‌های آزاد برای یک پزشک -----------------
+export const GetAvailableTimesController = async (req: Request, res: Response) => {
+  try {
+    const { doctorId, appointmentDate } = req.body;
+    if (!doctorId || !appointmentDate)
+      return res.status(400).json({ success: false, message: "doctorId و appointmentDate الزامی هستند ❌" });
+
+    const dateObj = new Date(appointmentDate);
+    if (isNaN(dateObj.getTime()))
+      return res.status(400).json({ success: false, message: "فرمت تاریخ معتبر نیست ❌" });
+
+    const bookedAppointments = await Appointment.find({
+      doctorId,
+      appointmentDate: dateObj,
+      status: { $ne: "cancelled" },
+    }).select("appointmentTime");
+
+    const bookedTimes = bookedAppointments.map(a => a.appointmentTime);
+    return res.status(200).json({ success: true, bookedTimes });
+  } catch (error) {
+    console.error("❌ Error in GetAvailableTimesController:", error);
+    return res.status(500).json({ success: false, message: "خطا در دریافت زمان‌های آزاد" });
+  }
+};
 
 // ----------------- رزرو نوبت -----------------
-export const ReserveAppointmentController = async (
-  req: Request,
-  res: Response
-) => {
+export const ReserveAppointmentController = async (req: Request, res: Response) => {
   try {
-    const {
+    const { fullName, phoneNumber, insuranceType, nationalCode, doctorId, appointmentDate, appointmentTime } = req.body;
+
+    if (!fullName || !phoneNumber || !insuranceType || !nationalCode || !doctorId || !appointmentDate || !appointmentTime) {
+      return res.status(400).json({ success: false, message: "همه فیلدهای اجباری باید پر شوند ❌" });
+    }
+
+    const dateObj = new Date(appointmentDate);
+    if (isNaN(dateObj.getTime()))
+      return res.status(400).json({ success: false, message: "فرمت تاریخ نوبت معتبر نیست ❌" });
+
+    const exists = await Appointment.findOne({
+      doctorId,
+      appointmentDate: dateObj,
+      appointmentTime,
+      status: { $ne: "cancelled" },
+    });
+
+    if (exists)
+      return res.status(409).json({ success: false, message: "این نوبت قبلاً رزرو شده است ❌" });
+
+    const appointment = new Appointment({
       fullName,
       phoneNumber,
       insuranceType,
       nationalCode,
       doctorId,
-      appointmentDate,
+      appointmentDate: dateObj,
       appointmentTime,
-    } = req.body;
+      status: "reserved",
+    });
 
-    // ولیدیشن اولیه
-    if (
-      !fullName ||
-      !phoneNumber ||
-      !insuranceType ||
-      !nationalCode ||
-      !doctorId ||
-      !appointmentDate ||
-      !appointmentTime
-    ) {
-      return res
-        .status(400)
-        .json({ message: "همه فیلدهای اجباری باید پر شوند ❌" });
+    await appointment.save();
+
+    // populate از مدل Personnel
+    const populatedAppointment = await appointment.populate<{ doctorId: { name: string; specialty: string } }>({
+      path: "doctorId",
+      model: "Personnel",
+      select: "name specialty",
+    });
+
+    // ارسال پیامک رزرو
+    try {
+      await sendReserveSMS({
+        phoneNumber,
+        appointmentDate: dateObj,
+        appointmentTime,
+      });
+    } catch (smsError) {
+      console.error("❌ خطا در ارسال پیامک رزرو:", smsError);
     }
 
-    const appointment = await reserveAppointment(req.body);
-    return res.status(201).json({ message: "✅ نوبت ثبت شد", appointment });
+    return res.status(201).json({
+      success: true,
+      message: "✅ نوبت ثبت شد",
+      data: {
+        ...populatedAppointment.toObject(),
+        doctorName: populatedAppointment.doctorId?.name || "نامشخص",
+        doctorId: undefined,
+      },
+    });
   } catch (error: any) {
     console.error("❌ Error in ReserveAppointmentController:", error);
-
-    const msg = error.message || "خطا در نوبت‌دهی";
-    let status = 500;
-
-    if (msg.includes("یافت نشد")) status = 404;
-    else if (msg.includes("قبلا رزرو شده")) status = 409; // Conflict
-    else status = 400;
-
-    return res.status(status).json({ message: msg });
+    return res.status(500).json({ success: false, message: error.message || "خطا در نوبت‌دهی" });
   }
 };
 
 // ----------------- استعلام نوبت بر اساس کد ملی -----------------
-export const FindAppointmentController = async (
-  req: Request,
-  res: Response
-) => {
+export const FindAppointmentController = async (req: Request, res: Response) => {
   try {
     const { nationalCode } = req.body;
+    if (!nationalCode) return res.status(400).json({ success: false, message: "کد ملی الزامی است ❌" });
 
-    if (!nationalCode) {
-      return res.status(400).json({ message: "کد ملی الزامی است ❌" });
-    }
+    const appointments = await Appointment.find({ nationalCode })
+      .populate({ path: "doctorId", model: "Personnel", select: "name specialty" })
+      .sort({ appointmentDate: 1, appointmentTime: 1 });
 
-    const result = await findAppointment(nationalCode);
+    if (!appointments.length)
+      return res.status(404).json({ success: false, message: "هیچ نوبتی یافت نشد ❌" });
 
-    if (!result.success) {
-      return res.status(404).json(result);
-    }
+    const formatted = appointments.map(a => ({
+      ...a.toObject(),
+      doctorName: (a.doctorId as any)?.name || "نامشخص",
+      doctorId: undefined,
+    }));
 
-    return res.status(200).json(result);
+    return res.status(200).json({ success: true, count: formatted.length, data: formatted });
   } catch (error) {
-    console.error("❌ خطا در کنترلر استعلام نوبت:", error);
-    return res.status(500).json({ message: "خطای داخلی سرور" });
+    console.error("❌ Error in FindAppointmentController:", error);
+    return res.status(500).json({ success: false, message: "خطای داخلی سرور" });
   }
 };
 
@@ -85,96 +127,86 @@ export const FindAppointmentController = async (
 export const GetAppointmentController = async (req: Request, res: Response) => {
   try {
     const appointments = await Appointment.find()
-      .populate("doctorId", "name specialty")
+      .populate({ path: "doctorId", model: "Personnel", select: "name specialty" })
       .sort({ appointmentDate: 1, appointmentTime: 1 });
 
-    return res.status(200).json({
-      success: true,
-      count: appointments.length,
-      data: appointments,
-    });
+    const formatted = appointments.map(a => ({
+      ...a.toObject(),
+      doctorName: (a.doctorId as any)?.name || "نامشخص",
+      doctorId: undefined,
+    }));
+
+    return res.status(200).json({ success: true, count: formatted.length, data: formatted });
   } catch (error) {
     console.error("❌ Error fetching appointments:", error);
-    return res.status(500).json({
-      success: false,
-      message: "خطا در دریافت نوبت‌ها",
-    });
+    return res.status(500).json({ success: false, message: "خطا در دریافت نوبت‌ها" });
   }
 };
+
 // ----------------- استعلام + لغو نوبت با کد ملی -----------------
-// ----------------- استعلام + لغو نوبت با کد ملی -----------------
-export const CancelByNationalCodeController = async (
-  req: Request,
-  res: Response
-) => {
+export const CancelByNationalCodeController = async (req: Request, res: Response) => {
   try {
     const { nationalCode, appointmentId } = req.body;
-
-    if (!nationalCode) {
-      return res.status(400).json({ message: "کد ملی الزامی است ❌" });
-    }
+    if (!nationalCode) return res.status(400).json({ success: false, message: "کد ملی الزامی است ❌" });
 
     const appointments = await Appointment.find({ nationalCode })
-      .populate("doctorId", "name specialty")
+      .populate({ path: "doctorId", model: "Personnel", select: "name specialty" })
       .sort({ appointmentDate: 1, appointmentTime: 1 });
 
-    if (!appointments || appointments.length === 0) {
-      return res.status(404).json({ message: "هیچ نوبتی یافت نشد ❌" });
-    }
+    if (!appointments.length)
+      return res.status(404).json({ success: false, message: "هیچ نوبتی یافت نشد ❌" });
 
     if (appointmentId) {
-      const appointment = await Appointment.findOne({
-        _id: appointmentId,
-        nationalCode,
-      });
+      const appointment = await Appointment.findOne({ _id: appointmentId, nationalCode })
+        .populate({ path: "doctorId", model: "Personnel", select: "name" });
 
-      if (!appointment) {
-        return res.status(404).json({ message: "نوبت موردنظر یافت نشد ❌" });
-      }
-
-      if (appointment.status === "cancelled") {
-        return res.status(400).json({ message: "این نوبت قبلاً لغو شده ⚠️" });
-      }
+      if (!appointment)
+        return res.status(404).json({ success: false, message: "نوبت موردنظر یافت نشد ❌" });
+      if (appointment.status === "cancelled")
+        return res.status(400).json({ success: false, message: "این نوبت قبلاً لغو شده ⚠️" });
 
       appointment.status = "cancelled";
       await appointment.save();
 
-      // ----------------- ارسال پیامک لغو فقط با روز هفته -----------------
       try {
-       
         const WEEK_DAYS = ["یکشنبه","دوشنبه","سه‌شنبه","چهارشنبه","پنج‌شنبه","جمعه","شنبه"];
-        const dateObj = appointment.appointmentDate instanceof Date 
-          ? appointment.appointmentDate 
-          : new Date(appointment.appointmentDate);
+        const dateObj = appointment.appointmentDate instanceof Date ? appointment.appointmentDate : new Date(appointment.appointmentDate);
         const dayName = WEEK_DAYS[dateObj.getDay()];
 
-        await sendCancelSMS({
-          phoneNumber: appointment.phoneNumber,
-          day: dayName, // فقط روز هفته
-        });
-        console.log("✅ پیامک لغو ارسال شد");
+        console.log("📩 Sending cancel SMS to:", appointment.phoneNumber, "for day:", dayName);
+        const smsResult = await sendCancelSMS({ phoneNumber: appointment.phoneNumber, appointmentDate: dateObj });
+        console.log("✅ SMS sent successfully:", smsResult);
       } catch (smsError) {
         console.error("❌ خطا در ارسال پیامک لغو:", smsError);
       }
-      // ---------------------------------------------------------------------
+
+      const remaining = appointments.filter(a => a.id !== appointmentId).map(a => ({
+        ...a.toObject(),
+        doctorName: (a.doctorId as any)?.name || "نامشخص",
+        doctorId: undefined,
+      }));
 
       return res.status(200).json({
         success: true,
         message: "✅ نوبت با موفقیت لغو شد و پیامک ارسال شد",
-        canceled: appointment,
-        remaining: appointments.filter((a) => a.id !== appointmentId),
+        canceled: {
+          ...appointment.toObject(),
+          doctorName: (appointment.doctorId as any)?.name || "نامشخص",
+          doctorId: undefined,
+        },
+        remaining,
       });
     }
 
-    return res.status(200).json({
-      success: true,
-      count: appointments.length,
-      appointments,
-    });
+    const formattedAppointments = appointments.map(a => ({
+      ...a.toObject(),
+      doctorName: (a.doctorId as any)?.name || "نامشخص",
+      doctorId: undefined,
+    }));
+
+    return res.status(200).json({ success: true, count: formattedAppointments.length, appointments: formattedAppointments });
   } catch (error) {
     console.error("❌ Error in CancelByNationalCodeController:", error);
-    return res.status(500).json({ message: "خطای داخلی سرور" });
+    return res.status(500).json({ success: false, message: "خطای داخلی سرور" });
   }
 };
-
-
