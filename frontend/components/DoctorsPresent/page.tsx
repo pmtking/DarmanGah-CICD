@@ -6,7 +6,7 @@ import api from "@/libs/axios";
 
 interface Doctor {
   personnelId: string;
-  name: string; // ← حتما باید 'name' باشد تا Card درست نمایش دهد
+  name: string;       // حتما name باشد تا Card درست کار کند
   avatarUrl?: string;
   specialty?: string;
   phone?: string;
@@ -22,8 +22,13 @@ const DoctorsPresent: React.FC = () => {
   // 🧠 اصلاح مسیر آواتار
   const fixAvatarUrl = (url?: string) => {
     if (!url) return "/images/default.png";
-    if (url.startsWith("http://localhost")) return url.replace("http://localhost:4000", "https://api.df-neyshabor.ir");
-    if (!url.startsWith("http")) return `https://api.df-neyshabor.ir${url.startsWith("/") ? "" : "/"}${url}`;
+    if (url.startsWith("http://localhost"))
+      return url.replace(
+        "http://localhost:4000",
+        "https://api.df-neyshabor.ir"
+      );
+    if (!url.startsWith("http"))
+      return `https://api.df-neyshabor.ir${url.startsWith("/") ? "" : "/"}${url}`;
     return url;
   };
 
@@ -72,7 +77,7 @@ const DoctorsPresent: React.FC = () => {
 
           return {
             personnelId: doc.personnelId,
-            name: doc.name, // ← مهم! باید 'name' باشد
+            name: doc.name || doc.doctorName, // ← مهم! اگر name نیست از doctorName استفاده کن
             avatarUrl: fixAvatarUrl(doc.avatarUrl),
             specialty: doc.specialty,
             phone: doc.phone,
@@ -90,7 +95,9 @@ const DoctorsPresent: React.FC = () => {
     }
   };
 
-  useEffect(() => { fetchDoctors(); }, []);
+  useEffect(() => {
+    fetchDoctors();
+  }, []);
 
   return (
     <div className="flex flex-col justify-start items-center w-full sm:w-[80%] md:w-[50%] lg:w-[35%] xl:w-[24%] bg-amber-50/30 h-auto lg:h-[80vh] rounded-2xl py-5 px-2 mx-auto">
@@ -101,17 +108,21 @@ const DoctorsPresent: React.FC = () => {
       <div className="flex flex-col gap-6 mt-3 w-full px-2 h-full overflow-y-auto scrollbar-hide">
         {loading && <p className="text-center text-sm text-gray-600">در حال بارگذاری...</p>}
         {error && <p className="text-center text-red-500 text-sm">{error}</p>}
-        {!loading && !error && doctors.length === 0 && <p className="text-center text-gray-500 text-sm">هیچ پزشکی برای امروز ثبت نشده است.</p>}
+        {!loading && !error && doctors.length === 0 && (
+          <p className="text-center text-gray-500 text-sm">
+            هیچ پزشکی برای امروز ثبت نشده است.
+          </p>
+        )}
 
         {doctors.map((d) => (
           <Card
             key={d.personnelId}
             doctorId={d.personnelId}
-            name={d.name} // ← حتما از 'name' استفاده شود
+            name={d.name} // ← استفاده از name
             specialty={d.specialty}
             status={d.status}
             nextShift={d.nextShift}
-            avatarUrl={d.avatarUrl}
+            avatarUrl={d.avatarUrl} // ← اصلاح مسیر
           />
         ))}
       </div>
