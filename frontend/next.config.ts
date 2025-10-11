@@ -7,8 +7,8 @@ const nextConfig: NextConfig = {
   images: {
     domains: [
       "localhost",         // توسعه لوکال
-      "api.df-neyshabor.ir", // پروداکشن
-      "drfn.ir"             // پروداکشن
+      "api.df-neyshabor.ir"// پروداکشن
+              // پروداکشن
     ],
   },
 

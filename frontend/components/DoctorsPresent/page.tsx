@@ -6,7 +6,7 @@ import api from "@/libs/axios";
 
 interface Doctor {
   personnelId: string;
-  name: string;       // حتما name باشد تا Card درست کار کند
+  name: string;
   avatarUrl?: string;
   specialty?: string;
   phone?: string;
@@ -19,7 +19,6 @@ const DoctorsPresent: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // 🧠 اصلاح مسیر آواتار
   const fixAvatarUrl = (url?: string) => {
     if (!url) return "/images/default.png";
     if (url.startsWith("http://localhost"))
@@ -77,7 +76,7 @@ const DoctorsPresent: React.FC = () => {
 
           return {
             personnelId: doc.personnelId,
-            name: doc.name || doc.doctorName, // ← مهم! اگر name نیست از doctorName استفاده کن
+            name: doc.name || doc.doctorName,
             avatarUrl: fixAvatarUrl(doc.avatarUrl),
             specialty: doc.specialty,
             phone: doc.phone,
@@ -118,11 +117,12 @@ const DoctorsPresent: React.FC = () => {
           <Card
             key={d.personnelId}
             doctorId={d.personnelId}
-            name={d.name} // ← استفاده از name
+            name={d.name}
             specialty={d.specialty}
             status={d.status}
             nextShift={d.nextShift}
-            avatarUrl={d.avatarUrl} // ← اصلاح مسیر
+            avatarUrl={d.avatarUrl}
+            // phone={d.phone}
           />
         ))}
       </div>
