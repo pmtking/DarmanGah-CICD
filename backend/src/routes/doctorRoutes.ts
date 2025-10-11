@@ -14,8 +14,12 @@ import {
 
 const router = express.Router();
 
+// ------------------ دسته بندی پزشک -------------------- //
+router.get("/all", getAllDoctorsController);
+
 // ------------------ دریافت اطلاعات ---------------------------- //
 router.get("/find", findDoctor);
+
 // ---------------------- ایجاد پروفایل پزشک ---------------------- //
 router.post("/add", createProfile);
 
@@ -40,8 +44,4 @@ router.post("/:id/document", uploadDocument);
 // --------------------------- ایجاد و بهروز رسانی ------------------------ //
 router.post("/upsert", upsertProfile);
 
-//  ------------------------------- دسته بندی پزشک -------------------- //
-router.get("/all", getAllDoctorsController);
-
-// --------------------- export =----------------- //
 export default router;
