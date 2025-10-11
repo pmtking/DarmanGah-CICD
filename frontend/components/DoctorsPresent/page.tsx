@@ -75,7 +75,7 @@ const DoctorsPresent: React.FC = () => {
           // مسیر کامل آواتار
           const avatarUrl = doc.avatarUrl
             ? `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}${doc.avatarUrl.startsWith("/") ? "" : "/"}${doc.avatarUrl}`
-            : "/images/default.png"; // عکس پیش‌فرض
+            : "/images/defult.png"; // عکس پیش‌فرض
 
           return {
             personnelId: doc.personnelId,

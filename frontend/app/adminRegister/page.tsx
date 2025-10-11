@@ -20,7 +20,7 @@ const AdminRegisterPage = () => {
       await register({
         number:phone,
         password,
-        role: "ADMIN",
+        role: "MANAGER",
       });
       // می‌تونی بعد از ثبت‌نام موفق، کاربر رو منتقل کنی یا پیام موفقیت نشون بدی
       console.log("ثبت‌نام موفق:", user);

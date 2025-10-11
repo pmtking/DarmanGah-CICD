@@ -39,8 +39,10 @@ export default function ClientDoctorsTable() {
       setFilteredDoctors(mapped);
       toast.success("✅ دریافت اطلاعات پزشکان موفقیت‌آمیز بود");
     } catch (error) {
-      console.error("Doctor fetch error:", error);
+      // console.error("Doctor fetch error:", error);
+      setModalOpen(true)
       toast.error("❌ خطا در دریافت اطلاعات پزشکان");
+
     }
   };
 
@@ -75,7 +77,6 @@ export default function ClientDoctorsTable() {
 
       // 📡 درخواست اطلاعات جزئی از API
       const res = await api.get(`/api/doctors/${doctor.personnelId}`);
-            console.log(res.data , '------->>');
 
       const detailedDoctor: Doctor = {
         ...doctor,
@@ -86,11 +87,23 @@ export default function ClientDoctorsTable() {
       setSelectedDoctor(detailedDoctor);
       setModalOpen(true);
       toast.success("✅ اطلاعات پزشک با موفقیت دریافت شد");
-    } catch (err) {
-      console.error("Doctor detail fetch error:", err);
-      toast.error("❌ خطا در دریافت اطلاعات پزشک");
+    } catch (err: any) {
+      // console.error("Doctor detail fetch error:", err);
+
+      // اگر اطلاعات پیدا نشد یا خطا رخ داد، باز هم فرم خالی برای ثبت بساز
+      const emptyDoctor: Doctor = {
+        personnelId: doctor.personnelId,
+        name: doctor.name || "",
+        nationalId: doctor.nationalId || "",
+      };
+
+      setSelectedDoctor(emptyDoctor);
+      setModalOpen(true);
+
+      toast.error("⚠️ اطلاعات پزشک هنوز ثبت نشده است. لطفاً اطلاعات را تکمیل کنید.");
     }
   };
+
 
   const closeModal = () => {
     setSelectedDoctor(null);

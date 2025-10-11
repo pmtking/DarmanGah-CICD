@@ -37,7 +37,7 @@ export interface IDoctorProfile extends Document {
     | "پزشکی قانونی"
     | "سایر";
   licenseNumber: string;
-  service: mongoose.Types.ObjectId;
+  service: string; // ✅ تغییر داده شد از ObjectId به String
   workingDays: (
     | "شنبه"
     | "یک‌شنبه"
@@ -83,7 +83,7 @@ const DoctorProfileSchema = new Schema<IDoctorProfile>(
     },
 
     licenseNumber: { type: String, required: true, trim: true, unique: true },
-    service: { type: Schema.Types.ObjectId, ref: "Service", required: true },
+    service: { type: String, required: true, trim: true }, // ✅ اینجا فقط اسم ذخیره می‌شود
 
     workingDays: {
       type: [String],

@@ -244,14 +244,13 @@ export const uploadDocument = async (req: Request, res: Response) => {
 
 export const upsertProfile = async (req: Request, res: Response) => {
   try {
-    // 1️⃣ اعتبارسنجی داده‌ها با Joi
+    // اعتبارسنجی داده‌ها با Joi
     const { error } = createDoctorProfileSchema.validate(req.body);
     if (error)
       return res.status(400).json({ message: error.details[0].message });
 
     const {
       nationalId,
-      personnelName,
       specialty,
       specialtyType,
       workingDays,
@@ -260,83 +259,51 @@ export const upsertProfile = async (req: Request, res: Response) => {
       licenseNumber,
       isAvailable,
       documents,
+      service,
     } = req.body;
 
-    // 2️⃣ پیدا کردن پرسنل بر اساس nationalId یا personnelName
-    const personnel = await Personnel.findOne({
-      $or: [
-        { nationalId: nationalId?.trim() },
-        { name: personnelName?.trim() },
-      ],
-    });
-
-    if (!personnel)
-      return res.status(404).json({ message: "پرسنل پیدا نشد" });
-
-    if (personnel.role !== "DOCTOR")
-      return res
-        .status(400)
-        .json({ message: "فقط پرسنل با نقش پزشک قابل انتخاب است" });
-
-    // 3️⃣ بررسی وجود پروفایل دکتر
-    let profile: IDoctorProfile | null = await DoctorProfile.findOne({
-      personnel: personnel._id,
-    });
-
-    if (profile) {
-      // 4️⃣ آپدیت امن فقط فیلدهای مورد نظر (اسم و کد ملی تغییر نمی‌کند)
-      profile.specialty = specialty ?? profile.specialty;
-      profile.specialtyType = specialtyType ?? profile.specialtyType;
-      profile.workingDays = workingDays ?? profile.workingDays;
-
-      if (workingHours) {
-        profile.workingHours = workingHours;
-        profile.markModified("workingHours"); // مهم برای Map / nested object
-      }
-
-      profile.roomNumber = roomNumber ?? profile.roomNumber;
-      profile.licenseNumber = licenseNumber ?? profile.licenseNumber;
-      profile.isAvailable = isAvailable ?? profile.isAvailable;
-
-      if (documents) {
-        profile.documents = documents.map((doc: any) => ({
-          title: doc.title,
-          fileUrl: doc.fileUrl,
-          uploadedAt: doc.uploadedAt ? new Date(doc.uploadedAt) : new Date(),
-        }));
-      }
-
-      await profile.save();
-    } else {
-      // 5️⃣ ایجاد پروفایل جدید از اطلاعات پرسنل (اسم و کد ملی)
-      profile = await DoctorProfile.create({
-        personnel: personnel._id,
-        personnelName: personnel.name, // ✅ استفاده از نام واقعی پرسنل
-        nationalId: personnel.nationalId, // ✅ استفاده از شماره ملی واقعی
-        specialty: specialty!,
-        specialtyType: specialtyType!,
-        workingDays: workingDays ?? [],
-        workingHours: workingHours ?? {},
-        roomNumber,
-        licenseNumber,
-        isAvailable: isAvailable ?? true,
-        documents: documents
-          ? documents.map((doc: any) => ({
-              title: doc.title,
-              fileUrl: doc.fileUrl,
-              uploadedAt: doc.uploadedAt ? new Date(doc.uploadedAt) : new Date(),
-            }))
-          : [],
-      });
+    // پیدا کردن پرسنل بر اساس کد ملی
+    const personnel = await Personnel.findOne({ nationalId: nationalId?.trim() });
+    if (!personnel) {
+      return res.status(404).json({ message: "پرسنل با این کد ملی پیدا نشد" });
     }
 
-    return res
-      .status(200)
-      .json({ message: "اطلاعات پزشک ذخیره شد", profile });
+    if (personnel.role !== "DOCTOR") {
+      return res.status(400).json({ message: "فقط پرسنل با نقش پزشک قابل انتخاب است" });
+    }
+
+    // استفاده از findOneAndUpdate با upsert
+    const profile = await DoctorProfile.findOneAndUpdate(
+      { personnel: personnel._id },
+      {
+        $set: {
+          personnelName: personnel.name,           // ✅ همیشه از دیتابیس
+          nationalId: personnel.nationalId,        // ✅ همیشه از دیتابیس
+          specialty,
+          specialtyType,
+          service: service ?? "سایر",
+          workingDays: workingDays ?? [],
+          workingHours: workingHours ?? {},
+          roomNumber,
+          licenseNumber,
+          isAvailable: isAvailable ?? true,
+          documents: documents?.map((doc: any) => ({
+            title: doc.title,
+            fileUrl: doc.fileUrl,
+            uploadedAt: doc.uploadedAt ? new Date(doc.uploadedAt) : new Date(),
+          })) ?? [],
+        },
+      },
+      { new: true, upsert: true } // 🆕 ایجاد یا آپدیت
+    );
+
+    return res.status(200).json({
+      message: "✅ اطلاعات پزشک با موفقیت ذخیره شد",
+      profile,
+    });
   } catch (err: any) {
     console.error("❌ Upsert Error:", err);
-    return res
-      .status(500)
-      .json({ message: "خطا در ذخیره اطلاعات", error: err.message });
+    return res.status(500).json({ message: "خطا در ذخیره اطلاعات", error: err.message });
   }
 };
+

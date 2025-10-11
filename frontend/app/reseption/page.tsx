@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import api from "@/libs/axios";
-import Cookies from "js-cookie"; // ✅ اضافه شد
+import Cookies from "js-cookie";
 
 import Button from "@/components/Button/page";
 import Input from "@/components/Input/page";
@@ -22,15 +22,24 @@ const RespontionPage = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [patientData, setPatientData] = useState<any>(null);
 
-  // ✅ چک کردن وجود توکن از کوکی
+  // ✅ بررسی توکن و ست کردن axios
   useEffect(() => {
-    const token = Cookies.get("token"); // ⬅️ گرفتن توکن از کوکی
+    const token = Cookies.get("token");
     if (!token) {
       toast.error("لطفاً ابتدا وارد شوید");
       router.push("/login");
     } else {
-      // ست کردن توکن در هدر axios برای درخواست‌ها
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    }
+
+    // ✅ بررسی وجود داده در localStorage
+    const storedPatient = localStorage.getItem("receptionPatient");
+    if (storedPatient) {
+      const patient = JSON.parse(storedPatient);
+      setPatientData(patient);
+      setNationalId(patient.nationalId || "");
+      setIsVerified(true);
+      localStorage.removeItem("receptionPatient"); // پاک کردن بعد از استفاده
     }
   }, [router]);
 
@@ -56,52 +65,6 @@ const RespontionPage = () => {
       setIsVerified(true);
     } finally {
       setLoading(false);
-    }
-  };
-
-  // ارسال داده به سرور Flask برای چاپ رسید
-  const printReceiptServer = async (receiptData: any) => {
-    try {
-      const res = await fetch("http://127.0.0.1:5000/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(receiptData),
-      });
-
-      if (!res.ok) {
-        const errData = await res.json();
-        console.error("خطا در چاپ رسید:", errData);
-        toast.error("خطا در چاپ رسید ❌");
-        return;
-      }
-
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "receipt.png";
-      link.click();
-      URL.revokeObjectURL(url);
-      toast.success("رسید چاپ شد ✅");
-    } catch (error) {
-      console.error(error);
-      toast.error("خطا در اتصال به سرور چاپ ❌");
-    }
-  };
-
-  // ثبت پذیرش و چاپ
-  const handleCreateReception = async (formData: any) => {
-    try {
-      const payload = { ...formData, nationalId };
-      const res = await api.post("/api/reseption/add", payload, { responseType: "json" });
-
-      const receiptData = res.data;
-      await printReceiptServer(receiptData);
-
-      toast.success("پذیرش با موفقیت ثبت شد ✅");
-    } catch (err) {
-      console.error(err);
-      toast.error("خطا در ثبت پذیرش یا چاپ قبض ❌");
     }
   };
 
@@ -140,7 +103,6 @@ const RespontionPage = () => {
             <ReseptionForm
               data={patientData}
               nationalId={nationalId}
-              // onSubmit={handleCreateReception}
             />
           </div>
         )}
