@@ -6,7 +6,7 @@ import api from "@/libs/axios";
 
 interface Doctor {
   personnelId: string;
-  doctorName: string;
+  name: string; // ← حتما باید 'name' باشد تا Card درست نمایش دهد
   avatarUrl?: string;
   specialty?: string;
   phone?: string;
@@ -21,7 +21,7 @@ const DoctorsPresent: React.FC = () => {
 
   // 🧠 اصلاح مسیر آواتار
   const fixAvatarUrl = (url?: string) => {
-    if (!url) return "/images/defult.png";
+    if (!url) return "/images/default.png";
     if (url.startsWith("http://localhost")) return url.replace("http://localhost:4000", "https://api.df-neyshabor.ir");
     if (!url.startsWith("http")) return `https://api.df-neyshabor.ir${url.startsWith("/") ? "" : "/"}${url}`;
     return url;
@@ -72,7 +72,7 @@ const DoctorsPresent: React.FC = () => {
 
           return {
             personnelId: doc.personnelId,
-            doctorName: doc.name, // ← استفاده از doctorName برای نمایش درست
+            name: doc.name, // ← مهم! باید 'name' باشد
             avatarUrl: fixAvatarUrl(doc.avatarUrl),
             specialty: doc.specialty,
             phone: doc.phone,
@@ -94,12 +94,10 @@ const DoctorsPresent: React.FC = () => {
 
   return (
     <div className="flex flex-col justify-start items-center w-full sm:w-[80%] md:w-[50%] lg:w-[35%] xl:w-[24%] bg-amber-50/30 h-auto lg:h-[80vh] rounded-2xl py-5 px-2 mx-auto">
-      {/* هدر */}
       <div className="header_doctor flex justify-center text-white mb-3">
         <h1 className="text-base sm:text-lg md:text-xl">پزشکان امروز</h1>
       </div>
 
-      {/* لیست پزشکان با اسکرول */}
       <div className="flex flex-col gap-6 mt-3 w-full px-2 h-full overflow-y-auto scrollbar-hide">
         {loading && <p className="text-center text-sm text-gray-600">در حال بارگذاری...</p>}
         {error && <p className="text-center text-red-500 text-sm">{error}</p>}
@@ -109,11 +107,11 @@ const DoctorsPresent: React.FC = () => {
           <Card
             key={d.personnelId}
             doctorId={d.personnelId}
-            name={d.doctorName} // ← اصلاح شد
+            name={d.name} // ← حتما از 'name' استفاده شود
             specialty={d.specialty}
             status={d.status}
             nextShift={d.nextShift}
-            avatarUrl={d.avatarUrl} // ← اصلاح شد
+            avatarUrl={d.avatarUrl}
           />
         ))}
       </div>
