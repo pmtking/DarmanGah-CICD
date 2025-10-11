@@ -13,6 +13,31 @@ import { createDoctorProfileSchema } from "../validations/doctorProfile.validati
 import Personnel from "../models/Personnel";
 import DoctorProfile, { IDoctorProfile } from "../models/DoctorProfile";
 import mongoose from "mongoose";
+interface IPopulatedPersonnel {
+  _id: string;
+  name?: string;
+  phone?: string;
+  nationalId?: string;
+  avatar?: string;
+  role?: string;
+}
+
+// نوع خروجی فرانت
+interface IFormattedDoctor {
+  profileId: string;
+  personnelId: string;
+  doctorName: string;
+  phoneNumber: string;
+  nationalId: string;
+  specialty?: string;
+  specialtyType?: string;
+  licenseNumber?: string;
+  isAvailable?: boolean;
+  workingHours?: any;
+  avatarUrl: string;
+  documents?: any[];
+  service: string;
+}
 
 // ---------------------- ایجاد پروفایل پزشک ---------------------- //
 // export const findDoctor = async (req: Request, res: Response) => {
@@ -55,88 +80,108 @@ export const createProfile = async (req: Request, res: Response) => {
 };
 
 // ---------------------- دریافت همه پروفایل‌ها با عکس پرسنل ---------------------- //
+
+// نوع برای populate شده personnel
+
+
+// ---------------------- دریافت پروفایل‌ها ----------------------
 export const getProfiles = async (_req: Request, res: Response) => {
   try {
-    const profiles = await DoctorProfile.find({
-      personnel: { $ne: null }, // فقط پروفایل‌هایی که پرسنل دارند
-    })
-      .populate({
+    const profiles = await DoctorProfile.find()
+      .populate<{ personnel: IPopulatedPersonnel }>({
         path: "personnel",
-        match: { role: "DOCTOR" }, // فقط دکترها
-        select: "name avatar phone role nationalId",
+        select: "name avatar phone nationalId role",
       })
-      .sort({ updatedAt: -1 }); // جدیدترین‌ها اول
+      .sort({ updatedAt: -1 });
 
-    // 🔹 فیلتر: فقط آن‌هایی که personnel پر شده
-    const validProfiles = profiles.filter((p: any) => p.personnel);
+    // فقط پروفایل‌هایی که پرسنل دارند
+    const validProfiles = profiles.filter((p) => p.personnel);
 
-    // 🔹 جلوگیری از تکرار پزشکان (اگر دو پروفایل داشت)
-    const uniqueProfilesMap = new Map<string, any>();
+    // جلوگیری از تکرار پزشکان
+    const uniqueProfilesMap = new Map<
+      string,
+      IDoctorProfile & { personnel: IPopulatedPersonnel }
+    >();
     for (const profile of validProfiles) {
       const id = String(profile.personnel._id);
       if (!uniqueProfilesMap.has(id)) {
-        uniqueProfilesMap.set(id, profile);
+        uniqueProfilesMap.set(id, profile as any);
       }
     }
 
     const uniqueProfiles = Array.from(uniqueProfilesMap.values());
 
-    // 🔹 فرمت نهایی برای فرانت
-    const formattedProfiles = uniqueProfiles.map((p: any) => ({
-      profileId: p._id,
-      personnelId: p.personnel._id,
-      name: p.personnel.name || "",
-      phone: p.personnel.phone || "",
-      nationalId: p.personnel.nationalId || "",
-      specialty: p.specialty,
-      specialtyType: p.specialtyType,
-      licenseNumber: p.licenseNumber,
-      isAvailable: p.isAvailable,
-      workingHours: p.workingHours,
-      avatarUrl: p.personnel.avatar
-        ? `/uploads/avatars/${p.personnel.avatar.split("/").pop()}`
-        : "/images/default.png",
-    }));
+    // فرمت خروجی برای فرانت
+    const formattedProfiles: IFormattedDoctor[] = uniqueProfiles.map((p) => {
+      const personnel = p.personnel!;
+      return {
+        profileId: p._id.toString(),
+        personnelId: personnel._id,
+        doctorName: personnel.name || "",
+        phoneNumber: personnel.phone || "",
+        nationalId: personnel.nationalId || "",
+        specialty: p.specialty,
+        specialtyType: p.specialtyType,
+        licenseNumber: p.licenseNumber,
+        isAvailable: p.isAvailable,
+        workingHours: p.workingHours,
+        avatarUrl: personnel.avatar
+          ? `/uploads/avatars/${personnel.avatar.split("/").pop()}`
+          : "/images/default.png",
+        documents: p.documents || [],
+        service: p.service || "سایر",
+      };
+    });
 
     res.status(200).json(formattedProfiles);
   } catch (err: any) {
+    console.error("❌ Error in getProfiles:", err);
     res.status(500).json({
-      message: "❌ خطا در دریافت لیست پزشکان",
+      message: "خطا در دریافت لیست پزشکان",
       error: err.message,
     });
   }
 };
 
-// -------------------------دریافت با type ------------------------ //
-// ------------------------- دریافت همه پزشکان با آواتار ------------------------ //
-export const getAllDoctorsController = async (req: Request, res: Response) => {
+// ---------------------- دریافت همه پزشکان بدون فیلتر ----------------------
+export const getAllDoctorsController = async (_req: Request, res: Response) => {
   try {
-    // پروفایل دکتر و اطلاعات پرسنل را populate می‌کنیم
-    const doctors = await DoctorProfile.find().populate({
-      path: "personnel",
-      select: "name avatar role", // فقط فیلدهای مورد نیاز
-    });
+    const doctors = await DoctorProfile.find()
+      .populate<{ personnel: IPopulatedPersonnel }>({
+        path: "personnel",
+        select: "name avatar phone nationalId role",
+      })
+      .sort({ updatedAt: -1 });
 
-    // ساخت خروجی مناسب برای فرانت
-    const formattedDoctors = doctors.map((doc: any) => ({
-      profileId: doc._id,
-      personnelId: doc.personnel._id,
-      name: doc.personnel.name,
-      avatarUrl: doc.personnel.avatar
-        ? `/uploads/avatars/${doc.personnel.avatar.split("/").pop()}`
-        : "/images/default.png",
-      specialty: doc.specialty,
-      phone: doc.phone,
-      workingHours: doc.workingHours,
-      isAvailable: doc.isAvailable,
-    }));
+    const formattedDoctors: IFormattedDoctor[] = doctors
+      .filter((doc) => doc.personnel)
+      .map((doc) => {
+        const personnel = doc.personnel!;
+        return {
+          profileId: doc._id.toString(),
+          personnelId: personnel._id,
+          doctorName: personnel.name || "",
+          phoneNumber: personnel.phone || "",
+          nationalId: personnel.nationalId || "",
+          specialty: doc.specialty,
+          specialtyType: doc.specialtyType,
+          licenseNumber: doc.licenseNumber,
+          isAvailable: doc.isAvailable,
+          workingHours: doc.workingHours,
+          avatarUrl: personnel.avatar
+            ? `/uploads/avatars/${personnel.avatar.split("/").pop()}`
+            : "/images/default.png",
+          documents: doc.documents || [],
+          service: doc.service || "سایر",
+        };
+      });
 
     res.status(200).json(formattedDoctors);
-  } catch (error) {
-    console.error("❌ Error in getAllDoctorsController:", error);
+  } catch (err: any) {
+    console.error("❌ Error in getAllDoctorsController:", err);
     res.status(500).json({
       message: "خطا در گرفتن لیست پزشک‌ها",
-      error,
+      error: err.message,
     });
   }
 };
@@ -241,7 +286,6 @@ export const uploadDocument = async (req: Request, res: Response) => {
   }
 };
 
-
 export const upsertProfile = async (req: Request, res: Response) => {
   try {
     // اعتبارسنجی داده‌ها با Joi
@@ -263,13 +307,17 @@ export const upsertProfile = async (req: Request, res: Response) => {
     } = req.body;
 
     // پیدا کردن پرسنل بر اساس کد ملی
-    const personnel = await Personnel.findOne({ nationalId: nationalId?.trim() });
+    const personnel = await Personnel.findOne({
+      nationalId: nationalId?.trim(),
+    });
     if (!personnel) {
       return res.status(404).json({ message: "پرسنل با این کد ملی پیدا نشد" });
     }
 
     if (personnel.role !== "DOCTOR") {
-      return res.status(400).json({ message: "فقط پرسنل با نقش پزشک قابل انتخاب است" });
+      return res
+        .status(400)
+        .json({ message: "فقط پرسنل با نقش پزشک قابل انتخاب است" });
     }
 
     // استفاده از findOneAndUpdate با upsert
@@ -277,8 +325,8 @@ export const upsertProfile = async (req: Request, res: Response) => {
       { personnel: personnel._id },
       {
         $set: {
-          personnelName: personnel.name,           // ✅ همیشه از دیتابیس
-          nationalId: personnel.nationalId,        // ✅ همیشه از دیتابیس
+          personnelName: personnel.name, // ✅ همیشه از دیتابیس
+          nationalId: personnel.nationalId, // ✅ همیشه از دیتابیس
           specialty,
           specialtyType,
           service: service ?? "سایر",
@@ -287,11 +335,14 @@ export const upsertProfile = async (req: Request, res: Response) => {
           roomNumber,
           licenseNumber,
           isAvailable: isAvailable ?? true,
-          documents: documents?.map((doc: any) => ({
-            title: doc.title,
-            fileUrl: doc.fileUrl,
-            uploadedAt: doc.uploadedAt ? new Date(doc.uploadedAt) : new Date(),
-          })) ?? [],
+          documents:
+            documents?.map((doc: any) => ({
+              title: doc.title,
+              fileUrl: doc.fileUrl,
+              uploadedAt: doc.uploadedAt
+                ? new Date(doc.uploadedAt)
+                : new Date(),
+            })) ?? [],
         },
       },
       { new: true, upsert: true } // 🆕 ایجاد یا آپدیت
@@ -303,7 +354,8 @@ export const upsertProfile = async (req: Request, res: Response) => {
     });
   } catch (err: any) {
     console.error("❌ Upsert Error:", err);
-    return res.status(500).json({ message: "خطا در ذخیره اطلاعات", error: err.message });
+    return res
+      .status(500)
+      .json({ message: "خطا در ذخیره اطلاعات", error: err.message });
   }
 };
-
