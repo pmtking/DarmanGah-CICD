@@ -6,7 +6,7 @@ import api from "@/libs/axios";
 
 interface Doctor {
   personnelId: string;
-  name: string;
+  doctorName: string;
   avatarUrl?: string;
   specialty?: string;
   phone?: string;
@@ -19,6 +19,14 @@ const DoctorsPresent: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // 🧠 اصلاح مسیر آواتار
+  const fixAvatarUrl = (url?: string) => {
+    if (!url) return "/images/defult.png";
+    if (url.startsWith("http://localhost")) return url.replace("http://localhost:4000", "https://api.df-neyshabor.ir");
+    if (!url.startsWith("http")) return `https://api.df-neyshabor.ir${url.startsWith("/") ? "" : "/"}${url}`;
+    return url;
+  };
+
   const fetchDoctors = async () => {
     try {
       setLoading(true);
@@ -27,16 +35,7 @@ const DoctorsPresent: React.FC = () => {
 
       const now = new Date();
       const nowMinutes = now.getHours() * 60 + now.getMinutes();
-
-      const weekDays = [
-        "یک‌شنبه",
-        "دوشنبه",
-        "سه‌شنبه",
-        "چهارشنبه",
-        "پنج‌شنبه",
-        "جمعه",
-        "شنبه",
-      ];
+      const weekDays = ["یک‌شنبه","دوشنبه","سه‌شنبه","چهارشنبه","پنج‌شنبه","جمعه","شنبه"];
       const today = weekDays[now.getDay()];
 
       const filtered: Doctor[] = res.data
@@ -51,7 +50,7 @@ const DoctorsPresent: React.FC = () => {
             const [sh, sm] = shift.start.split(":").map(Number);
             const [eh, em] = shift.end.split(":").map(Number);
 
-            if (sh === eh && sm === em) return; // شیفت صفر طول را نادیده بگیر
+            if (sh === eh && sm === em) return;
 
             let start = sh * 60 + sm;
             let end = eh * 60 + em;
@@ -60,9 +59,8 @@ const DoctorsPresent: React.FC = () => {
             if (end <= start && nowMinutes < start) nowComparable += 24 * 60;
             if (end <= start) end += 24 * 60;
 
-            if (nowComparable >= start && nowComparable <= end) {
-              status = "present";
-            } else if (nowComparable < start && status !== "present") {
+            if (nowComparable >= start && nowComparable <= end) status = "present";
+            else if (nowComparable < start && status !== "present") {
               const delta = start - nowComparable;
               if (delta < nearestUpcomingDelta) {
                 nearestUpcomingDelta = delta;
@@ -72,15 +70,10 @@ const DoctorsPresent: React.FC = () => {
             }
           });
 
-          // مسیر کامل آواتار
-          const avatarUrl = doc.avatarUrl
-            ? `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}${doc.avatarUrl.startsWith("/") ? "" : "/"}${doc.avatarUrl}`
-            : "/images/defult.png"; // عکس پیش‌فرض
-
           return {
             personnelId: doc.personnelId,
-            name: doc.name,
-            avatarUrl,
+            doctorName: doc.name, // ← استفاده از doctorName برای نمایش درست
+            avatarUrl: fixAvatarUrl(doc.avatarUrl),
             specialty: doc.specialty,
             phone: doc.phone,
             status,
@@ -97,9 +90,7 @@ const DoctorsPresent: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    fetchDoctors();
-  }, []);
+  useEffect(() => { fetchDoctors(); }, []);
 
   return (
     <div className="flex flex-col justify-start items-center w-full sm:w-[80%] md:w-[50%] lg:w-[35%] xl:w-[24%] bg-amber-50/30 h-auto lg:h-[80vh] rounded-2xl py-5 px-2 mx-auto">
@@ -110,26 +101,19 @@ const DoctorsPresent: React.FC = () => {
 
       {/* لیست پزشکان با اسکرول */}
       <div className="flex flex-col gap-6 mt-3 w-full px-2 h-full overflow-y-auto scrollbar-hide">
-        {loading && (
-          <p className="text-center text-sm text-gray-600">در حال بارگذاری...</p>
-        )}
+        {loading && <p className="text-center text-sm text-gray-600">در حال بارگذاری...</p>}
         {error && <p className="text-center text-red-500 text-sm">{error}</p>}
-        {!loading && !error && doctors.length === 0 && (
-          <p className="text-center text-gray-500 text-sm">
-            هیچ پزشکی برای امروز ثبت نشده است.
-          </p>
-        )}
+        {!loading && !error && doctors.length === 0 && <p className="text-center text-gray-500 text-sm">هیچ پزشکی برای امروز ثبت نشده است.</p>}
 
         {doctors.map((d) => (
           <Card
             key={d.personnelId}
             doctorId={d.personnelId}
-            name={d.name}
+            name={d.doctorName} // ← اصلاح شد
             specialty={d.specialty}
             status={d.status}
             nextShift={d.nextShift}
             avatarUrl={d.avatarUrl} // ← اصلاح شد
-            
           />
         ))}
       </div>
