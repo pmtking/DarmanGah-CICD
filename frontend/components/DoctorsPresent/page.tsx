@@ -19,25 +19,18 @@ const DoctorsPresent: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // --- تابع اصلاح URL عکس ---
   const fixAvatarUrl = (url?: string) => {
     if (!url || url.trim() === "") return "/images/default.png";
-
-    // URL نسبی روی سرور
     if (!url.startsWith("http")) {
       return `https://api.df-neyshabor.ir${url.startsWith("/") ? "" : "/"}${url}`;
     }
-
-    // URL مطلق بدون تغییر
     return url;
   };
 
-  // --- دریافت اطلاعات پزشکان ---
   const fetchDoctors = async () => {
     try {
       setLoading(true);
       setError("");
-
       const res = await api.get("/api/doctors");
 
       const now = new Date();
@@ -56,14 +49,10 @@ const DoctorsPresent: React.FC = () => {
           todayHours.shifts.forEach((shift: any) => {
             const [sh, sm] = shift.start.split(":").map(Number);
             const [eh, em] = shift.end.split(":").map(Number);
-
             if (sh === eh && sm === em) return;
-
             let start = sh * 60 + sm;
             let end = eh * 60 + em;
             let nowComparable = nowMinutes;
-
-            // مدیریت شیفت شبانه
             if (end <= start && nowMinutes < start) nowComparable += 24 * 60;
             if (end <= start) end += 24 * 60;
 
@@ -103,20 +92,16 @@ const DoctorsPresent: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex flex-col justify-start items-center w-full sm:w-[80%] md:w-[50%] lg:w-[35%] xl:w-[24%] bg-amber-50/30 h-auto lg:h-[80vh] rounded-2xl py-5 px-2 mx-auto">
+    <div className="flex flex-col justify-start items-center w-full sm:w-[90%] lg:w-[70%] bg-amber-50/30 h-auto lg:h-[80vh] rounded-2xl py-5 px-2 mx-auto">
       <div className="header_doctor flex justify-center text-white mb-3">
         <h1 className="text-base sm:text-lg md:text-xl">پزشکان امروز</h1>
       </div>
 
-      <div className="flex flex-col gap-6 mt-3 w-full px-2 h-full overflow-y-auto scrollbar-hide">
-        {loading && (
-          <p className="text-center text-sm text-gray-600">در حال بارگذاری...</p>
-        )}
-        {error && (
-          <p className="text-center text-red-500 text-sm">{error}</p>
-        )}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3 w-full h-full overflow-y-auto scrollbar-hide px-2">
+        {loading && <p className="col-span-2 text-center text-sm text-gray-600">در حال بارگذاری...</p>}
+        {error && <p className="col-span-2 text-center text-red-500 text-sm">{error}</p>}
         {!loading && !error && doctors.length === 0 && (
-          <p className="text-center text-gray-500 text-sm">
+          <p className="col-span-2 text-center text-gray-500 text-sm">
             هیچ پزشکی برای امروز ثبت نشده است.
           </p>
         )}
@@ -130,8 +115,7 @@ const DoctorsPresent: React.FC = () => {
             status={d.status}
             nextShift={d.nextShift}
             avatarUrl={d.avatarUrl}
-            // phone={d.phone}
-            defaultAvatar="images/defult.png"
+            defaultAvatar="/images/defult.png"
           />
         ))}
       </div>
