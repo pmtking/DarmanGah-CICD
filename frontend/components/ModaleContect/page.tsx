@@ -24,7 +24,9 @@ const ModaleContect = ({ data }: ModalContentProps) => {
             name={doctor.name}
             avatarUrl={doctor.image}
             specialty={doctor.specialty}
-            phone={doctor.phone}
+            // phone={doctor.phone}
+              defaultAvatar="/images/default.png"
+
           />
         ))}
       </div>
