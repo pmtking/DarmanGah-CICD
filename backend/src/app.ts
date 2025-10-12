@@ -12,12 +12,10 @@ dotenvConfig();
 // -------------------- ساخت اپلیکیشن --------------------
 export const app = express();
 
-// -------------------- مسیرهای فایل‌های استاتیک --------------------
-// مسیر آپلودها
-app.use(
-  "/uploads",
-  express.static(path.join(__dirname, "public/uploads"))
-);
+// -------------------- مسیر فایل‌های استاتیک --------------------
+// مسیر آپلودها (بر اساس مسیر جدید)
+const UPLOADS_PATH = path.join(__dirname, "public", "uploads");
+app.use("/uploads", express.static(UPLOADS_PATH));
 
 // مسیر فایل‌های دیگر
 const FILES_PATH = process.env.FILES_PATH || path.join(process.cwd(), "files");
