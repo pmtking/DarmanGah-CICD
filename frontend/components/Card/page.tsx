@@ -24,10 +24,7 @@ const Card: React.FC<CardProps> = ({
   defaultAvatar,
 }) => {
   const displayName = name || "نامشخص";
-
-  // اگر عکس نبود، عکس پیش‌فرض استفاده شود
-  const finalAvatar =
-    avatarUrl && avatarUrl.trim() !== "" ? avatarUrl : defaultAvatar;
+  const finalAvatar = avatarUrl && avatarUrl.trim() !== "" ? avatarUrl : defaultAvatar;
 
   const renderSpecialty = () => {
     if (!specialty) return "تخصص نامشخص";
@@ -36,9 +33,8 @@ const Card: React.FC<CardProps> = ({
 
   const renderStatusText = () => {
     if (status === "present") return "حضور دارد";
-    if (status === "upcoming" && nextShift)
-      return `شروع از ساعت ${nextShift}`;
-    if (status === "finished") return "شیفت به پایان رسیده";
+    if (status === "upcoming" && nextShift) return `شروع از ساعت ${nextShift}`;
+    if (status === "finished") return "شیفت امروز به پایان رسیده است";
     return "وضعیت نامشخص";
   };
 
@@ -49,9 +45,9 @@ const Card: React.FC<CardProps> = ({
   };
 
   return (
-    <div className="flex flex-col items-center gap-2 bg-white rounded-xl p-3 w-full shadow-md hover:shadow-lg transition-shadow duration-200">
+    <div className="flex items-center gap-4 bg-white rounded-2xl p-3 w-full shadow-md hover:shadow-lg transition-shadow duration-300">
       {/* عکس */}
-      <div className="w-16 h-16 relative rounded-full overflow-hidden border border-gray-200">
+      <div className="w-16 h-16 relative rounded-full overflow-hidden border border-gray-200 flex-shrink-0">
         <Image
           src={finalAvatar}
           alt={displayName}
@@ -61,22 +57,14 @@ const Card: React.FC<CardProps> = ({
         />
       </div>
 
-      {/* نام */}
-      <p className="font-semibold text-sm text-gray-900 text-center truncate w-full">
-        {displayName}
-      </p>
-
-      {/* تخصص با رنگ خاص */}
-      <p className="text-white bg-blue-500 text-xs text-center w-full rounded-full py-0.5 truncate">
-        {renderSpecialty()}
-      </p>
-
-      {/* وضعیت */}
-      <span
-        className={`mt-1 inline-block px-2 py-0.5 text-xs font-medium rounded-full ${statusColor()}`}
-      >
-        {renderStatusText()}
-      </span>
+      {/* اطلاعات */}
+      <div className="flex-1 flex flex-col justify-center">
+        <p className="font-semibold text-sm text-gray-900 truncate">{displayName}</p>
+        <p className="text-xs text-white bg-blue-500 px-2 py-0.5 rounded-full w-max mt-1">{renderSpecialty()}</p>
+        <span className={`mt-1 inline-block px-2 py-0.5 text-xs font-medium rounded-full ${statusColor()}`}>
+          {renderStatusText()}
+        </span>
+      </div>
     </div>
   );
 };
