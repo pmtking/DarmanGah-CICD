@@ -37,8 +37,8 @@ const Card: React.FC<CardProps> = ({
   const renderStatusText = () => {
     if (status === "present") return "حضور دارد";
     if (status === "upcoming" && nextShift)
-      return `شروع حضور از ساعت ${nextShift}`;
-    if (status === "finished") return "شیفت امروز به پایان رسیده است";
+      return `شروع از ساعت ${nextShift}`;
+    if (status === "finished") return "شیفت به پایان رسیده";
     return "وضعیت نامشخص";
   };
 
@@ -49,25 +49,25 @@ const Card: React.FC<CardProps> = ({
   };
 
   return (
-    <div className="flex flex-col items-center gap-3 bg-white rounded-2xl p-4 w-full shadow-md hover:shadow-lg transition-shadow duration-300">
+    <div className="flex flex-col items-center gap-2 bg-white rounded-xl p-3 w-40 shadow-md hover:shadow-lg transition-shadow duration-200">
       {/* عکس */}
-      <div className="w-24 h-24 relative rounded-full overflow-hidden border-2 border-gray-200">
+      <div className="w-16 h-16 relative rounded-full overflow-hidden border border-gray-200">
         <Image
           src={finalAvatar}
           alt={displayName}
           fill
           style={{ objectFit: "cover" }}
-          sizes="96px"
+          sizes="64px"
         />
       </div>
 
       {/* نام و تخصص */}
-      <p className="font-bold text-lg text-gray-900">{displayName}</p>
-      <p className="text-gray-500 text-sm">{renderSpecialty()}</p>
+      <p className="font-semibold text-sm text-gray-900 text-center truncate">{displayName}</p>
+      <p className="text-gray-500 text-xs text-center truncate">{renderSpecialty()}</p>
 
       {/* وضعیت */}
       <span
-        className={`mt-2 inline-block px-3 py-1 text-sm font-semibold rounded-full ${statusColor()}`}
+        className={`mt-1 inline-block px-2 py-0.5 text-xs font-medium rounded-full ${statusColor()}`}
       >
         {renderStatusText()}
       </span>
