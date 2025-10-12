@@ -49,7 +49,7 @@ const Card: React.FC<CardProps> = ({
   };
 
   return (
-    <div className="flex flex-col items-center gap-2 bg-white rounded-xl p-3 w-40 shadow-md hover:shadow-lg transition-shadow duration-200">
+    <div className="flex flex-col items-center gap-2 bg-white rounded-xl p-3 w-full shadow-md hover:shadow-lg transition-shadow duration-200">
       {/* عکس */}
       <div className="w-16 h-16 relative rounded-full overflow-hidden border border-gray-200">
         <Image
@@ -61,9 +61,15 @@ const Card: React.FC<CardProps> = ({
         />
       </div>
 
-      {/* نام و تخصص */}
-      <p className="font-semibold text-sm text-gray-900 text-center truncate">{displayName}</p>
-      <p className="text-gray-500 text-xs text-center truncate">{renderSpecialty()}</p>
+      {/* نام */}
+      <p className="font-semibold text-sm text-gray-900 text-center truncate w-full">
+        {displayName}
+      </p>
+
+      {/* تخصص با رنگ خاص */}
+      <p className="text-white bg-blue-500 text-xs text-center w-full rounded-full py-0.5 truncate">
+        {renderSpecialty()}
+      </p>
 
       {/* وضعیت */}
       <span
