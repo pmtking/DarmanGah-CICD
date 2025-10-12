@@ -104,7 +104,7 @@ export const getProfiles = async (_req: Request, res: Response) => {
         isAvailable: p.isAvailable,
         workingHours: p.workingHours,
         avatarUrl: personnel.avatar
-          ? `${API_BASE}/uploads/avatars/${personnel.avatar.split("/").pop()}`
+          ? `/uploads/avatars/${personnel.avatar.split("/").pop()}`
           : "/images/default.png",
         documents: p.documents || [],
         service: p.service || "سایر",
