@@ -14,7 +14,7 @@ export const app = express();
 
 // -------------------- مسیر فایل‌های استاتیک --------------------
 // مسیر آپلودها (بر اساس مسیر جدید)
-const UPLOADS_PATH = path.join(__dirname, "public", "uploads");
+const UPLOADS_PATH = path.join(__dirname, "uploads");
 app.use("/uploads", express.static(UPLOADS_PATH));
 
 // مسیر فایل‌های دیگر
