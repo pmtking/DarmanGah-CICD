@@ -6,50 +6,53 @@ import { mongoConnected } from "./db";
 import { dotenvConfig } from "./config/dotenv";
 import { router } from "./routes";
 
-// بارگذاری env
+// -------------------- بارگذاری env --------------------
 dotenvConfig();
 
-// اپلیکیشن
+// -------------------- ساخت اپلیکیشن --------------------
 export const app = express();
 
-// مسیر فایل‌ها (static)
-app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
-const FILES_PATH = process.env.FILES_PATH || path.join(process.cwd(), "files");
+// -------------------- مسیرهای فایل‌های استاتیک --------------------
+// مسیر آپلودها
+const UPLOADS_PATH =
+  process.env.UPLOADS_PATH || path.join(process.cwd(), "public/uploads");
+app.use("/uploads", express.static(UPLOADS_PATH));
 
-// app.use("/uploads", express.static(UPLOADS_PATH));
+// مسیر فایل‌های دیگر
+const FILES_PATH = process.env.FILES_PATH || path.join(process.cwd(), "files");
 app.use("/files", express.static(FILES_PATH));
 
-// CORS
+// -------------------- CORS --------------------
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || ["*"];
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (origin && allowedOrigins.includes(origin)) {
-    res.header("Access-Control-Allow-Origin", origin);
-  }
-  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Origin,Content-Type,Accept,Authorization");
-  res.header("Access-Control-Allow-Credentials", "true");
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Origin not allowed by CORS"));
+      }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Origin", "Content-Type", "Accept", "Authorization"],
+  })
+);
 
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(200);
-  }
-  next();
-});
-
-// پارسر JSON و URL
+// -------------------- پارسرها --------------------
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// مسیرهای API
+// -------------------- مسیرهای API --------------------
 app.use("/api", router);
 
-// هندل خطاهای عمومی
+// -------------------- هندل خطاهای عمومی --------------------
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-  console.error("❌ Error:", err.message || err);
+  console.error("❌ Server Error:", err.message || err);
   res.status(500).json({ error: "مشکلی در سرور رخ داده است." });
 });
 
-// گرفتن IPهای سرور
+// -------------------- تابع کمکی برای نمایش IP --------------------
 const getServerIPs = (): string[] => {
   const nets = os.networkInterfaces();
   const results: string[] = [];
@@ -65,13 +68,13 @@ const getServerIPs = (): string[] => {
   return results;
 };
 
-// تابع راه‌اندازی سرور
+// -------------------- راه‌اندازی سرور --------------------
 export const startServer = async () => {
   try {
     await mongoConnected();
 
     const PORT = Number(process.env.PORT) || 4000;
-    const HOST = process.env.HOST || "0.0.0.0"; // برای دسترسی در شبکه داخلی و سرور
+    const HOST = process.env.HOST || "0.0.0.0";
 
     app.listen(PORT, HOST, () => {
       console.log("🚀 Server is running:");
@@ -79,12 +82,16 @@ export const startServer = async () => {
 
       const serverIPs = getServerIPs();
       if (serverIPs.length > 0) {
-        serverIPs.forEach((ip) => console.log(`   → Network: http://${ip}:${PORT}`));
+        serverIPs.forEach((ip) =>
+          console.log(`   → Network: http://${ip}:${PORT}`)
+        );
       } else {
         console.log(`   → Network: http://${HOST}:${PORT}`);
       }
 
-      console.log(`   → Frontend allowed origins: ${allowedOrigins.join(", ")}`);
+      console.log(`   → Allowed Origins: ${allowedOrigins.join(", ")}`);
+      console.log(`   → Uploads Path: ${UPLOADS_PATH}`);
+      console.log(`   → Files Path: ${FILES_PATH}`);
     });
   } catch (error) {
     console.error("❌ Server failed to start:", error);
