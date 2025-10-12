@@ -19,22 +19,25 @@ const DoctorsPresent: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // --- تابع اصلاح URL عکس ---
   const fixAvatarUrl = (url?: string) => {
-    if (!url) return "/images/default.png";
-    if (url.startsWith("http://localhost"))
-      return url.replace(
-        "http://localhost:4000",
-        "https://api.df-neyshabor.ir"
-      );
-    if (!url.startsWith("http"))
+    if (!url || url.trim() === "") return "/images/default.png";
+
+    // URL نسبی روی سرور
+    if (!url.startsWith("http")) {
       return `https://api.df-neyshabor.ir${url.startsWith("/") ? "" : "/"}${url}`;
+    }
+
+    // URL مطلق بدون تغییر
     return url;
   };
 
+  // --- دریافت اطلاعات پزشکان ---
   const fetchDoctors = async () => {
     try {
       setLoading(true);
       setError("");
+
       const res = await api.get("/api/doctors");
 
       const now = new Date();
@@ -60,6 +63,7 @@ const DoctorsPresent: React.FC = () => {
             let end = eh * 60 + em;
             let nowComparable = nowMinutes;
 
+            // مدیریت شیفت شبانه
             if (end <= start && nowMinutes < start) nowComparable += 24 * 60;
             if (end <= start) end += 24 * 60;
 
@@ -76,7 +80,7 @@ const DoctorsPresent: React.FC = () => {
 
           return {
             personnelId: doc.personnelId,
-            name: doc.name || doc.doctorName,
+            name: doc.name || doc.doctorName || "نامشخص",
             avatarUrl: fixAvatarUrl(doc.avatarUrl),
             specialty: doc.specialty,
             phone: doc.phone,
@@ -105,8 +109,12 @@ const DoctorsPresent: React.FC = () => {
       </div>
 
       <div className="flex flex-col gap-6 mt-3 w-full px-2 h-full overflow-y-auto scrollbar-hide">
-        {loading && <p className="text-center text-sm text-gray-600">در حال بارگذاری...</p>}
-        {error && <p className="text-center text-red-500 text-sm">{error}</p>}
+        {loading && (
+          <p className="text-center text-sm text-gray-600">در حال بارگذاری...</p>
+        )}
+        {error && (
+          <p className="text-center text-red-500 text-sm">{error}</p>
+        )}
         {!loading && !error && doctors.length === 0 && (
           <p className="text-center text-gray-500 text-sm">
             هیچ پزشکی برای امروز ثبت نشده است.
@@ -122,7 +130,7 @@ const DoctorsPresent: React.FC = () => {
             status={d.status}
             nextShift={d.nextShift}
             avatarUrl={d.avatarUrl}
-            // phone={d.phone}
+            phone={d.phone}
           />
         ))}
       </div>
