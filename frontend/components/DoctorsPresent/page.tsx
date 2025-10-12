@@ -130,7 +130,8 @@ const DoctorsPresent: React.FC = () => {
             status={d.status}
             nextShift={d.nextShift}
             avatarUrl={d.avatarUrl}
-            phone={d.phone}
+            // phone={d.phone}
+            defaultAvatar="images/defult.png"
           />
         ))}
       </div>
