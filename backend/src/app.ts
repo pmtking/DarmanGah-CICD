@@ -14,9 +14,10 @@ export const app = express();
 
 // -------------------- مسیرهای فایل‌های استاتیک --------------------
 // مسیر آپلودها
-const UPLOADS_PATH =
-  process.env.UPLOADS_PATH || path.join(process.cwd(), "public/uploads");
-app.use("/uploads", express.static(UPLOADS_PATH));
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "public/uploads"))
+);
 
 // مسیر فایل‌های دیگر
 const FILES_PATH = process.env.FILES_PATH || path.join(process.cwd(), "files");
