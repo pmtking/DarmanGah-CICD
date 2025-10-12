@@ -20,18 +20,11 @@ const Card: React.FC<CardType> = ({
   status,
   nextShift,
 }) => {
-  // اگر اسم موجود نیست، "نامشخص" نمایش بده
   const displayName = name || "نامشخص";
 
-  // مسیر کامل عکس
+  // فقط اگر آواتار وجود نداشت از عکس پیش‌فرض استفاده کن
   const finalAvatar =
-    avatarUrl && avatarUrl.trim() !== ""
-      ? avatarUrl.startsWith("http")
-        ? avatarUrl
-        : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}${
-            avatarUrl.startsWith("/") ? "" : "/"
-          }${avatarUrl}`
-      : "/images/default.png"; // عکس پیش‌فرض
+    avatarUrl && avatarUrl.trim() !== "" ? avatarUrl : "/images/defult.png";
 
   const renderSpecialty = () => {
     if (!specialty) return "تخصص نامشخص";
@@ -40,7 +33,8 @@ const Card: React.FC<CardType> = ({
 
   const renderStatusText = () => {
     if (status === "present") return "حضور دارد";
-    if (status === "upcoming" && nextShift) return `شروع حضور از ساعت ${nextShift}`;
+    if (status === "upcoming" && nextShift)
+      return `شروع حضور از ساعت ${nextShift}`;
     if (status === "finished") return "شیفت امروز به پایان رسیده است";
     return "وضعیت نامشخص";
   };
@@ -58,14 +52,20 @@ const Card: React.FC<CardType> = ({
       </div>
 
       <div className="flex-1 text-sm sm:text-base text-gray-800">
-        <p className="font-bold text-gray-900 text-lg">{displayName}</p>
+        <p className="font-bold text-gray-900 text-md">{displayName}</p>
         <p className="text-gray-500 mt-1">{renderSpecialty()}</p>
         {phone && <p className="text-gray-400 mt-1">تلفن: {phone}</p>}
-        <p className={`mt-2 ${
-          status === "present" ? "text-green-600" :
-          status === "upcoming" ? "text-blue-600" :
-          "text-red-500"
-        }`}>{renderStatusText()}</p>
+        <p
+          className={`mt-2 ${
+            status === "present"
+              ? "text-green-600"
+              : status === "upcoming"
+              ? "text-blue-600"
+              : "text-red-500"
+          }`}
+        >
+          {renderStatusText()}
+        </p>
       </div>
     </div>
   );
