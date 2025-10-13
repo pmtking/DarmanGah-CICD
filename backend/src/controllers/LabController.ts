@@ -79,23 +79,26 @@ export const uploadFiles = (req: Request, res: Response) => {
 };
 
 // جستجوی فایل‌ها بر اساس کد ملی و شماره آزمایش (اختیاری)
+// جستجوی فایل‌ها به صورت بازگشتی بر اساس کد ملی
 const findFilesRecursively = (dir: string, codeMelli: string): string[] => {
   let results: string[] = [];
   if (!fs.existsSync(dir)) return results;
 
   const list = fs.readdirSync(dir, { withFileTypes: true });
-  list.forEach(item => {
+
+  for (const item of list) {
     const fullPath = path.join(dir, item.name);
+
     if (item.isDirectory()) {
       results = results.concat(findFilesRecursively(fullPath, codeMelli));
     } else if (
       item.isFile() &&
-      fullPath.includes(path.sep + codeMelli + path.sep) &&
-      fullPath.endsWith(".pdf")
+      fullPath.endsWith(".pdf") &&
+      fullPath.split(path.sep).includes(codeMelli)
     ) {
       results.push(fullPath);
     }
-  });
+  }
 
   return results;
 };
@@ -103,16 +106,25 @@ const findFilesRecursively = (dir: string, codeMelli: string): string[] => {
 // دریافت فایل‌ها بر اساس کد ملی
 export const getFilesByCodeMelli = (req: Request, res: Response) => {
   const codeMelli = req.body?.codeMelli?.trim();
-  if (!codeMelli) return res.status(400).json({ error: "کد ملی ارسال نشده است." });
+  if (!codeMelli)
+    return res.status(400).json({ error: "کد ملی ارسال نشده است." });
 
   const matchedFiles = findFilesRecursively(UPLOAD_DIR, codeMelli);
   if (matchedFiles.length === 0)
     return res.status(404).json({ message: "فایلی برای این کد ملی پیدا نشد." });
 
-  const filesData = matchedFiles.map(filePath => ({
-    name: path.basename(filePath),
-    path: path.relative(UPLOAD_DIR, filePath),
-  }));
+  const filesData = matchedFiles.map(filePath => {
+    const relativePath = path.relative(UPLOAD_DIR, filePath);
+    const parts = relativePath.split(path.sep);
+    const dateFolder = parts.length > 1 ? parts[0] : "نامشخص";
+
+    return {
+      name: path.basename(filePath),
+      path: relativePath,
+      dateFolder, // پوشه روز
+    };
+  });
 
   res.json({ files: filesData });
 };
+
