@@ -39,12 +39,7 @@ export default function LabPage() {
     try {
       const res = await api.post("/api/lab/get-files", { codeMelli: englishCode });
 
-      const fetchedFiles: LabFile[] = res.data.files?.map((f: any) => ({
-        name: f.name,
-        urlPreview: `/api/lab/file?path=${encodeURIComponent(f.path)}&mode=inline`,
-        urlDownload: `/api/lab/file?path=${encodeURIComponent(f.path)}&mode=download`,
-        dateFolder: f.dateFolder,
-      })) || [];
+      const fetchedFiles: LabFile[] = res.data.files || [];
 
       setFiles(fetchedFiles);
       setVisibleFiles(0);

@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -23,7 +23,6 @@ const storage = multer.diskStorage({
     const todayPath = getTodayPath();
     const codeMelli = path.parse(file.originalname).name.trim();
     if (!codeMelli) return cb(new Error("کد ملی از نام فایل استخراج نشد."));
-
     const userDir = path.join(todayPath, codeMelli);
     if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, { recursive: true });
     cb(null, userDir);
@@ -38,37 +37,31 @@ const storage = multer.diskStorage({
   },
 });
 
-// Multer برای چند فایل همزمان
 export const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } }).array("files", 100);
 
 // مدیریت خطاهای multer
-export const handleMulterError = (
-  err: any,
-  _req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const handleMulterError = (err: any, _req: any, res: Response, next: any) => {
   if (err instanceof multer.MulterError) return res.status(400).json({ error: err.message });
   if (err) return res.status(400).json({ error: err.message || "خطای سرور در آپلود فایل" });
   next();
 };
 
 // کنترلر آپلود فایل‌ها
-export const uploadFiles = (req: Request, res: Response) => {
+export const uploadFiles = (req: any, res: Response) => {
   const files = req.files as Express.Multer.File[];
-  if (!files || files.length === 0)
-    return res.status(400).json({ error: "هیچ فایلی ارسال نشده است." });
+  if (!files || files.length === 0) return res.status(400).json({ error: "هیچ فایلی ارسال نشده است." });
 
-  const uploadedFiles = files.map(f => ({
-    name: path.basename(f.path),
-    path: path.relative(UPLOAD_DIR, f.path).replace(/\\/g, "/"),
-    url: `/api/lab/download?path=${encodeURIComponent(path.relative(UPLOAD_DIR, f.path).replace(/\\/g, "/"))}`,
-  }));
-
-  res.json({
-    message: `✅ ${files.length} فایل با موفقیت آپلود شد.`,
-    files: uploadedFiles,
+  const uploadedFiles = files.map(f => {
+    const relativePath = path.relative(UPLOAD_DIR, f.path).replace(/\\/g, "/");
+    return {
+      name: path.basename(f.path),
+      path: relativePath,
+      urlPreview: `/api/lab/file?path=${encodeURIComponent(relativePath)}&mode=inline`,
+      urlDownload: `/api/lab/file?path=${encodeURIComponent(relativePath)}&mode=download`,
+    };
   });
+
+  res.json({ message: `✅ ${files.length} فایل با موفقیت آپلود شد.`, files: uploadedFiles });
 };
 
 // جستجوی فایل‌ها به صورت بازگشتی بر اساس کد ملی
@@ -78,9 +71,8 @@ const findFilesRecursively = (dir: string, codeMelli: string): string[] => {
   const list = fs.readdirSync(dir, { withFileTypes: true });
   for (const item of list) {
     const fullPath = path.join(dir, item.name);
-    if (item.isDirectory()) {
-      results = results.concat(findFilesRecursively(fullPath, codeMelli));
-    } else if (item.isFile() && fullPath.endsWith(".pdf") && fullPath.split(path.sep).includes(codeMelli)) {
+    if (item.isDirectory()) results = results.concat(findFilesRecursively(fullPath, codeMelli));
+    else if (item.isFile() && fullPath.endsWith(".pdf") && fullPath.split(path.sep).includes(codeMelli)) {
       results.push(fullPath);
     }
   }
@@ -104,7 +96,6 @@ export const getFilesByCodeMelli = (req: Request, res: Response) => {
       name: path.basename(filePath),
       path: relativePath,
       dateFolder,
-      // لینک واحد برای دانلود و پیش‌نمایش
       urlPreview: `/api/lab/file?path=${encodeURIComponent(relativePath)}&mode=inline`,
       urlDownload: `/api/lab/file?path=${encodeURIComponent(relativePath)}&mode=download`,
     };
@@ -113,24 +104,35 @@ export const getFilesByCodeMelli = (req: Request, res: Response) => {
   res.json({ files: filesData });
 };
 
+// دانلود یا نمایش فایل PDF
+export const serveFile = (req: Request, res: Response) => {
+  try {
+    const filePath = req.query.path as string;
+    const mode = (req.query.mode as string) || "download";
 
-// دانلود فایل
-export const downloadFile = (req: Request, res: Response) => {
-  const filePath = req.query.path as string;
-  const preview = req.query.preview === "1"; // برای پیش‌نمایش
+    if (!filePath) return res.status(400).json({ error: "مسیر فایل ارسال نشده است." });
 
-  if (!filePath) return res.status(400).json({ error: "مسیر فایل ارسال نشده است." });
+    const decodedPath = decodeURIComponent(filePath);
+    const fullPath = path.resolve(UPLOAD_DIR, decodedPath);
 
-  const fullPath = path.join(UPLOAD_DIR, filePath);
-  if (!fs.existsSync(fullPath)) return res.status(404).json({ error: "فایل پیدا نشد." });
+    // امنیت: جلوگیری از دسترسی خارج از پوشه
+    if (!fullPath.startsWith(UPLOAD_DIR)) return res.status(400).json({ error: "مسیر نامعتبر است." });
 
-  const fileName = path.basename(fullPath);
-  res.setHeader("Content-Type", "application/pdf");
-  res.setHeader(
-    "Content-Disposition",
-    preview ? `inline; filename="${fileName}"` : `attachment; filename="${fileName}"`
-  );
+    if (!fs.existsSync(fullPath)) return res.status(404).json({ error: "فایل پیدا نشد." });
 
-  const stream = fs.createReadStream(fullPath);
-  stream.pipe(res);
+    const fileName = path.basename(fullPath);
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      mode === "inline"
+        ? `inline; filename="${fileName}"`
+        : `attachment; filename="${fileName}"`
+    );
+
+    const stream = fs.createReadStream(fullPath);
+    stream.pipe(res);
+  } catch (err: any) {
+    console.error("❌ serveFile Error:", err);
+    res.status(500).json({ error: "خطا در سرویس فایل", message: err.message });
+  }
 };
