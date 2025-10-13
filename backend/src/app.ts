@@ -18,7 +18,7 @@ const UPLOADS_PATH = path.join(__dirname, "uploads");
 app.use("/uploads", express.static(UPLOADS_PATH));
 
 // مسیر فایل‌های دیگر
-const FILES_PATH = process.env.FILES_PATH || path.join(process.cwd(), "files");
+const FILES_PATH = "/home/ubuntu-website/lab";
 app.use("/files", express.static(FILES_PATH));
 
 // -------------------- CORS --------------------
