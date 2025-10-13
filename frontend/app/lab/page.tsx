@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import NavBar from "@/components/NavBar/page";
 import api from "@/libs/axios";
 
+const API_BASE = "https://api.df-neyshabor.ir"; // آدرس واقعی بک‌اند
+
 const toEnglishDigits = (str: string) =>
   str
     .replace(/[\u06F0-\u06F9]/g, (d) => String(d.charCodeAt(0) - 1776))
@@ -43,8 +45,8 @@ export default function LabPage() {
       const fetchedFiles: LabFile[] = res.data.files.map((f: any) => ({
         name: f.name,
         dateFolder: f.dateFolder,
-        urlPreview: `/api/lab/file?path=${encodeURIComponent(f.path)}&mode=inline`,
-        urlDownload: `/api/lab/file?path=${encodeURIComponent(f.path)}&mode=download`,
+        urlPreview: `${API_BASE}/api/lab/file?path=${encodeURIComponent(f.path)}&mode=inline`,
+        urlDownload: `${API_BASE}/api/lab/file?path=${encodeURIComponent(f.path)}&mode=download`,
       }));
 
       setFiles(fetchedFiles);
@@ -69,7 +71,6 @@ export default function LabPage() {
 
   const handlePreview = (file: LabFile) => {
     if (isMobile) {
-      // موبایل: باز کردن در تب جدید
       window.open(file.urlPreview, "_blank", "noopener,noreferrer");
     } else {
       setPreviewFile(file.urlPreview);
