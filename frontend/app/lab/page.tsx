@@ -39,6 +39,7 @@ export default function LabPage() {
 
     try {
       const res = await api.post("/api/lab/get-files", { codeMelli: englishCode });
+
       const fetchedFiles: LabFile[] = res.data.files.map((f: any) => ({
         name: f.name,
         dateFolder: f.dateFolder,
@@ -48,9 +49,10 @@ export default function LabPage() {
 
       setFiles(fetchedFiles);
       setVisibleFiles(0);
-      setStatus(fetchedFiles.length
-        ? `✅ ${fetchedFiles.length} فایل برای کد ملی پیدا شد.`
-        : "⚠️ جوابی برای کد ملی مورد نظر موجود نیست."
+      setStatus(
+        fetchedFiles.length
+          ? `✅ ${fetchedFiles.length} فایل برای کد ملی پیدا شد.`
+          : "⚠️ جوابی برای کد ملی مورد نظر موجود نیست."
       );
 
       fetchedFiles.forEach((_, i) =>
@@ -66,8 +68,8 @@ export default function LabPage() {
   const handleClosePreview = () => setPreviewFile(null);
 
   const handlePreview = (file: LabFile) => {
-    // موبایل: باز کردن در تب جدید
     if (isMobile) {
+      // موبایل: باز کردن در تب جدید
       window.open(file.urlPreview, "_blank", "noopener,noreferrer");
     } else {
       setPreviewFile(file.urlPreview);
@@ -76,11 +78,12 @@ export default function LabPage() {
 
   const handleDownload = async (file: LabFile) => {
     try {
-      const response = await fetch(file.urlDownload);
+      const response = await fetch(file.urlDownload, { credentials: "include" });
       if (!response.ok) throw new Error("خطا در دانلود فایل");
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
+
       const a = document.createElement("a");
       a.href = url;
       a.download = file.name;
@@ -90,7 +93,7 @@ export default function LabPage() {
       window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error(err);
-      alert("دانلود فایل با مشکل مواجه شد.");
+      alert("❌ دانلود فایل با مشکل مواجه شد.");
     }
   };
 
