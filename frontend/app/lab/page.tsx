@@ -12,7 +12,7 @@ const toEnglishDigits = (str: string) =>
 interface LabFile {
   name: string;
   url: string;
-  blob?: Blob;
+  dateFolder?: string;
 }
 
 export default function LabPage() {
@@ -40,17 +40,14 @@ export default function LabPage() {
     try {
       const res = await api.post("/api/lab/get-files", { codeMelli: englishCode });
 
-      const fetchedFiles: LabFile[] = res.data.files?.map((f: any) => {
-        const byteCharacters = atob(f.data);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
-        const blob = new Blob([new Uint8Array(byteNumbers)], { type: "application/pdf" });
-        const url = URL.createObjectURL(blob);
-        return { name: f.name, url, blob };
-      }) || [];
+      const fetchedFiles: LabFile[] = res.data.files?.map((f: any) => ({
+        name: f.name,
+        url: `/api/lab/download?path=${encodeURIComponent(f.path)}`, // endpoint دانلود مستقیم
+        dateFolder: f.dateFolder,
+      })) || [];
 
       setFiles(fetchedFiles);
-      setVisibleFiles(0); // reset animation
+      setVisibleFiles(0);
       setStatus(
         fetchedFiles.length
           ? `✅ ${fetchedFiles.length} فایل برای کد ملی پیدا شد.`
@@ -68,18 +65,11 @@ export default function LabPage() {
     }
   };
 
-  const handleClosePreview = () => {
-    if (previewFile) {
-      URL.revokeObjectURL(previewFile);
-      setPreviewFile(null);
-    }
-  };
+  const handleClosePreview = () => setPreviewFile(null);
 
-  const handleDownload = async (file: LabFile) => {
-    if (!file.blob) return;
-    const url = URL.createObjectURL(file.blob);
+  const handleDownload = (file: LabFile) => {
     const a = document.createElement("a");
-    a.href = url;
+    a.href = file.url;
     a.download = file.name;
     document.body.appendChild(a);
 
@@ -95,11 +85,10 @@ export default function LabPage() {
 
     a.click();
     document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b  flex flex-col items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-gradient-to-b flex flex-col items-center justify-center px-4 py-12">
       <NavBar />
       <h1 className="text-3xl md:text-4xl font-extrabold mb-8 text-center text-blue-100 drop-shadow-lg">
         سامانه دریافت جواب آزمایش
