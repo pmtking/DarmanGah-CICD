@@ -103,28 +103,28 @@ const findFilesRecursively = (dir: string, codeMelli: string): string[] => {
   return results;
 };
 
-// دریافت فایل‌ها بر اساس کد ملی
 export const getFilesByCodeMelli = (req: Request, res: Response) => {
   const codeMelli = req.body?.codeMelli?.trim();
   if (!codeMelli)
     return res.status(400).json({ error: "کد ملی ارسال نشده است." });
 
   const matchedFiles = findFilesRecursively(UPLOAD_DIR, codeMelli);
+
   if (matchedFiles.length === 0)
     return res.status(404).json({ message: "فایلی برای این کد ملی پیدا نشد." });
 
-  const filesData = matchedFiles.map(filePath => {
+  const filesData = matchedFiles.map((filePath) => {
     const relativePath = path.relative(UPLOAD_DIR, filePath);
     const parts = relativePath.split(path.sep);
     const dateFolder = parts.length > 1 ? parts[0] : "نامشخص";
 
     return {
       name: path.basename(filePath),
-      path: relativePath,
-      dateFolder, // پوشه روز
+      path: relativePath.replace(/\\/g, "/"), // تبدیل \ به / برای URL
+      dateFolder,
+      url: `/api/lab/download?path=${encodeURIComponent(relativePath.replace(/\\/g, "/"))}`, // مسیر دانلود مستقیم
     };
   });
 
   res.json({ files: filesData });
 };
-
