@@ -20,12 +20,11 @@ export default function LabPage() {
   const [files, setFiles] = useState<LabFile[]>([]);
   const [status, setStatus] = useState<string | null>(null);
   const [previewFile, setPreviewFile] = useState<string | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
-  const [downloadProgress, setDownloadProgress] = useState<Record<string, number>>({});
   const [visibleFiles, setVisibleFiles] = useState<number>(0);
 
   useEffect(() => {
-    setIsMobile(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
+    // تشخیص موبایل برای UI اختیاری
+    const mobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -42,7 +41,7 @@ export default function LabPage() {
 
       const fetchedFiles: LabFile[] = res.data.files?.map((f: any) => ({
         name: f.name,
-        url: `/api/lab/download?path=${encodeURIComponent(f.path)}`, // endpoint دانلود مستقیم
+        url: `/api/lab/download?path=${encodeURIComponent(f.path)}`, // دانلود مستقیم
         dateFolder: f.dateFolder,
       })) || [];
 
@@ -70,19 +69,8 @@ export default function LabPage() {
   const handleDownload = (file: LabFile) => {
     const a = document.createElement("a");
     a.href = file.url;
-    a.download = file.name;
+    a.download = file.name; // مرورگر با Content-Disposition از backend دانلود می‌کند
     document.body.appendChild(a);
-
-    let progress = 0;
-    setDownloadProgress((prev) => ({ ...prev, [file.name]: 0 }));
-    const interval = setInterval(() => {
-      progress += 10;
-      if (progress > 100) {
-        clearInterval(interval);
-        setDownloadProgress((prev) => ({ ...prev, [file.name]: 0 }));
-      } else setDownloadProgress((prev) => ({ ...prev, [file.name]: progress }));
-    }, 50);
-
     a.click();
     document.body.removeChild(a);
   };
@@ -119,11 +107,7 @@ export default function LabPage() {
       </form>
 
       {status && (
-        <p
-          className={`mt-4 text-center font-medium ${
-            status.startsWith("❌") ? "text-red-600" : "text-gray-800"
-          }`}
-        >
+        <p className={`mt-4 text-center font-medium ${status.startsWith("❌") ? "text-red-600" : "text-gray-800"}`}>
           {status}
         </p>
       )}
@@ -137,7 +121,9 @@ export default function LabPage() {
                 index < visibleFiles ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"
               } hover:shadow-2xl`}
             >
-              <span className="truncate font-medium text-blue-900">{file.name}</span>
+              <span className="truncate font-medium text-blue-900">
+                {file.dateFolder ? `[${file.dateFolder}] ` : ""}{file.name}
+              </span>
               <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
                 <button
                   onClick={() => setPreviewFile(file.url)}
@@ -152,14 +138,6 @@ export default function LabPage() {
                   📄 دانلود
                 </button>
               </div>
-              {downloadProgress[file.name] > 0 && (
-                <div className="w-full bg-gray-200 rounded h-2 mt-2 md:mt-0 md:ml-3">
-                  <div
-                    className="bg-blue-600 h-2 rounded transition-all"
-                    style={{ width: `${downloadProgress[file.name]}%` }}
-                  />
-                </div>
-              )}
             </div>
           ))}
         </div>
