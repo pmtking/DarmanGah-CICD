@@ -66,20 +66,32 @@ export default function LabPage() {
   const handleClosePreview = () => setPreviewFile(null);
 
   const handlePreview = (file: LabFile) => {
+    // موبایل: باز کردن در تب جدید
     if (isMobile) {
-      window.open(file.urlPreview, "_blank");
+      window.open(file.urlPreview, "_blank", "noopener,noreferrer");
     } else {
       setPreviewFile(file.urlPreview);
     }
   };
 
-  const handleDownload = (file: LabFile) => {
-    const a = document.createElement("a");
-    a.href = file.urlDownload;
-    a.setAttribute("download", file.name);
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+  const handleDownload = async (file: LabFile) => {
+    try {
+      const response = await fetch(file.urlDownload);
+      if (!response.ok) throw new Error("خطا در دانلود فایل");
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = file.name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+      alert("دانلود فایل با مشکل مواجه شد.");
+    }
   };
 
   return (

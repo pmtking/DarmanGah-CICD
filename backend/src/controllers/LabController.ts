@@ -8,7 +8,7 @@ import { toJalaali } from "jalaali-js";
 const UPLOAD_DIR = "/home/ubuntu-website/lab";
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
-// مسیر امروز به شمسی
+// گرفتن مسیر امروز به شمسی
 const getTodayPath = (): string => {
   const now = new Date();
   const { jy, jm, jd } = toJalaali(now.getFullYear(), now.getMonth() + 1, now.getDate());
@@ -17,7 +17,7 @@ const getTodayPath = (): string => {
   return todayPath;
 };
 
-// Multer storage
+// تنظیمات Multer
 const storage = multer.diskStorage({
   destination: (_req, file, cb) => {
     const todayPath = getTodayPath();
@@ -39,12 +39,8 @@ const storage = multer.diskStorage({
 
 export const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } }).array("files", 100);
 
-export const handleMulterError = (
-  err: any,
-  _req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+// مدیریت خطاهای Multer
+export const handleMulterError = (err: any, _req: Request, res: Response, next: NextFunction) => {
   if (err instanceof multer.MulterError) return res.status(400).json({ error: err.message });
   if (err) return res.status(400).json({ error: err.message || "خطای سرور در آپلود فایل" });
   next();
@@ -53,21 +49,22 @@ export const handleMulterError = (
 // آپلود فایل‌ها
 export const uploadFiles = (req: Request, res: Response) => {
   const files = req.files as Express.Multer.File[];
-  if (!files || files.length === 0)
-    return res.status(400).json({ error: "هیچ فایلی ارسال نشده است." });
+  if (!files || files.length === 0) return res.status(400).json({ error: "هیچ فایلی ارسال نشده است." });
 
-  const uploadedFiles = files.map(f => ({
-    name: path.basename(f.path),
-    path: path.relative(UPLOAD_DIR, f.path).replace(/\\/g, "/"),
-  }));
-
-  res.json({
-    message: `✅ ${files.length} فایل با موفقیت آپلود شد.`,
-    files: uploadedFiles,
+  const uploadedFiles = files.map(f => {
+    const relativePath = path.relative(UPLOAD_DIR, f.path).replace(/\\/g, "/");
+    return {
+      name: path.basename(f.path),
+      path: relativePath,
+      urlPreview: `/api/lab/file?path=${encodeURIComponent(relativePath)}&mode=inline`,
+      urlDownload: `/api/lab/file?path=${encodeURIComponent(relativePath)}&mode=download`,
+    };
   });
+
+  res.json({ message: `✅ ${files.length} فایل با موفقیت آپلود شد.`, files: uploadedFiles });
 };
 
-// جستجوی فایل‌ها بر اساس کد ملی
+// جستجوی فایل‌ها به صورت بازگشتی
 const findFilesRecursively = (dir: string, codeMelli: string): string[] => {
   if (!fs.existsSync(dir)) return [];
   let results: string[] = [];
@@ -110,7 +107,7 @@ export const getFilesByCodeMelli = (req: Request, res: Response) => {
 // سرو کردن فایل‌ها برای دانلود یا پیش‌نمایش
 export const serveFile = (req: Request, res: Response) => {
   const filePath = req.query.path as string;
-  const mode = req.query.mode as string || "download"; // inline یا download
+  const mode = req.query.mode === "inline" ? "inline" : "attachment"; // پیش‌فرض attachment
 
   if (!filePath) return res.status(400).json({ error: "مسیر فایل ارسال نشده است." });
 
@@ -121,12 +118,7 @@ export const serveFile = (req: Request, res: Response) => {
 
   const fileName = path.basename(fullPath);
   res.setHeader("Content-Type", "application/pdf");
-  res.setHeader(
-    "Content-Disposition",
-    mode === "inline"
-      ? `inline; filename="${fileName}"`
-      : `attachment; filename="${fileName}"`
-  );
+  res.setHeader("Content-Disposition", `${mode}; filename="${fileName}"`);
 
   fs.createReadStream(fullPath).pipe(res);
 };
