@@ -21,10 +21,10 @@ export default function LabPage() {
   const [status, setStatus] = useState<string | null>(null);
   const [previewFile, setPreviewFile] = useState<string | null>(null);
   const [visibleFiles, setVisibleFiles] = useState<number>(0);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    // تشخیص موبایل برای UI اختیاری
-    const mobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    setIsMobile(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -41,7 +41,7 @@ export default function LabPage() {
 
       const fetchedFiles: LabFile[] = res.data.files?.map((f: any) => ({
         name: f.name,
-        url: `/api/lab/download?path=${encodeURIComponent(f.path)}`, // دانلود مستقیم
+        url: `/api/lab/download?path=${encodeURIComponent(f.path)}`,
         dateFolder: f.dateFolder,
       })) || [];
 
@@ -53,7 +53,6 @@ export default function LabPage() {
           : "⚠️ جوابی برای کد ملی مورد نظر موجود نیست."
       );
 
-      // staggered animation
       fetchedFiles.forEach((_, i) =>
         setTimeout(() => setVisibleFiles((prev) => prev + 1), i * 100)
       );
@@ -66,13 +65,33 @@ export default function LabPage() {
 
   const handleClosePreview = () => setPreviewFile(null);
 
-  const handleDownload = (file: LabFile) => {
-    const a = document.createElement("a");
-    a.href = file.url;
-    a.download = file.name; // مرورگر با Content-Disposition از backend دانلود می‌کند
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+  const handlePreview = (file: LabFile) => {
+    if (isMobile) {
+      // موبایل: باز کردن فایل در تب جدید
+      window.open(file.url, "_blank");
+    } else {
+      setPreviewFile(file.url); // دسکتاپ: modal
+    }
+  };
+
+  const handleDownload = async (file: LabFile) => {
+    try {
+      // دانلود با fetch برای موبایل و دسکتاپ
+      const response = await fetch(file.url);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = file.name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Download failed:", err);
+      setStatus("❌ دانلود فایل انجام نشد.");
+    }
   };
 
   return (
@@ -126,7 +145,7 @@ export default function LabPage() {
               </span>
               <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
                 <button
-                  onClick={() => setPreviewFile(file.url)}
+                  onClick={() => handlePreview(file)}
                   className="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded-xl text-sm font-semibold transition"
                 >
                   👁️ مشاهده
@@ -143,7 +162,7 @@ export default function LabPage() {
         </div>
       )}
 
-      {previewFile && (
+      {previewFile && !isMobile && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/60 backdrop-blur-sm">
           <div className="bg-white rounded-3xl shadow-2xl w-11/12 md:w-3/4 lg:w-2/3 h-[80vh] flex flex-col overflow-hidden">
             <div className="flex justify-between items-center p-4 border-b border-gray-200">
