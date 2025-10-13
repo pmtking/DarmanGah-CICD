@@ -41,6 +41,7 @@ export default function LabPage() {
 
       const fetchedFiles: LabFile[] = res.data.files?.map((f: any) => ({
         name: f.name,
+        // URL بدون تبدیل blob، فقط برای دانلود یا پیش‌نمایش
         url: `/api/lab/download?path=${encodeURIComponent(f.path)}`,
         dateFolder: f.dateFolder,
       })) || [];
@@ -53,6 +54,7 @@ export default function LabPage() {
           : "⚠️ جوابی برای کد ملی مورد نظر موجود نیست."
       );
 
+      // staggered animation
       fetchedFiles.forEach((_, i) =>
         setTimeout(() => setVisibleFiles((prev) => prev + 1), i * 100)
       );
@@ -66,32 +68,23 @@ export default function LabPage() {
   const handleClosePreview = () => setPreviewFile(null);
 
   const handlePreview = (file: LabFile) => {
+    const previewUrl = file.url + "&preview=1"; // query preview برای inline PDF
     if (isMobile) {
       // موبایل: باز کردن فایل در تب جدید
-      window.open(file.url, "_blank");
+      window.open(previewUrl, "_blank");
     } else {
-      setPreviewFile(file.url); // دسکتاپ: modal
+      setPreviewFile(previewUrl); // دسکتاپ: modal
     }
   };
 
-  const handleDownload = async (file: LabFile) => {
-    try {
-      // دانلود با fetch برای موبایل و دسکتاپ
-      const response = await fetch(file.url);
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = file.name;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error("Download failed:", err);
-      setStatus("❌ دانلود فایل انجام نشد.");
-    }
+  const handleDownload = (file: LabFile) => {
+    // دانلود مستقیم بدون blob
+    const a = document.createElement("a");
+    a.href = file.url; // backend باید Content-Disposition: attachment باشد
+    a.download = file.name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   return (
