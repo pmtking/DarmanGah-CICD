@@ -1,22 +1,15 @@
 import express from "express";
-import {
-  getFilesByCodeMelli,
-  upload,
-  uploadFiles,
-  handleMulterError,
-  serveFile, // اضافه شد
-} from "../controllers/LabController";
+import { getFilesByCodeMelli, upload, uploadFiles, handleMulterError, serveFile } from "../controllers/LabController";
 
-export const router = express.Router();
+const router = express.Router();
 
-// ------------------- آپلود فایل‌ها ------------------- //
+// آپلود فایل‌ها
 router.post("/upload", upload, handleMulterError, uploadFiles);
 
-// ------------------- گرفتن فایل‌ها بر اساس کد ملی ------------------- //
+// گرفتن فایل‌ها بر اساس کد ملی
 router.post("/get-files", getFilesByCodeMelli);
 
-// ------------------- نمایش یا دانلود فایل ------------------- //
-// query: ?path=relative/path/to/file.pdf&mode=inline|download
+// دانلود یا پیش‌نمایش فایل
 router.get("/file", serveFile);
 
 export default router;

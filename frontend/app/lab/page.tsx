@@ -5,8 +5,9 @@ import NavBar from "@/components/NavBar/page";
 import api from "@/libs/axios";
 
 const toEnglishDigits = (str: string) =>
-  str.replace(/[\u06F0-\u06F9]/g, (d) => String(d.charCodeAt(0) - 1776))
-     .replace(/[\u0660-\u0669]/g, (d) => String(d.charCodeAt(0) - 1632));
+  str
+    .replace(/[\u06F0-\u06F9]/g, (d) => String(d.charCodeAt(0) - 1776))
+    .replace(/[\u0660-\u0669]/g, (d) => String(d.charCodeAt(0) - 1632));
 
 interface LabFile {
   name: string;
@@ -38,8 +39,12 @@ export default function LabPage() {
 
     try {
       const res = await api.post("/api/lab/get-files", { codeMelli: englishCode });
-
-      const fetchedFiles: LabFile[] = res.data.files || [];
+      const fetchedFiles: LabFile[] = res.data.files.map((f: any) => ({
+        name: f.name,
+        dateFolder: f.dateFolder,
+        urlPreview: `/api/lab/file?path=${encodeURIComponent(f.path)}&mode=inline`,
+        urlDownload: `/api/lab/file?path=${encodeURIComponent(f.path)}&mode=download`,
+      }));
 
       setFiles(fetchedFiles);
       setVisibleFiles(0);
@@ -53,7 +58,7 @@ export default function LabPage() {
       );
     } catch (err) {
       console.error(err);
-      setStatus("❌ جواب شما هنوز آماده نیست");
+      setStatus("❌ خطا در دریافت فایل‌ها");
       setFiles([]);
     }
   };
@@ -71,7 +76,7 @@ export default function LabPage() {
   const handleDownload = (file: LabFile) => {
     const a = document.createElement("a");
     a.href = file.urlDownload;
-    a.download = file.name;
+    a.setAttribute("download", file.name);
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -109,7 +114,11 @@ export default function LabPage() {
       </form>
 
       {status && (
-        <p className={`mt-4 text-center font-medium ${status.startsWith("❌") ? "text-red-600" : "text-gray-800"}`}>
+        <p
+          className={`mt-4 text-center font-medium ${
+            status.startsWith("❌") ? "text-red-600" : "text-gray-800"
+          }`}
+        >
           {status}
         </p>
       )}
