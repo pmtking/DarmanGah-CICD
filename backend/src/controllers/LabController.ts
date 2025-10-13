@@ -104,12 +104,15 @@ export const getFilesByCodeMelli = (req: Request, res: Response) => {
       name: path.basename(filePath),
       path: relativePath,
       dateFolder,
-      url: `/api/lab/download?path=${encodeURIComponent(relativePath)}`, // مسیر دانلود
+      // لینک واحد برای دانلود و پیش‌نمایش
+      urlPreview: `/api/lab/file?path=${encodeURIComponent(relativePath)}&mode=inline`,
+      urlDownload: `/api/lab/file?path=${encodeURIComponent(relativePath)}&mode=download`,
     };
   });
 
   res.json({ files: filesData });
 };
+
 
 // دانلود فایل
 export const downloadFile = (req: Request, res: Response) => {

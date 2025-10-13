@@ -5,13 +5,13 @@ import NavBar from "@/components/NavBar/page";
 import api from "@/libs/axios";
 
 const toEnglishDigits = (str: string) =>
-  str
-    .replace(/[\u06F0-\u06F9]/g, (d) => String(d.charCodeAt(0) - 1776))
-    .replace(/[\u0660-\u0669]/g, (d) => String(d.charCodeAt(0) - 1632));
+  str.replace(/[\u06F0-\u06F9]/g, (d) => String(d.charCodeAt(0) - 1776))
+     .replace(/[\u0660-\u0669]/g, (d) => String(d.charCodeAt(0) - 1632));
 
 interface LabFile {
   name: string;
-  url: string;
+  urlPreview: string;
+  urlDownload: string;
   dateFolder?: string;
 }
 
@@ -41,20 +41,18 @@ export default function LabPage() {
 
       const fetchedFiles: LabFile[] = res.data.files?.map((f: any) => ({
         name: f.name,
-        // URL بدون تبدیل blob، فقط برای دانلود یا پیش‌نمایش
-        url: `/api/lab/download?path=${encodeURIComponent(f.path)}`,
+        urlPreview: `/api/lab/file?path=${encodeURIComponent(f.path)}&mode=inline`,
+        urlDownload: `/api/lab/file?path=${encodeURIComponent(f.path)}&mode=download`,
         dateFolder: f.dateFolder,
       })) || [];
 
       setFiles(fetchedFiles);
       setVisibleFiles(0);
-      setStatus(
-        fetchedFiles.length
-          ? `✅ ${fetchedFiles.length} فایل برای کد ملی پیدا شد.`
-          : "⚠️ جوابی برای کد ملی مورد نظر موجود نیست."
+      setStatus(fetchedFiles.length
+        ? `✅ ${fetchedFiles.length} فایل برای کد ملی پیدا شد.`
+        : "⚠️ جوابی برای کد ملی مورد نظر موجود نیست."
       );
 
-      // staggered animation
       fetchedFiles.forEach((_, i) =>
         setTimeout(() => setVisibleFiles((prev) => prev + 1), i * 100)
       );
@@ -68,19 +66,16 @@ export default function LabPage() {
   const handleClosePreview = () => setPreviewFile(null);
 
   const handlePreview = (file: LabFile) => {
-    const previewUrl = file.url + "&preview=1"; // query preview برای inline PDF
     if (isMobile) {
-      // موبایل: باز کردن فایل در تب جدید
-      window.open(previewUrl, "_blank");
+      window.open(file.urlPreview, "_blank");
     } else {
-      setPreviewFile(previewUrl); // دسکتاپ: modal
+      setPreviewFile(file.urlPreview);
     }
   };
 
   const handleDownload = (file: LabFile) => {
-    // دانلود مستقیم بدون blob
     const a = document.createElement("a");
-    a.href = file.url; // backend باید Content-Disposition: attachment باشد
+    a.href = file.urlDownload;
     a.download = file.name;
     document.body.appendChild(a);
     a.click();
