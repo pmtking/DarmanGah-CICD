@@ -36,22 +36,25 @@ Object.defineProperty(exports, "__esModule", { value: true });
 // models/Reseption.ts
 const mongoose_1 = __importStar(require("mongoose"));
 const reseptionSchema = new mongoose_1.Schema({
-    patientName: { type: String, required: true },
-    phoneNumber: { type: String, required: true },
-    relationWithGuardian: { type: String, default: "خود شخص" },
+    patientName: { type: String, required: true, trim: true },
+    phoneNumber: { type: String, required: true, trim: true },
+    relationWithGuardian: { type: String, default: "خود شخص", trim: true },
     visitType: {
         type: String,
         required: true,
         enum: ["اولیه", "پیگیری", "اورژانسی"],
+        trim: true,
     },
     insuranceType: {
         type: String,
         required: true,
-        enum: ["تأمین اجتماعی", "سلامت", "آزاد", "نیروهای مسلح", "سایر"],
+        enum: ["تامین اجتماعی", "تأمین اجتماعی", "سلامت", "آزاد", "نیروهای مسلح", "سایر"],
+        trim: true,
     },
     supplementaryInsurance: {
         type: String,
-        enum: ["دی", "آتیه", "ایران", "سایر"],
+        enum: ["دی", "ملت", "آتیه سازان", "دانا", "آزاد", "سایر"],
+        trim: true,
     },
     doctorId: { type: mongoose_1.Schema.Types.ObjectId, ref: "DoctorProfile", required: true },
     services: [

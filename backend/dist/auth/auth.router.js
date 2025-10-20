@@ -13,3 +13,4 @@ exports.authRouter.get('/test', (req, res) => {
 });
 // register Controller 
 exports.authRouter.post('/register', authController_1.RegisterController);
+exports.authRouter.post('/login', authController_1.LoginController);

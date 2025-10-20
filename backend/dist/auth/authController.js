@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RegisterController = RegisterController;
+exports.LoginController = LoginController;
 const UserAuth_1 = __importDefault(require("../models/UserAuth"));
 const hash_1 = require("../utils/hash");
 const jwt_1 = require("../utils/jwt");
@@ -45,6 +46,40 @@ async function RegisterController(req, res) {
             return res.status(409).json({ error: "این شماره قبلاً ثبت شده است." });
         }
         console.error("Register error:", error);
+        return res.status(500).json({ error: "خطای داخلی سرور" });
+    }
+}
+async function LoginController(req, res) {
+    const { username, password } = req.body;
+    try {
+        if (!username) {
+            return res.status(400).json({ error: "شماره الزامی است." });
+        }
+        // پیدا کردن کاربر
+        const user = await UserAuth_1.default.findOne({ username });
+        if (!user) {
+            return res.status(404).json({ error: "کاربر یافت نشد." });
+        }
+        // اگر نقش ADMIN باشد باید رمز بررسی شود
+        if (user.role === "MANAGER") {
+            if (!password) {
+                return res.status(400).json({ error: "رمز عبور الزامی است." });
+            }
+            const isMatch = await (0, hash_1.comparePassword)(password, user.password || "");
+            if (!isMatch) {
+                return res.status(401).json({ error: "رمز عبور اشتباه است." });
+            }
+        }
+        // ساختن توکن JWT
+        const token = (0, jwt_1.signJWT)({ id: user._id, role: user.role });
+        return res.status(200).json({
+            message: "ورود موفقیت‌آمیز بود.",
+            user,
+            token,
+        });
+    }
+    catch (error) {
+        console.error("Login error:", error);
         return res.status(500).json({ error: "خطای داخلی سرور" });
     }
 }

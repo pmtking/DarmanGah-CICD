@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = require("mongoose");
-//  ------------------------------------ schma mongo ----------------- //
 const personnelSchema = new mongoose_1.Schema({
     name: { type: String, required: true },
     nationalId: { type: String, required: true, unique: true },
@@ -20,15 +19,11 @@ const personnelSchema = new mongoose_1.Schema({
     isActive: { type: Boolean, default: true },
     hireAt: { type: Date, default: Date.now },
     lastLogin: { type: Date },
-    currentShift: {
-        type: mongoose_1.Schema.Types.ObjectId,
-        ref: "Shift",
-        default: null,
-    },
+    currentShift: { type: mongoose_1.Schema.Types.ObjectId, ref: "Shift", default: null },
     shifts: [{ type: mongoose_1.Schema.Types.ObjectId, ref: "Shift" }],
     performances: [{ type: mongoose_1.Schema.Types.ObjectId, ref: "Performance" }],
+    avatar: { type: String }, // مسیر عکس
 }, {
     timestamps: true,
 });
-const Personnel = (0, mongoose_1.model)("Personnel", personnelSchema);
-exports.default = Personnel;
+exports.default = (0, mongoose_1.model)("Personnel", personnelSchema);

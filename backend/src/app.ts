@@ -13,28 +13,35 @@ dotenvConfig();
 export const app = express();
 
 // -------------------- مسیر فایل‌های استاتیک --------------------
-// مسیر آپلودها (بر اساس مسیر جدید)
 const UPLOADS_PATH = path.join(__dirname, "uploads");
 app.use("/uploads", express.static(UPLOADS_PATH));
 
-// مسیر فایل‌های دیگر
-const FILES_PATH = "/home/ubuntu-website/lab";
+const FILES_PATH = process.env.FILES_PATH || "/home/ubuntu-website/lab";
 app.use("/files", express.static(FILES_PATH));
 
 // -------------------- CORS --------------------
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || ["*"];
+// در حالت توسعه از localhost:3000
+// در حالت Production از دامنه drfn.ir
+// -------------------- CORS --------------------
+const allowedOrigins = [
+  "https://drfn.ir",
+  "https://www.drfn.ir",
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+];
+
 app.use(
   cors({
     origin: (origin, callback) => {
+      // اگر origin وجود نداشت (مثل فلاتر دسکتاپ/موبایل) اجازه بده
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
+        console.warn("🚫 Blocked by CORS:", origin);
         callback(new Error("Origin not allowed by CORS"));
       }
     },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Origin", "Content-Type", "Accept", "Authorization"],
+    credentials: true, // برای کوکی و auth
   })
 );
 
@@ -45,25 +52,22 @@ app.use(express.urlencoded({ extended: true }));
 // -------------------- مسیرهای API --------------------
 app.use("/api", router);
 
-// -------------------- هندل خطاهای عمومی --------------------
+// -------------------- هندل خطا --------------------
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error("❌ Server Error:", err.message || err);
   res.status(500).json({ error: "مشکلی در سرور رخ داده است." });
 });
 
-// -------------------- تابع کمکی برای نمایش IP --------------------
+// -------------------- نمایش IP --------------------
 const getServerIPs = (): string[] => {
   const nets = os.networkInterfaces();
   const results: string[] = [];
 
   for (const name of Object.keys(nets)) {
     for (const net of nets[name] || []) {
-      if (net.family === "IPv4" && !net.internal) {
-        results.push(net.address);
-      }
+      if (net.family === "IPv4" && !net.internal) results.push(net.address);
     }
   }
-
   return results;
 };
 
@@ -78,19 +82,9 @@ export const startServer = async () => {
     app.listen(PORT, HOST, () => {
       console.log("🚀 Server is running:");
       console.log(`   → Local:   http://localhost:${PORT}`);
-
-      const serverIPs = getServerIPs();
-      if (serverIPs.length > 0) {
-        serverIPs.forEach((ip) =>
-          console.log(`   → Network: http://${ip}:${PORT}`)
-        );
-      } else {
-        console.log(`   → Network: http://${HOST}:${PORT}`);
-      }
-
+      const ips = getServerIPs();
+      ips.forEach(ip => console.log(`   → Network: http://${ip}:${PORT}`));
       console.log(`   → Allowed Origins: ${allowedOrigins.join(", ")}`);
-      console.log(`   → Uploads Path: ${UPLOADS_PATH}`);
-      console.log(`   → Files Path: ${FILES_PATH}`);
     });
   } catch (error) {
     console.error("❌ Server failed to start:", error);

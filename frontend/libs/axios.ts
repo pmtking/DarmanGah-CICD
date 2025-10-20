@@ -5,8 +5,10 @@ import axios, {
 } from "axios";
 
 // 🌐 Base URL — خواندن از env
-const BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.df-neyshabor.ir/";
+// const BASE_URL =
+//   process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.df-neyshabor.ir/";
+
+const BASE_URL = 'http://localhost:4000'
 
 const api = axios.create({
   baseURL: BASE_URL,

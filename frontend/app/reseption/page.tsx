@@ -23,25 +23,25 @@ const RespontionPage = () => {
   const [patientData, setPatientData] = useState<any>(null);
 
   // ✅ بررسی توکن و ست کردن axios
-  useEffect(() => {
-    const token = Cookies.get("token");
-    if (!token) {
-      toast.error("لطفاً ابتدا وارد شوید");
-      router.push("/login");
-    } else {
-      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-    }
+  // useEffect(() => {
+  //   const token = Cookies.get("token");
+  //   if (!token) {
+  //     toast.error("لطفاً ابتدا وارد شوید");
+  //     router.push("/login");
+  //   } else {
+  //     api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+  //   }
 
-    // ✅ بررسی وجود داده در localStorage
-    const storedPatient = localStorage.getItem("receptionPatient");
-    if (storedPatient) {
-      const patient = JSON.parse(storedPatient);
-      setPatientData(patient);
-      setNationalId(patient.nationalId || "");
-      setIsVerified(true);
-      localStorage.removeItem("receptionPatient"); // پاک کردن بعد از استفاده
-    }
-  }, [router]);
+  //   // ✅ بررسی وجود داده در localStorage
+  //   const storedPatient = localStorage.getItem("receptionPatient");
+  //   if (storedPatient) {
+  //     const patient = JSON.parse(storedPatient);
+  //     setPatientData(patient);
+  //     setNationalId(patient.nationalId || "");
+  //     setIsVerified(true);
+  //     localStorage.removeItem("receptionPatient"); // پاک کردن بعد از استفاده
+  //   }
+  // }, [router]);
 
   // استعلام کد ملی
   const handleVerify = async () => {

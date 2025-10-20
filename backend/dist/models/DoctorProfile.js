@@ -36,68 +36,44 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
 // ---------------------- Schema ---------------------- //
 const DoctorProfileSchema = new mongoose_1.Schema({
-    personnel: {
-        type: mongoose_1.Schema.Types.ObjectId,
-        ref: "Personnel",
-    },
-    specialty: {
-        type: String,
-        required: true,
-        trim: true,
-    },
+    personnel: { type: mongoose_1.Schema.Types.ObjectId, ref: "Personnel", required: true },
+    personnelName: { type: String, required: true, trim: true },
+    nationalId: { type: String, required: true, trim: true },
+    specialty: { type: String, required: true, trim: true },
     specialtyType: {
         type: String,
         enum: [
-            "پزشک عمومی",
-            "جراح",
-            "داخلی",
-            "اطفال",
-            "پوست",
-            "رادیولوژی",
-            "سایر",
+            "پزشک عمومی", "جراح", "داخلی", "اطفال", "پوست و مو", "قلب و عروق",
+            "رادیولوژی", "مامایی", "دندان پزشک", "اورولوژی", "روان شناس",
+            "روان پزشک", "تغذیه", "زنان و زایمان", "چشم‌پزشک", "گوش حلق بینی",
+            "فیزیوتراپ", "ارتوپدی", "گوارش", "عفونی", "مغز و اعصاب", "ریه",
+            "کلیه (نفرولوژی)", "غدد", "پزشکی ورزشی", "طب کار", "طب سنتی",
+            "پزشکی قانونی", "سایر"
         ],
         required: true,
     },
-    licenseNumber: {
-        type: String,
-        required: true,
-        unique: true,
-        trim: true,
-    },
-    bio: {
-        type: String,
-        maxlength: 10000,
-    },
-    service: { type: String, required: true },
+    licenseNumber: { type: String, required: true, trim: true, unique: true },
+    service: { type: String, required: true, trim: true }, // ✅ اینجا فقط اسم ذخیره می‌شود
     workingDays: {
         type: [String],
         enum: ["شنبه", "یک‌شنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنج‌شنبه", "جمعه"],
         default: [],
     },
     workingHours: {
-        شروع: { type: String, required: true },
-        پایان: { type: String, required: true },
+        type: Map,
+        of: new mongoose_1.Schema({
+            shifts: [
+                { start: { type: String, required: true }, end: { type: String, required: true }, booked: { type: [String], default: [] } },
+            ],
+        }),
+        default: {},
     },
-    roomNumber: {
-        type: String,
-        trim: true,
-    },
-    avatarUrl: {
-        type: String,
-    },
-    isAvailable: {
-        type: Boolean,
-        default: true,
-    },
+    roomNumber: { type: String, trim: true },
+    isAvailable: { type: Boolean, default: true },
     documents: [
-        {
-            title: { type: String, required: true },
-            fileUrl: { type: String, required: true },
-            uploadedAt: { type: Date, default: Date.now },
-        },
+        { title: { type: String, required: true }, fileUrl: { type: String, required: true }, uploadedAt: { type: Date, default: Date.now } },
     ],
 }, { timestamps: true });
 // ---------------------- Model ---------------------- //
 const DoctorProfile = mongoose_1.default.model("DoctorProfile", DoctorProfileSchema);
-// ---------------------- Export ---------------------- //
 exports.default = DoctorProfile;

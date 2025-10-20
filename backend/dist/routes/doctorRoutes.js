@@ -6,6 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const doctorProfileController_1 = require("../controllers/doctorProfileController");
 const router = express_1.default.Router();
+// ------------------ دسته بندی پزشک -------------------- //
+router.get("/all", doctorProfileController_1.getAllDoctorsController);
 // ------------------ دریافت اطلاعات ---------------------------- //
 router.get("/find", doctorProfileController_1.findDoctor);
 // ---------------------- ایجاد پروفایل پزشک ---------------------- //
@@ -24,7 +26,4 @@ router.patch("/:id/availability", doctorProfileController_1.changeAvailability);
 router.post("/:id/document", doctorProfileController_1.uploadDocument);
 // --------------------------- ایجاد و بهروز رسانی ------------------------ //
 router.post("/upsert", doctorProfileController_1.upsertProfile);
-//  ------------------------------- دسته بندی پزشک -------------------- //
-router.get("/all", doctorProfileController_1.getAllDoctorsController);
-// --------------------- export =----------------- //
 exports.default = router;

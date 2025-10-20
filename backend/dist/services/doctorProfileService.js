@@ -28,40 +28,20 @@ exports.createDoctorProfile = createDoctorProfile;
 //  ---------------------- find all profiles --------------- //
 const getAllDoctorProfiles = async () => {
     try {
-        // مرحله ۱: دریافت پرسنل‌هایی که نقش‌شون پزشک هست و فعال هستند
         const doctors = await Personnel_1.default.find({
             role: "DOCTOR",
             isActive: true,
         }).select("name phone nationalId gender");
-        // تعیین روز فعلی (فارسی)
-        const weekDays = [
-            "یک‌شنبه",
-            "دوشنبه",
-            "سه‌شنبه",
-            "چهارشنبه",
-            "پنج‌شنبه",
-            "جمعه",
-            "شنبه",
-        ];
-        const todayIndex = new Date().getDay(); // 0 یکشنبه، 6 شنبه
-        const today = weekDays[todayIndex === 0 ? 0 : todayIndex]; // روز فعلی فارسی
-        const now = new Date();
-        const currentTime = now.getHours() * 60 + now.getMinutes(); // زمان فعلی به دقیقه
-        // مرحله ۲: دریافت پروفایل‌های مرتبط و فیلتر پزشکان فعال در روز جاری و زمان مناسب
         const profiles = await Promise.all(doctors.map(async (doctor) => {
             const profile = await DoctorProfile_1.default.findOne({ personnel: doctor._id });
             if (!profile)
                 return null;
-            // فقط پزشکان فعال در روز جاری را برگردان
-            if (!profile.isAvailable || !profile.workingDays.includes(today))
+            // فقط پزشکان فعال
+            if (!profile.isAvailable)
                 return null;
-            // بررسی زمان پایان
-            const [endHour, endMinute] = profile.workingHours.پایان
-                .split(":")
-                .map(Number);
-            const endTimeInMinutes = endHour * 60 + endMinute;
-            if (currentTime > endTimeInMinutes)
-                return null; // اگر زمان گذشته بود حذف شود
+            // اگر روزها و شیفت‌ها تعریف نشده باشد، رد شود
+            if (!profile.workingDays?.length || !profile.workingHours)
+                return null;
             return {
                 personnelId: doctor._id,
                 name: doctor.name,
@@ -78,7 +58,6 @@ const getAllDoctorProfiles = async () => {
                 workingDays: profile.workingDays,
             };
         }));
-        // حذف null‌ها
         return profiles.filter((p) => p !== null);
     }
     catch (err) {

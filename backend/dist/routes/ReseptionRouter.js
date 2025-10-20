@@ -6,5 +6,5 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const reseptionController_1 = require("../controllers/reseptionController");
 const router = express_1.default.Router();
-router.post('/add', reseptionController_1.createReseptionController);
+router.post('/add', reseptionController_1.createReceptionController);
 exports.default = router;
