@@ -26,10 +26,15 @@ const allowedOrigins = [
   "https://www.df-neyshabor.ir",
 ];
 
-const isDev = process.env.NODE_ENV !== "production";
 app.use(cors({
-  origin: "*",
-  credentials: false,
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Origin not allowed by CORS"));
+    }
+  },
+  credentials: true,
 }));
 
 
