@@ -20,15 +20,35 @@ const FILES_PATH = process.env.FILES_PATH || "/home/ubuntu-website/lab";
 app.use("/files", express.static(FILES_PATH));
 
 // -------------------- CORS --------------------
-// در حالت توسعه از localhost:3000
-// در حالت Production از دامنه drfn.ir
-// -------------------- CORS --------------------
-
+const allowedOrigins = [
+  "https://drfn.ir",
+  "https://www.drfn.ir",
+  "https://www.df-neyshabor.ir",
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+];
 
 const isDev = process.env.NODE_ENV !== "production";
-app.use(cors({
-  origin: "*", // فقط یک مقدار
-}));
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (isDev) {
+        // در حالت توسعه همه آزاد هستند
+        callback(null, true);
+      } else {
+        // در حالت Production فقط دامنه‌های مشخص
+        if (!origin || allowedOrigins.includes(origin)) {
+          callback(null, true);
+        } else {
+          console.warn("🚫 Blocked by CORS:", origin);
+          callback(new Error("Origin not allowed by CORS"));
+        }
+      }
+    },
+    credentials: true,
+  })
+);
 
 // -------------------- پارسرها --------------------
 app.use(express.json());
@@ -69,7 +89,7 @@ export const startServer = async () => {
       console.log(`   → Local:   http://localhost:${PORT}`);
       const ips = getServerIPs();
       ips.forEach(ip => console.log(`   → Network: http://${ip}:${PORT}`));
-      console.log(`   → Allowed Origins: `);
+      console.log(`   → Allowed Origins: ${isDev ? "ALL (Dev)" : allowedOrigins.join(", ")}`);
     });
   } catch (error) {
     console.error("❌ Server failed to start:", error);
