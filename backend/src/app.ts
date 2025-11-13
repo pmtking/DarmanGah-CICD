@@ -27,26 +27,11 @@ const allowedOrigins = [
 ];
 
 const isDev = process.env.NODE_ENV !== "production";
+app.use(cors({
+  origin: "*",
+  credentials: false,
+}));
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (isDev) {
-        // در حالت توسعه همه آزاد هستند
-        callback(null, true);
-      } else {
-        // در حالت Production فقط دامنه‌های مشخص
-        if (!origin || allowedOrigins.includes(origin)) {
-          callback(null, true);
-        } else {
-          console.warn("🚫 Blocked by CORS:", origin);
-          callback(new Error("Origin not allowed by CORS"));
-        }
-      }
-    },
-    credentials: true,
-  })
-);
 
 // -------------------- پارسرها --------------------
 app.use(express.json());
