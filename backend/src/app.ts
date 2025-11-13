@@ -26,17 +26,6 @@ const allowedOrigins = [
   "https://www.df-neyshabor.ir",
 ];
 
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Origin not allowed by CORS"));
-    }
-  },
-  credentials: true,
-}));
-
 const isDev = process.env.NODE_ENV !== "production";
 
 app.use(
