@@ -28,7 +28,10 @@ const allowedOrigins = [
   "https://www.drfn.ir",
   "http://localhost:3000",
   "http://127.0.0.1:3000",
+  "https://www.df-neyshabor.ir",
+  "https://2.180.44.227",
 ];
+
 
 app.use(
   cors({
