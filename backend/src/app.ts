@@ -26,27 +26,18 @@ app.use("/files", express.static(FILES_PATH));
 const allowedOrigins = [
   "https://drfn.ir",
   "https://www.drfn.ir",
+  "https://www.df-neyshabor.ir",
   "http://localhost:3000",
   "http://127.0.0.1:3000",
-  "https://www.df-neyshabor.ir",
-  "https://2.180.44.227",
 ];
 
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // اگر origin وجود نداشت (مثل فلاتر دسکتاپ/موبایل) اجازه بده
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        console.warn("🚫 Blocked by CORS:", origin);
-        callback(new Error("Origin not allowed by CORS"));
-      }
-    },
-    credentials: true, // برای کوکی و auth
-  })
-);
+
+app.use(cors({
+  origin: (origin, callback) => callback(null, true),
+  credentials: true,
+}));
+
 
 // -------------------- پارسرها --------------------
 app.use(express.json());
