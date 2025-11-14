@@ -38,6 +38,7 @@ export const ReserveAppointmentController = async (req: Request, res: Response) 
       return res.status(400).json({ success: false, message: "همه فیلدهای اجباری باید پر شوند ❌" });
 
     const dateObj = new Date(appointmentDate);
+    
     if (isNaN(dateObj.getTime()))
       return res.status(400).json({ success: false, message: "فرمت تاریخ نوبت معتبر نیست ❌" });
 

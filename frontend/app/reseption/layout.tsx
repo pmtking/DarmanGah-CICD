@@ -174,15 +174,9 @@ const RespontionLayout = ({ children }: RespontionLayoutType) => {
       <div className="flex flex-col w-full h-screen relative">
         {loading && <LoadingScreen />}
         <Navbar />
-        <main className="flex flex-1 items-start justify-center gap-6 p-6">
-          <div className="flex flex-col gap-4 w-64">
-            <h2 className="text-base font-bold text-white mb-1">بیمه‌های پایه</h2>
-            <InsuranceGrid insurances={basicInsurance} />
-
-            <h2 className="text-base font-bold text-white mt-4 mb-1">بیمه‌های تکمیلی</h2>
-            <InsuranceGrid insurances={supplementaryInsurance} />
-          </div>
-          <div className="flex-1 rounded-xl p-6 shadow-lg bg-white/20 backdrop-blur-md">{children}</div>
+        <main className="flex flex-1 items-start justify-center gap-6 h-screen">
+          
+          <div className="flex-1 rounded-xl mt-[150px] ">{children}</div>
         </main>
       </div>
     </UserProvider>

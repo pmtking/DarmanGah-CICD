@@ -12,43 +12,26 @@ import ReseptionForm from "@/components/ReseptionForm/page";
 import ReseptionNav from "@/components/ReseptionNav/page";
 import TitleComponents from "@/components/TitleComponents/page";
 import { useUser } from "@/context/UserContext";
+import useReseption from "@/hooks/useReseption";
 
 const RespontionPage = () => {
   const { user } = useUser();
-  const router = useRouter();
+
 
   const [nationalId, setNationalId] = useState<string>("");
   const [isVerified, setIsVerified] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [patientData, setPatientData] = useState<any>(null);
+  const [isDisebled, setIsDisebled] = useState(true)
+  const { checkNationalCode } = useReseption();
 
-  // ✅ بررسی توکن و ست کردن axios
-  // useEffect(() => {
-  //   const token = Cookies.get("token");
-  //   if (!token) {
-  //     toast.error("لطفاً ابتدا وارد شوید");
-  //     router.push("/login");
-  //   } else {
-  //     api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-  //   }
 
-  //   // ✅ بررسی وجود داده در localStorage
-  //   const storedPatient = localStorage.getItem("receptionPatient");
-  //   if (storedPatient) {
-  //     const patient = JSON.parse(storedPatient);
-  //     setPatientData(patient);
-  //     setNationalId(patient.nationalId || "");
-  //     setIsVerified(true);
-  //     localStorage.removeItem("receptionPatient"); // پاک کردن بعد از استفاده
-  //   }
-  // }, [router]);
+
 
   // استعلام کد ملی
   const handleVerify = async () => {
-    if (nationalId.length !== 10) {
-      toast.error("کد ملی باید ۱۰ رقم باشد");
-      return;
-    }
+    const check = checkNationalCode(nationalId)
+    check.success === true ? "ol" : toast.error('sdsds'); setIsDisebled(true);
     try {
       setLoading(true);
       const res = await api.post("/api/appointment/find", { nationalCode: nationalId });
@@ -67,17 +50,29 @@ const RespontionPage = () => {
       setLoading(false);
     }
   };
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setNationalId(val);
+    const res = checkNationalCode(val)
+    if (res.success) {
+      setIsDisebled(false)
+    } else {
+      setIsDisebled(true)
+    }
+
+  }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") handleVerify();
+
   };
 
   return (
-    <div className="flex flex-col w-full justify-center items-center">
+    <div className="flex flex-col w-full  items-center mt-[-152px]">
       {user && <ReseptionNav patientCount={42} user={user} />}
 
-      <main className="bg-white/30 flex flex-col justify-start items-center w-[60%] h-[80%] px-5 py-8 rounded-2xl border-2 border-gray-600 shadow-2xl">
-        <div className="mt-8 flex">
+      <main className="flex flex-col justify-start items-center w-[60%] h-[80%] px-5 py-8 rounded-2xl shadow-2xl">
+        <div className="mb-8 flex">
           <TitleComponents h1="پذیرش درمانگاه" color="#fff" classname="flex" />
         </div>
 
@@ -87,7 +82,7 @@ const RespontionPage = () => {
               type="text"
               value={nationalId}
               placeholder="کد ملی را وارد کنید"
-              onChange={(e) => setNationalId(e.target.value)}
+              onChange={handleChange}
               onKeyDown={handleKeyDown}
               className="w-full py-5 px-5 border border-gray-400 bg-white rounded text-black shadow-2xl"
             />
@@ -96,13 +91,13 @@ const RespontionPage = () => {
               name="استعلام"
               loading={loading}
               className="mt-4 px-4 py-2 text-white rounded hover:opacity-90"
+              disabled={isDisebled}
             />
           </div>
         ) : (
-          <div className="mt-6 w-full text-center text-white rounded-xl p-4 transition-all duration-300 bg-white px-5">
+          <div className=" w-full text-center ">
             <ReseptionForm
-              data={patientData}
-              nationalId={nationalId}
+
             />
           </div>
         )}

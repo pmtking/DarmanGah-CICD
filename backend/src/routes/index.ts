@@ -10,6 +10,7 @@ import appontment from "./appointmentRoutes";
 import reseption from './ReseptionRouter'
 import Lab from "./labRoutes";
 import { isManager } from "../middlewares/isManager";
+import PetintRouter from './PetientRouter'
 export const router = express.Router();
 const fs = require("fs");
 const path = "D:/key.txt"; // مسیر فلش (در ویندوز)
@@ -54,3 +55,4 @@ router.use("/doctors", doctors);
 router.use("/appointment", appontment);
 router.use("/lab", Lab);
 router.use("/reseption", reseption);
+router.use("/user" , PetintRouter)

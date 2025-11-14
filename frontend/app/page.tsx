@@ -14,6 +14,13 @@ export default function Home() {
   useEffect(() => {
     // نمایش مدال بلافاصله بعد از ورود کاربر
     setShowModal(true);
+    const isPWA = window.matchMedia("(display-mode: standalone)").matches || (window.navigator as any).standalone;
+    if (isPWA) {
+      const hasLoggedin = localStorage.getItem('loggedIn');
+      if (!hasLoggedin) {
+        window.location.href = '/login'
+      }
+    }
   }, []);
 
   return (
