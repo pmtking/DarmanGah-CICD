@@ -7,10 +7,10 @@ import { Menu, CloseSquare, User } from "iconsax-reactjs";
 import api from "@/libs/axios";
 
 const navItems = [
-  { name: "بخش دندان پزشکی", link: "/" },
-  { name: "آزمایشگاه", link: "/lab" },
-  { name: "فیزیوتراپی", link: "/" },
-  { name: "چشم پزشکی", link: "/login" },
+  { name: "لیست پزشگان", link: "/a" },
+  { name: "اورژانس سیار", link: "/lab" },
+  { name: "نوبت دهی", link: "/a" },
+  { name: "مقالات", link: "/login" },
 ];
 
 const NavBar = () => {

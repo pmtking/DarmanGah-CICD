@@ -1,47 +1,102 @@
-// Example template for config.ts
 @use "../../styles/sass/abstracts/variables" as *;
+
 .nav-item {
+  position: relative;
   display: flex;
   align-items: center;
+  padding: 10px 14px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
 
-  &.navbar {
-    padding: 10px 16px;
-    .nav-link {
-      color: #333;
-      text-decoration: none;
-      display: flex;
-      gap: 8px;
+  // حالت هاور روی کل آیتم
+  &:hover {
+    background-color: #f3f4ff;
+    font-weight: bold;
+    box-shadow: rgba(0, 0, 0, 0.15) 0px 4px 12px;
+  }
+
+  // خط زیر متن با انیمیشن
+  .nav-link {
+    position: relative;
+    text-decoration: none;
+    color: #333;
+    display: flex;
+    gap: 8px;
+    padding: 8px 12px;
+    transition: color 0.3s ease;
+
+    &::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0%;
+      height: 2px;
+      background: linear-gradient(90deg, $color-primary, lighten($color-primary, 20%));
+      transition: width 0.4s ease;
     }
+
+    &:hover {
+      color: $color-primary;
+    }
+
+    &:hover::after {
+      width: 100%;
+    }
+  }
+
+  // حالت navbar
+  &.navbar {
     .nav-text {
       font-size: 16px;
     }
   }
 
+  // حالت sidebar
   &.sidebar {
-    padding: 5px 5px;
     .nav-link {
-      // color: #fff;
-      text-decoration: none;
-      display: flex;
       width: 100%;
-      padding: 10px 20px ;
+      padding: 10px 20px;
       gap: 10px;
-      transition: background 0.3s ease;
+      transition: all 0.3s ease;
+
       &:hover {
-        background-color: $color-primary;
-        border-radius: 6px;
+        background: linear-gradient(135deg, $color-primary, lighten($color-primary, 15%));
         color: #fff;
+        transform: scale(1.05);
+        border-radius: 8px;
       }
     }
+
     .nav-text {
       font-size: 14px;
     }
   }
-   &.active .nav-link {
-    background-color: #e0e7ff;
-    color: #1d4ed8;
+
+  // حالت active
+  &.active .nav-link {
+    background: #e0e7ff;
+    color: $color-primary;
     font-weight: bold;
-    
-    border-radius: 6px;
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: rgba(0, 0, 0, 0.25) 0px 5px 15px;
+  }
+
+  // خط دور آیتم با انیمیشن چرخشی
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+    border: 2px solid $color-primary;
+    opacity: 0;
+    transform: rotate(0deg);
+    transition: opacity 0.3s ease, transform 0.6s ease;
+  }
+
+  &:hover::before {
+    opacity: 1;
+    transform: rotate(360deg); // چرخش خط دور آیتم
   }
 }

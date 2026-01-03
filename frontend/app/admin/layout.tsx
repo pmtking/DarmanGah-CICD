@@ -11,41 +11,41 @@ interface AdminLayoutProps {
 }
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
-  const [authorized, setAuthorized] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [authorized, setAuthorized] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
   const [progress, setProgress] = useState<boolean[]>([false, false, false, false]);
   const router = useRouter();
 
-  useEffect(() => {
-    const role = Cookies.get("role");
-    const tickIntervals: NodeJS.Timeout[] = [];
+  // useEffect(() => {
+  //   const role = Cookies.get("role");
+  //   const tickIntervals: NodeJS.Timeout[] = [];
 
-    if (role === "MANAGER") {
-      // تیک زدن آیتم‌ها یکی یکی
-      progress.forEach((_, index) => {
-        const interval = setTimeout(() => {
-          setProgress((prev) => {
-            const newState = [...prev];
-            newState[index] = true;
-            return newState;
-          });
-        }, 600 * (index + 1));
-        tickIntervals.push(interval);
-      });
+  //   if (role === "MANAGER") {
+  //     // تیک زدن آیتم‌ها یکی یکی
+  //     progress.forEach((_, index) => {
+  //       const interval = setTimeout(() => {
+  //         setProgress((prev) => {
+  //           const newState = [...prev];
+  //           newState[index] = true;
+  //           return newState;
+  //         });
+  //       }, 600 * (index + 1));
+  //       tickIntervals.push(interval);
+  //     });
 
-      // بعد از تمام شدن تیک‌ها اجازه دسترسی بده
-      const authTimeout = setTimeout(() => {
-        setAuthorized(true);
-        setLoading(false);
-      }, 3000);
-      tickIntervals.push(authTimeout);
-    } else {
-      router.push("/login");
-      setLoading(false);
-    }
+  //     // بعد از تمام شدن تیک‌ها اجازه دسترسی بده
+  //     const authTimeout = setTimeout(() => {
+  //       setAuthorized(true);
+  //       setLoading(false);
+  //     }, 3000);
+  //     tickIntervals.push(authTimeout);
+  //   } else {
+  //     router.push("/login");
+  //     setLoading(false);
+  //   }
 
-    return () => tickIntervals.forEach((t) => clearTimeout(t));
-  }, [router]);
+  //   return () => tickIntervals.forEach((t) => clearTimeout(t));
+  // }, [router]);
 
   return (
     <div className="flex min-h-screen w-full">

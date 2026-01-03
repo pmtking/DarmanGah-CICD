@@ -23,13 +23,10 @@ app.use("/files", express.static(FILES_PATH));
 const allowedOrigins = [
   "https://drfn.ir",
   "https://www.drfn.ir",
-<<<<<<< HEAD
   "http://localhost:3000",
   "http://127.0.0.1:3000",
   "http://192.168.56.1:3000",
-=======
   "https://www.df-neyshabor.ir",
->>>>>>> 8f86703140bc30f479220232ba085ac39a1c51a6
 ];
 
 const isDev = process.env.NODE_ENV !== "production";
@@ -49,7 +46,6 @@ app.use(cors({
   },
   credentials: true,
 }));
-
 
 // -------------------- پارسرها --------------------
 app.use(express.json());
