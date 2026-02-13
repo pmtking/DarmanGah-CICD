@@ -17,22 +17,22 @@ const PhysioSelectCard: React.FC<PhysioSelectCardProps> = ({ data, isSelected, o
     return (
         <div 
             onClick={onClick} 
-            className="relative w-full h-80 flex flex-col items-center justify-end group cursor-pointer"
+            className="relative w-full h-60 flex flex-col items-center justify-end group cursor-pointer"
         >
             {/* --- بدنه اصلی کارت (لایه زیرین) --- */}
             <div className={`
-                absolute bottom-0 inset-x-0 h-[70%] rounded-[2.5rem] transition-all duration-500 ease-out
-                border-2 z-10
+                absolute bottom-0 inset-x-1 h-[70%] rounded-[2.5rem] transition-all duration-500 ease-out 
+                border-2 z-1
                 ${isSelected 
                     ? "bg-white border-[#213448] shadow-[0_25px_50px_-12px_rgba(33,52,72,0.2)] scale-[1.05]" 
                     : "bg-white/80 border-slate-200 hover:border-slate-300 hover:shadow-xl group-hover:h-[77%]"
                 }
             `}>
                 {/* محتوای متنی */}
-                <div className="absolute inset-x-0 bottom-6 text-center px-4 ">
+                <div className="absolute inset-x-0 bottom-6 text-center px-4 z-10 top-16  ">
                     <span className={`
-                        text-[9px] font-black tracking-[0.2em] px-2 py-1 rounded-md transition-colors
-                        ${isSelected ? "bg-[#213448] text-white" : "bg-slate-100 text-slate-400"}
+                        text-[9px] font-black tracking-[2px] px-2 rounded-md transition-colors py-3 
+                        ${isSelected ? "bg-[#fff] text-[#213448]  " : "bg-slate-100 text-slate-400"}
                     `}>
                         PHYSIOTHERAPIST
                     </span>
@@ -46,7 +46,7 @@ const PhysioSelectCard: React.FC<PhysioSelectCardProps> = ({ data, isSelected, o
             </div>
 
             {/* --- بخش تصویر 3D (سرِ بیرون زده) --- */}
-            <div className="absolute top-15 z-20 flex flex-col items-center overflow-visible">
+            <div className="absolute top-10 z-20 flex flex-col items-center overflow-visible">
                 <div className={`
                     relative w-20 h-25 transition-all duration-500 transform
                     ${isSelected ? "scale-110 -translate-y-4" : "scale-100 group-hover:-translate-y-2"}
@@ -54,13 +54,14 @@ const PhysioSelectCard: React.FC<PhysioSelectCardProps> = ({ data, isSelected, o
                     
                     {/* ۱. دایره پس‌زمینه و خط دور (Border) که فقط نیمه پایین دارد یا تصویر را در بر می‌گیرد */}
                     <div className={`
-                        absolute inset-0 rounded-full border-[3px] transition-all duration-500
+                        absolute inset-0 rounded-full border-[3px] transition-all duration-500 
+                        
                         ${isSelected ? "border-[#213448] bg-slate-50" : "border-white bg-slate-100"}
                         shadow-inner z-0
                     `} />
 
                     {/* ۲. ظرف تصویر با overflow-visible برای افکت خروج از کادر */}
-                    <div className="absolute inset-0 z-10 overflow-visible">
+                    <div className="absolute inset-1 z-0 overflow-visible top-[-10px]">
                         <Image 
                             src={DefultAvatar} 
                             alt={name}

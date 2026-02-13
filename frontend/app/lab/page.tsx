@@ -131,9 +131,8 @@ export default function LabPage() {
 
       {status && (
         <p
-          className={`mt-4 text-center font-medium ${
-            status.startsWith("❌") ? "text-red-600" : "text-gray-800"
-          }`}
+          className={`mt-4 text-center font-medium ${status.startsWith("❌") ? "text-red-600" : "text-gray-800"
+            }`}
         >
           {status}
         </p>
@@ -144,9 +143,8 @@ export default function LabPage() {
           {files.map((file, index) => (
             <div
               key={index}
-              className={`bg-white shadow-lg rounded-2xl p-4 flex flex-col md:flex-row justify-between items-center gap-3 transform transition-all duration-500 ${
-                index < visibleFiles ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"
-              } hover:shadow-2xl`}
+              className={`bg-white shadow-lg rounded-2xl p-4 flex flex-col md:flex-row justify-between items-center gap-3 transform transition-all duration-500 ${index < visibleFiles ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"
+                } hover:shadow-2xl`}
             >
               <span className="truncate font-medium text-blue-900">
                 {file.dateFolder ? `[${file.dateFolder}] ` : ""}{file.name}
