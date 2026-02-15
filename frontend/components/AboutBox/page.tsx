@@ -7,7 +7,7 @@ const AboutBox = () => {
     type: "video",
     title: "درمانگاه فرهنگیان نیشابور",
     content: "به دنیای مدرن سلامت خوش آمدید...",
-    mediaUrl: "https://assets.mixkit.co/videos/46367/46367-720.mp4"
+    mediaUrl: "https://assets.mixkit.co/videos/21685/21685-720.mp4"
   });
 
   return (
