@@ -35,7 +35,7 @@ export default function Home() {
       
 
       {/* Main Content */}
-      <main className="w-full flex flex-col-reverse items-center justify-between gap-25 px-4 sm:px-6 sm:flex-col md:px-12 md:flex-col lg:px-20 py-8 lg:flex-row">
+      <main className="w-full flex flex-col-reverse items-center justify-center gap-40 px-4 sm:px-6 sm:flex-col md:px-5 md:flex-col lg:px-[-10px] py-5 lg:flex-row">
         <Services />
         <AboutBox />
         <DoctorsPresent />

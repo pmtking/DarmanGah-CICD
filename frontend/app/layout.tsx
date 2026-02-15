@@ -87,7 +87,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* <NavBar /> */}
 
         {/* محتوای اصلی */}
-        <main className="flex flex-col px-4 sm:px-6 md:px-12 lg:px-20 py-6 gap-12">
+        <main className="flex flex-col  justify-center item-center px-4 sm:px-6 md:px-12 lg:px-0 py-6 gap-12 mr-8">
           {children}
         </main>
       </body>
